@@ -21,17 +21,17 @@ public class GameStagesPlugin {
 
     public static void beforeScripts(KJSScriptType scriptType) {
         if (scriptType == KJSScriptType.SERVER) {
-            if (ServerGameStageManager.INSTANCE == null) return;
-            ServerGameStageManager.INSTANCE.allowMutation();
-            ServerGameStageManager.INSTANCE.reset();
+            ServerGameStageManager.instance().allowMutation();
+            ServerGameStageManager.instance().reset();
         }
     }
 
     public static void afterScripts(KJSScriptType scriptType) {
         if (scriptType == KJSScriptType.SERVER) {
-            if (ServerGameStageManager.INSTANCE == null) return;
-            ServerGameStageManager.INSTANCE.disallowMutation();
-            ServerGameStageManager.INSTANCE.sync();
+            ServerGameStageManager.instance().disallowMutation();
+            if (ServerGameStageManager.INSTANCE != null) {
+                ServerGameStageManager.INSTANCE.sync();
+            }
         }
     }
 }

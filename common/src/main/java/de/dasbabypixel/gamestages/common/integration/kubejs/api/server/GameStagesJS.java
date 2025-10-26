@@ -8,17 +8,14 @@ import java.util.function.Consumer;
 public class GameStagesJS {
     public static GameStage registerStage(String name) {
         var stage = new GameStage(name);
-        if (ServerGameStageManager.INSTANCE != null) {
-            ServerGameStageManager.INSTANCE.add(stage);
-        }
+        System.out.println("Register stage " + name);
+        ServerGameStageManager.instance().add(stage);
         return stage;
     }
 
     public static void configureStage(String name, Consumer<GameStage> configurer) {
-        if (ServerGameStageManager.INSTANCE != null) {
-            var stage = ServerGameStageManager.INSTANCE.get(name);
-            if (stage != null) configurer.accept(stage);
-        }
+        var stage = ServerGameStageManager.instance().get(name);
+        if (stage != null) configurer.accept(stage);
     }
 
     public static void test() {

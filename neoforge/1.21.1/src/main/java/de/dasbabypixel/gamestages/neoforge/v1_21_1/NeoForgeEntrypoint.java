@@ -3,6 +3,8 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1;
 import de.dasbabypixel.gamestages.common.BuildConstants;
 import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
+import de.dasbabypixel.gamestages.common.entity.Player;
+import de.dasbabypixel.gamestages.common.listener.PlayerJoinListener;
 import de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod;
 import de.dasbabypixel.gamestages.neoforge.NeoForgeInstances;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.Attachments;
@@ -14,6 +16,7 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.network.PlatformPacketDistrib
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 
@@ -35,8 +38,14 @@ public class NeoForgeEntrypoint {
 
         NeoForge.EVENT_BUS.addListener(this::handleServerAboutToStart);
         NeoForge.EVENT_BUS.addListener(this::handleServerStopped);
+        NeoForge.EVENT_BUS.addListener(this::handlePlayerJoin);
 
         Attachments.ATTACHMENT_TYPES.register(modBus);
+    }
+
+    private void handlePlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
+        var player = event.getEntity();
+        PlayerJoinListener.handleJoin((Player) player);
     }
 
     private void handleServerAboutToStart(ServerAboutToStartEvent event) {
