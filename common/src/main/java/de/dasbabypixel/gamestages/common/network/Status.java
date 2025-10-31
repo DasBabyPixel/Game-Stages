@@ -1,5 +1,5 @@
 package de.dasbabypixel.gamestages.common.network;
 
-public interface CustomPacket {
-
+public enum Status {
+    BEGIN_SYNC, END_SYNC
 }

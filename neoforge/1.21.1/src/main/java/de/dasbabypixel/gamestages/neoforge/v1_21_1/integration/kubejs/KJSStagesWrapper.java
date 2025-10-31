@@ -1,6 +1,6 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs;
 
-import de.dasbabypixel.gamestages.common.data.GameStageReference;
+import de.dasbabypixel.gamestages.common.data.GameStage;
 import de.dasbabypixel.gamestages.common.data.server.PlayerStages;
 import dev.latvian.mods.kubejs.stages.Stages;
 import net.minecraft.world.entity.player.Player;
@@ -23,31 +23,31 @@ public class KJSStagesWrapper implements Stages {
 
     @Override
     public boolean addNoUpdate(String s) {
-        return stages.addSilent(new GameStageReference(s));
+        return stages.addSilent(new GameStage(s));
     }
 
     @Override
     public boolean removeNoUpdate(String s) {
-        return stages.removeSilent(new GameStageReference(s));
+        return stages.removeSilent(new GameStage(s));
     }
 
     @Override
     public boolean add(String stage) {
-        return stages.add(new GameStageReference(stage));
+        return stages.add(new GameStage(stage));
     }
 
     @Override
     public boolean remove(String stage) {
-        return stages.remove(new GameStageReference(stage));
+        return stages.remove(new GameStage(stage));
     }
 
     @Override
     public Collection<String> getAll() {
-        return stages.getAll().stream().map(GameStageReference::name).toList();
+        return stages.getAll().stream().map(GameStage::name).toList();
     }
 
     @Override
     public void sync() {
-        stages.sync();
+        stages.fullSync();
     }
 }

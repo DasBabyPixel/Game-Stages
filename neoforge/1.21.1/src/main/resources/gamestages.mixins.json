@@ -3,10 +3,6 @@
   "package": "de.dasbabypixel.gamestages.neoforge.v1_21_1.mixins",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "KJSBindingRegistryMixin",
-    "KJSEventGroupMixin",
-    "KJSEventGroupRegistryMixin",
-    "KJSEventHandlerMixin",
     "MCPlayerMixin"
   ],
   "injectors": {

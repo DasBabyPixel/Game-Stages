@@ -1,12 +1,14 @@
 package de.dasbabypixel.gamestages.common.data.server;
 
-import de.dasbabypixel.gamestages.common.CommonInstances;
-import de.dasbabypixel.gamestages.common.entity.Player;
+import de.dasbabypixel.gamestages.common.network.PacketConsumer;
+import de.dasbabypixel.gamestages.common.network.Status;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
+
+import static de.dasbabypixel.gamestages.common.CommonInstances.platformPacketCreator;
 
 public class ServerGameStageManager extends MutatableGameStageManager {
     public static @Nullable ServerGameStageManager INSTANCE;
@@ -42,15 +44,13 @@ public class ServerGameStageManager extends MutatableGameStageManager {
         return QueuingGameStageManager.INSTANCE;
     }
 
-    public void sync() {
-        var stages = List.copyOf(this.getGameStages().values());
-        var packet = CommonInstances.platformPacketCreator.createSyncRegisteredGameStages(stages);
-        CommonInstances.platformPacketDistributor.sendToAllPlayers(packet);
-    }
-
-    public void sync(Player target) {
-        var stages = List.copyOf(this.getGameStages().values());
-        var packet = CommonInstances.platformPacketCreator.createSyncRegisteredGameStages(stages);
-        CommonInstances.platformPacketDistributor.sendToPlayer(target, packet);
+    public void sync(@NonNull PacketConsumer packetConsumer) {
+        packetConsumer.send(platformPacketCreator.createStatusPacket(Status.BEGIN_SYNC));
+        var gameStages = List.copyOf(this.gameStages());
+        packetConsumer.send(platformPacketCreator.createSyncRegisteredGameStages(gameStages));
+        for (var restriction : restrictions()) {
+            packetConsumer.send(restriction.createPacket());
+        }
+        packetConsumer.send(platformPacketCreator.createStatusPacket(Status.END_SYNC));
     }
 }

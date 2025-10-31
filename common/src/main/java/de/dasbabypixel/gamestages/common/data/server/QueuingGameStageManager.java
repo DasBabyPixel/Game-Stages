@@ -2,6 +2,8 @@ package de.dasbabypixel.gamestages.common.data.server;
 
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.GameStage;
+import de.dasbabypixel.gamestages.common.data.restriction.types.RestrictionEntry;
+import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +23,13 @@ public class QueuingGameStageManager extends MutatableGameStageManager {
     public void reset() {
         super.reset();
         recorded.add(AbstractGameStageManager::reset);
+    }
+
+    @Override
+    public <T extends RestrictionEntry<T>> T addRestriction(@NonNull T restriction) {
+        super.addRestriction(restriction);
+        recorded.add(c -> c.addRestriction(restriction));
+        return restriction;
     }
 
     @Override

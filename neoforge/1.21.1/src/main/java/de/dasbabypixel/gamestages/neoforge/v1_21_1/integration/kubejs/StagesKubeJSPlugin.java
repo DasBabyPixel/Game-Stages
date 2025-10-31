@@ -1,16 +1,17 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs;
 
-import de.dasbabypixel.gamestages.common.integration.kubejs.GameStagesPlugin;
-import de.dasbabypixel.gamestages.common.integration.kubejs.binding.KJSBindingRegistry;
-import de.dasbabypixel.gamestages.common.integration.kubejs.event.KJSEventGroupRegistry;
+import de.dasbabypixel.gamestages.common.data.GameStage;
+import de.dasbabypixel.gamestages.common.data.GameStageReference;
+import de.dasbabypixel.gamestages.common.data.ItemCollection;
 import de.dasbabypixel.gamestages.neoforge.integration.Mods;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.StageEvents;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.listener.KJSListeners;
 import dev.latvian.mods.kubejs.event.EventGroupRegistry;
 import dev.latvian.mods.kubejs.plugin.KubeJSPlugin;
 import dev.latvian.mods.kubejs.script.BindingRegistry;
 import dev.latvian.mods.kubejs.script.ScriptManager;
+import dev.latvian.mods.kubejs.script.ScriptType;
 
-@SuppressWarnings({"unused", "DataFlowIssue"})
 public class StagesKubeJSPlugin implements KubeJSPlugin {
     private void asserLoaded() {
         if (!Mods.KUBEJS.isLoaded()) {
@@ -27,24 +28,30 @@ public class StagesKubeJSPlugin implements KubeJSPlugin {
     @Override
     public void registerBindings(BindingRegistry bindings) {
         asserLoaded();
-        GameStagesPlugin.registerBindings((KJSBindingRegistry) (Object) bindings);
+        bindings.add("GameStage", GameStage.class);
+        bindings.add("GameStageReference", GameStageReference.class);
+        bindings.add("ItemCollection", ItemCollection.class);
     }
 
     @Override
     public void registerEvents(EventGroupRegistry registry) {
         asserLoaded();
-        GameStagesPlugin.registerEvents((KJSEventGroupRegistry) registry);
+        registry.register(StageEvents.GROUP);
     }
 
     @Override
     public void beforeScriptsLoaded(ScriptManager manager) {
         asserLoaded();
-        GameStagesPlugin.beforeScripts(KJSUtil.convert(manager.scriptType));
+        if (manager.scriptType == ScriptType.SERVER) {
+            System.out.println("Before scripts loaded");
+        }
     }
 
     @Override
     public void afterScriptsLoaded(ScriptManager manager) {
         asserLoaded();
-        GameStagesPlugin.afterScripts(KJSUtil.convert(manager.scriptType));
+        if (manager.scriptType == ScriptType.SERVER) {
+            System.out.println("After scripts loaded");
+        }
     }
 }

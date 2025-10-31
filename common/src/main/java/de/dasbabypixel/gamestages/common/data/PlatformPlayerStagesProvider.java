@@ -5,7 +5,7 @@ import de.dasbabypixel.gamestages.common.entity.Player;
 import java.util.Set;
 
 public interface PlatformPlayerStagesProvider {
-    void setStages(Player player, Set<GameStageReference> unlockedStages);
+    void setStages(Player player, Set<GameStage> unlockedStages);
 
-    Set<GameStageReference> getStages(Player player);
+    Set<GameStage> getStages(Player player);
 }

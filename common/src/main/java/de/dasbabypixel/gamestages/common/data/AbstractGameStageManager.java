@@ -1,25 +1,35 @@
 package de.dasbabypixel.gamestages.common.data;
 
+import de.dasbabypixel.gamestages.common.data.restriction.types.RestrictionEntry;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 public class AbstractGameStageManager {
-    protected final Map<GameStageReference, GameStage> gameStages = new HashMap<>();
+    protected final Set<GameStage> gameStages = new HashSet<>();
+    protected final List<RestrictionEntry<?>> restrictions = new ArrayList<>();
 
     public void add(GameStage gameStage) {
         if (!mayMutate()) throw new IllegalStateException("Cannot mutate");
-        var ref = new GameStageReference(gameStage.name());
-        if (containsKey(ref)) {
+        if (containsKey(gameStage)) {
             throw new IllegalArgumentException("Multiple GameStages have the same name");
         }
-        put0(ref, gameStage);
+        add0(gameStage);
     }
 
     public @Nullable GameStage get(String name) {
-        return get0(new GameStageReference(name));
+        var stage = new GameStage(name);
+        if (!containsKey(stage)) return null;
+        return stage;
+    }
+
+    public <T extends RestrictionEntry<T>> T addRestriction(@NonNull T restriction) {
+        this.restrictions.add(restriction);
+        return restriction;
     }
 
     public void set(List<GameStage> gameStages) {
@@ -31,24 +41,25 @@ public class AbstractGameStageManager {
         clear0();
     }
 
-    public Map<GameStageReference, GameStage> getGameStages() {
+    public Set<GameStage> gameStages() {
         return gameStages;
+    }
+
+    public List<RestrictionEntry<?>> restrictions() {
+        return restrictions;
     }
 
     protected void clear0() {
         gameStages.clear();
+        restrictions.clear();
     }
 
-    protected boolean containsKey(GameStageReference reference) {
-        return gameStages.containsKey(reference);
+    protected boolean containsKey(GameStage gameStage) {
+        return gameStages.contains(gameStage);
     }
 
-    protected void put0(GameStageReference reference, GameStage stage) {
-        gameStages.put(reference, stage);
-    }
-
-    protected GameStage get0(GameStageReference reference) {
-        return gameStages.get(reference);
+    protected void add0(GameStage stage) {
+        gameStages.add(stage);
     }
 
     protected boolean mayMutate() {
