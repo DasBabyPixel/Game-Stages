@@ -5,7 +5,7 @@ import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPre
 import de.dasbabypixel.gamestages.common.data.restriction.types.ItemRestrictionEntry;
 import org.jspecify.annotations.NonNull;
 
-public abstract class AbstractItemRestrictionEntry<T extends AbstractItemRestrictionEntry<T>> extends AbstractRestrictionEntry<T> implements ItemRestrictionEntry<T> {
+public abstract class AbstractItemRestrictionEntry<T extends AbstractItemRestrictionEntry<T, P>, P> extends AbstractRestrictionEntry<T, P> implements ItemRestrictionEntry<T, P> {
     private final @NonNull ItemCollection<?> targetCollection;
     private boolean canBeAttackedWith = false;
     private boolean canBeStoredInInventory = false;

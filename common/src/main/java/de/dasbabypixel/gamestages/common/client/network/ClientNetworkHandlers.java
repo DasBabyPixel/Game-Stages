@@ -31,10 +31,10 @@ public class ClientNetworkHandlers {
     }
 
     public static void itemRestriction(@NonNull PreparedRestrictionPredicate predicate, @NonNull ItemCollection<?> targetCollection, boolean hideTooltip, boolean renderItemName, boolean hideInJEI) {
-        
+        System.out.println("client restrictions");
     }
 
     public static void status(Status status) {
-//        System.out.println("Handle status " + status);
+        System.out.println("client status " + status);
     }
 }

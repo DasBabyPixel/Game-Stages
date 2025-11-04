@@ -1,8 +1,8 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs;
 
 import de.dasbabypixel.gamestages.common.data.GameStage;
-import de.dasbabypixel.gamestages.common.data.GameStageReference;
 import de.dasbabypixel.gamestages.common.data.ItemCollection;
+import de.dasbabypixel.gamestages.common.data.restriction.Restrictions;
 import de.dasbabypixel.gamestages.neoforge.integration.Mods;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.StageEvents;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.listener.KJSListeners;
@@ -29,8 +29,8 @@ public class StagesKubeJSPlugin implements KubeJSPlugin {
     public void registerBindings(BindingRegistry bindings) {
         asserLoaded();
         bindings.add("GameStage", GameStage.class);
-        bindings.add("GameStageReference", GameStageReference.class);
         bindings.add("ItemCollection", ItemCollection.class);
+        bindings.add("Restrictions", Restrictions.class);
     }
 
     @Override

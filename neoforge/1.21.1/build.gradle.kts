@@ -6,6 +6,10 @@ loaderVersionBase.minecraftVersionRange.addAll(listOf("1.21", "1.21.1"))
 loaderVersionNeo.neoVersion = "21.1.209"
 loaderVersionNeo.parchment("1.21.1", "2024.11.17")
 
+neoForge {
+    interfaceInjectionData.from("interfaces.json")
+}
+
 dependencies {
     gameStagesComponent(projects.common1211)
 

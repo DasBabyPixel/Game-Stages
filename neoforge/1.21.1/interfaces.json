@@ -1,0 +1,5 @@
+{
+  "net/minecraft/world/entity/player/Player": [
+    "de/dasbabypixel/gamestages/common/entity/Player"
+  ]
+}

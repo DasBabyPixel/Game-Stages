@@ -14,13 +14,13 @@ import static de.dasbabypixel.gamestages.common.v1_21_1.data.CommonCodecs.PREPAR
 import static net.minecraft.network.codec.ByteBufCodecs.BOOL;
 
 public record CommonItemRestrictionPacket(@NonNull PreparedRestrictionPredicate predicate,
-                                          @NonNull CommonItemCollection<?> targetCollection, boolean hideTooltip,
+                                          CommonItemCollection.@NonNull Direct targetCollection, boolean hideTooltip,
                                           boolean renderItemName, boolean hideInJEI) implements GameStagesPacket {
     public static final Type<CommonItemRestrictionPacket> TYPE = new Type<>(CommonVGameStageMod.location("item_restriction"));
     public static final StreamCodec<RegistryFriendlyByteBuf, CommonItemRestrictionPacket> STREAM_CODEC = StreamCodec.ofMember(CommonItemRestrictionPacket::encode, CommonItemRestrictionPacket::new);
 
     public CommonItemRestrictionPacket(RegistryFriendlyByteBuf byteBuf) {
-        this(PREPARED_RESTRICTION_PREDICATE_STREAM_CODEC.decode(byteBuf), CommonItemCollection.STREAM_CODEC.decode(byteBuf), BOOL.decode(byteBuf), BOOL.decode(byteBuf), BOOL.decode(byteBuf));
+        this(PREPARED_RESTRICTION_PREDICATE_STREAM_CODEC.decode(byteBuf), CommonItemCollection.Direct.STREAM_CODEC.decode(byteBuf), BOOL.decode(byteBuf), BOOL.decode(byteBuf), BOOL.decode(byteBuf));
     }
 
     public void encode(RegistryFriendlyByteBuf byteBuf) {

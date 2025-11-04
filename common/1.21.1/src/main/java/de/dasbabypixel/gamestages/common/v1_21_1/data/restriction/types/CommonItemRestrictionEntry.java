@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.function.Function;
 
-public abstract class CommonItemRestrictionEntry<T extends CommonItemRestrictionEntry<T>> extends AbstractItemRestrictionEntry<T> {
+public abstract class CommonItemRestrictionEntry<T extends CommonItemRestrictionEntry<T, P>, P> extends AbstractItemRestrictionEntry<T, P> {
     private @Nullable Function<ItemStack, Component> hiddenName;
     private @Nullable Function<ItemStack, Component> dropMessage;
     private @Nullable Function<ItemStack, Component> attackMessage;

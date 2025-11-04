@@ -13,7 +13,7 @@ public class KJSStagesWrapper implements Stages {
 
     public KJSStagesWrapper(Player player) {
         this.player = player;
-        this.stages = ((de.dasbabypixel.gamestages.common.entity.Player) player).getGameStages();
+        this.stages = player.getGameStages();
     }
 
     @Override

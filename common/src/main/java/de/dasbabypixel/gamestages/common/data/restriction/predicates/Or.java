@@ -1,6 +1,6 @@
 package de.dasbabypixel.gamestages.common.data.restriction.predicates;
 
-import de.dasbabypixel.gamestages.common.data.restriction.CompiledRestrictionPredicate;
+import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionPredicate;
 import de.dasbabypixel.gamestages.common.entity.Player;
@@ -15,7 +15,7 @@ public final class Or implements RestrictionPredicate {
     }
 
     @Override
-    public boolean accepts(@NonNull List<@NonNull PreparedRestrictionPredicate> dependencies) {
+    public boolean accepts(@NonNull List<? extends @NonNull PreparedRestrictionPredicate> dependencies) {
         return true;
     }
 

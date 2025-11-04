@@ -33,7 +33,7 @@ plugins {
 }
 
 include("common")
-include("fabric")
+//include("fabric")
 include("neoforge")
 include("compile-hacks")
 

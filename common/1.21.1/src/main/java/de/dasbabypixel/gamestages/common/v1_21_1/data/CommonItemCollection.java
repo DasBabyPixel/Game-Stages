@@ -2,6 +2,7 @@ package de.dasbabypixel.gamestages.common.v1_21_1.data;
 
 import de.dasbabypixel.gamestages.common.data.ItemCollection;
 import de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod;
+import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
@@ -12,9 +13,13 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
 import org.jspecify.annotations.NonNull;
 
+import java.util.stream.Stream;
+
 public sealed interface CommonItemCollection<T extends CommonItemCollection<T>> extends ItemCollection<CommonItemCollection<?>> {
-    @NonNull ResourceKey<Registry<CommonItemCollectionSerializer<?>>> REGISTRY_KEY = ResourceKey.createRegistryKey(CommonVGameStageMod.location("item_collection_serializer"));
-    @NonNull StreamCodec<RegistryFriendlyByteBuf, CommonItemCollection<?>> STREAM_CODEC = ByteBufCodecs
+    @NonNull
+    ResourceKey<Registry<CommonItemCollectionSerializer<?>>> REGISTRY_KEY = ResourceKey.createRegistryKey(CommonVGameStageMod.location("item_collection_serializer"));
+    @NonNull
+    StreamCodec<RegistryFriendlyByteBuf, CommonItemCollection<?>> STREAM_CODEC = ByteBufCodecs
             .registry(REGISTRY_KEY)
             .dispatch(CommonItemCollection::serializer, CommonItemCollectionSerializer::streamCodec);
 
@@ -33,9 +38,10 @@ public sealed interface CommonItemCollection<T extends CommonItemCollection<T>> 
         return new Union(this, other.self());
     }
 
-    @NonNull CommonItemCollectionSerializer<T> serializer();
+    @NonNull
+    CommonItemCollectionSerializer<T> serializer();
 
-    record Direct(HolderSet<Item> items) implements CommonItemCollection<Direct> {
+    record Direct(@NonNull HolderSet<@NonNull Item> items) implements CommonItemCollection<Direct> {
         public static final StreamCodec<RegistryFriendlyByteBuf, Direct> STREAM_CODEC = ByteBufCodecs
                 .holderSet(Registries.ITEM)
                 .map(Direct::new, Direct::items);
@@ -46,8 +52,8 @@ public sealed interface CommonItemCollection<T extends CommonItemCollection<T>> 
         }
     }
 
-    record Except(CommonItemCollection<?> base,
-                  CommonItemCollection<?> exclusion) implements CommonItemCollection<Except> {
+    record Except(@NonNull CommonItemCollection<?> base,
+                  @NonNull CommonItemCollection<?> exclusion) implements CommonItemCollection<Except> {
         public static final StreamCodec<RegistryFriendlyByteBuf, Except> STREAM_CODEC = StreamCodec.composite(CommonItemCollection.STREAM_CODEC, Except::base, CommonItemCollection.STREAM_CODEC, Except::exclusion, Except::new);
 
         @Override
@@ -56,7 +62,8 @@ public sealed interface CommonItemCollection<T extends CommonItemCollection<T>> 
         }
     }
 
-    record Union(CommonItemCollection<?> c1, CommonItemCollection<?> c2) implements CommonItemCollection<Union> {
+    record Union(@NonNull CommonItemCollection<?> c1,
+                 @NonNull CommonItemCollection<?> c2) implements CommonItemCollection<Union> {
         public static final StreamCodec<RegistryFriendlyByteBuf, Union> STREAM_CODEC = StreamCodec.composite(CommonItemCollection.STREAM_CODEC, Union::c1, CommonItemCollection.STREAM_CODEC, Union::c2, Union::new);
 
         @Override

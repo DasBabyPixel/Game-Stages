@@ -4,7 +4,7 @@ import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPre
 import de.dasbabypixel.gamestages.common.data.restriction.types.RestrictionEntry;
 import org.jspecify.annotations.NonNull;
 
-public abstract class AbstractRestrictionEntry<T extends AbstractRestrictionEntry<T>> implements RestrictionEntry<T> {
+public abstract class AbstractRestrictionEntry<T extends AbstractRestrictionEntry<T, P>, P> implements RestrictionEntry<T, P> {
     private final @NonNull PreparedRestrictionPredicate predicate;
     private boolean allowDuplicates = false;
 

@@ -2,6 +2,7 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.mixins;
 
 import de.dasbabypixel.gamestages.common.data.server.PlayerStages;
 import net.minecraft.world.entity.player.Player;
+import org.jspecify.annotations.NonNull;
 import org.spongepowered.asm.mixin.Implements;
 import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,7 +14,7 @@ public abstract class MCPlayerMixin {
     @Unique
     private final PlayerStages game_Stages$playerStages = new PlayerStages((de.dasbabypixel.gamestages.common.entity.Player) this);
 
-    public PlayerStages gamestages$getGameStages() {
+    public @NonNull PlayerStages gamestages$getGameStages() {
         return game_Stages$playerStages;
     }
 }

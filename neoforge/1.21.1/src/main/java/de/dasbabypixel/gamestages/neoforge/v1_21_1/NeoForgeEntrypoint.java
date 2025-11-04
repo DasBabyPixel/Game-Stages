@@ -7,12 +7,14 @@ import de.dasbabypixel.gamestages.common.entity.Player;
 import de.dasbabypixel.gamestages.common.listener.PlayerJoinListener;
 import de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonCodecs;
+import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonCodecs.PreparedRestrictionPredicateSerializer;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonCodecs.RestrictionPredicateSerializer;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonItemCollection;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonItemCollectionSerializer;
 import de.dasbabypixel.gamestages.neoforge.NeoForgeInstances;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.Attachments;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.PlatformPlayerStagesProviderImpl;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.entity.PlatformPlayerProviderImpl;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.NeoModProvider;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.network.NeoNetworkHandler;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.network.PlatformPacketDistributorImpl;
@@ -37,10 +39,14 @@ public class NeoForgeEntrypoint {
     public static final Registry<RestrictionPredicateSerializer<?>> RESTRICTION_PREDICATE_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonCodecs.RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY)
             .sync(true)
             .create();
+    public static final Registry<PreparedRestrictionPredicateSerializer<?>> PREPARED_RESTRICTION_PREDICATE_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonCodecs.PREPARED_RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY)
+            .sync(true)
+            .create();
 
     static {
         CommonInstances.platformPacketDistributor = new PlatformPacketDistributorImpl();
         CommonInstances.platformPlayerStagesProvider = new PlatformPlayerStagesProviderImpl();
+        CommonInstances.platformPlayerProvider = new PlatformPlayerProviderImpl();
 
         NeoForgeInstances.modProvider = new NeoModProvider();
 
@@ -49,11 +55,11 @@ public class NeoForgeEntrypoint {
 
     public NeoForgeEntrypoint(IEventBus modBus) {
         modBus.addListener(NeoNetworkHandler::register);
+        modBus.addListener(this::handleRegistries);
 
         NeoForge.EVENT_BUS.addListener(this::handleServerAboutToStart);
         NeoForge.EVENT_BUS.addListener(this::handleServerStopped);
         NeoForge.EVENT_BUS.addListener(this::handlePlayerJoin);
-        NeoForge.EVENT_BUS.addListener(this::handleRegistries);
 
         Attachments.ATTACHMENT_TYPES.register(modBus);
     }
@@ -61,11 +67,12 @@ public class NeoForgeEntrypoint {
     private void handleRegistries(NewRegistryEvent event) {
         event.register(ITEM_COLLECTION_SERIALIZER_REGISTRY);
         event.register(RESTRICTION_PREDICATE_SERIALIZER_REGISTRY);
+        event.register(PREPARED_RESTRICTION_PREDICATE_SERIALIZER_REGISTRY);
     }
 
     private void handlePlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         var player = event.getEntity();
-        PlayerJoinListener.handleJoin((Player) player);
+        PlayerJoinListener.handleJoin(player);
     }
 
     private void handleServerAboutToStart(ServerAboutToStartEvent event) {
