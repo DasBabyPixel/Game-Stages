@@ -4,14 +4,14 @@ import de.dasbabypixel.gamestages.common.data.restriction.types.RestrictionEntry
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class AbstractGameStageManager {
     protected final Set<GameStage> gameStages = new HashSet<>();
-    protected final List<RestrictionEntry<?>> restrictions = new ArrayList<>();
+    protected final List<RestrictionEntry<?, ?>> restrictions = new ArrayList<>();
+    private final Map<Attribute<?>, Object> attributeMap = new HashMap<>();
 
     public void add(GameStage gameStage) {
         if (!mayMutate()) throw new IllegalStateException("Cannot mutate");
@@ -27,7 +27,12 @@ public class AbstractGameStageManager {
         return stage;
     }
 
-    public <T extends RestrictionEntry<T>> T addRestriction(@NonNull T restriction) {
+    @SuppressWarnings("unchecked")
+    public <T> T get(Attribute<? extends T> attribute) {
+        return (T) attributeMap.computeIfAbsent(attribute, a -> a.defaultValue().apply(this));
+    }
+
+    public <T extends RestrictionEntry<T, ?>> T addRestriction(@NonNull T restriction) {
         this.restrictions.add(restriction);
         return restriction;
     }
@@ -45,13 +50,14 @@ public class AbstractGameStageManager {
         return gameStages;
     }
 
-    public List<RestrictionEntry<?>> restrictions() {
+    public List<RestrictionEntry<?, ?>> restrictions() {
         return restrictions;
     }
 
     protected void clear0() {
         gameStages.clear();
         restrictions.clear();
+        attributeMap.clear();
     }
 
     protected boolean containsKey(GameStage gameStage) {
@@ -64,5 +70,11 @@ public class AbstractGameStageManager {
 
     protected boolean mayMutate() {
         return true;
+    }
+
+    public record Attribute<T>(Function<@NonNull AbstractGameStageManager, ? extends @NonNull T> defaultValue) {
+        public Attribute(Supplier<? extends @NonNull T> defaultValue) {
+            this(ignore -> defaultValue.get());
+        }
     }
 }

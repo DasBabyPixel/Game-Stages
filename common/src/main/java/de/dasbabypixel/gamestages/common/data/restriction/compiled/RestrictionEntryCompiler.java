@@ -1,20 +1,25 @@
 package de.dasbabypixel.gamestages.common.data.restriction.compiled;
 
+import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.restriction.types.RestrictionEntry;
-import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
 import de.dasbabypixel.gamestages.common.entity.Player;
 import org.jspecify.annotations.NonNull;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class RestrictionEntryCompiler {
-    public static final ServerGameStageManager.Attribute<RestrictionEntryCompiler> ATTRIBUTE = new ServerGameStageManager.Attribute<>(RestrictionEntryCompiler::new);
-    private final ServerGameStageManager instance;
+    public static final AbstractGameStageManager.Attribute<RestrictionEntryCompiler> ATTRIBUTE = new AbstractGameStageManager.Attribute<>(RestrictionEntryCompiler::new);
+    private final AbstractGameStageManager instance;
     private final Map<RestrictionEntry<?, ?>, Object> preCompiledCache = new HashMap<>();
 
-    private RestrictionEntryCompiler(ServerGameStageManager instance) {
+    private RestrictionEntryCompiler(AbstractGameStageManager instance) {
         this.instance = instance;
+    }
+
+    public AbstractGameStageManager instance() {
+        return instance;
     }
 
     public void precompile(@NonNull RestrictionEntry<?, ?> entry) {
@@ -24,7 +29,7 @@ public class RestrictionEntryCompiler {
 
     @SuppressWarnings("unchecked")
     public @NonNull CompiledRestrictionEntry compile(@NonNull Player player, @NonNull RestrictionEntry<?, ?> entry, @NonNull CompiledRestrictionPredicate predicate) {
-        var preCompiled = preCompiledCache.get(entry);
+        var preCompiled = Objects.requireNonNull(preCompiledCache.get(entry));
         return ((RestrictionEntry<?, Object>) entry).compile(instance, preCompiled, predicate);
     }
 }

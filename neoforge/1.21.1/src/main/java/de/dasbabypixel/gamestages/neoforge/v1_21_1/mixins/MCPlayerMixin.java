@@ -1,6 +1,6 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.mixins;
 
-import de.dasbabypixel.gamestages.common.data.server.PlayerStages;
+import de.dasbabypixel.gamestages.common.data.PlayerStages;
 import net.minecraft.world.entity.player.Player;
 import org.jspecify.annotations.NonNull;
 import org.spongepowered.asm.mixin.Implements;

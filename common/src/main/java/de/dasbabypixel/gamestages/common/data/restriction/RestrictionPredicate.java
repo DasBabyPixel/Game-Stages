@@ -36,6 +36,9 @@ public interface RestrictionPredicate {
     String toString();
 
     default void append(@NonNull StringBuilder builder, @NonNull List<? extends @NonNull PreparedRestrictionPredicate> dependencies) {
+        if (dependencies.isEmpty()) {
+            builder.append(this);
+        }
         for (var i = 0; i < dependencies.size(); i++) {
             var dependency = dependencies.get(i);
             builder.append('(').append(dependency).append(')');

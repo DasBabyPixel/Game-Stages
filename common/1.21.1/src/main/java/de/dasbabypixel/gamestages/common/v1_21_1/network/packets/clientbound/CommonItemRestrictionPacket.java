@@ -25,7 +25,7 @@ public record CommonItemRestrictionPacket(@NonNull PreparedRestrictionPredicate 
 
     public void encode(RegistryFriendlyByteBuf byteBuf) {
         PREPARED_RESTRICTION_PREDICATE_STREAM_CODEC.encode(byteBuf, predicate);
-        CommonItemCollection.STREAM_CODEC.encode(byteBuf, targetCollection);
+        CommonItemCollection.Direct.STREAM_CODEC.encode(byteBuf, targetCollection);
         BOOL.encode(byteBuf, hideTooltip);
         BOOL.encode(byteBuf, renderItemName);
         BOOL.encode(byteBuf, hideInJEI);
@@ -33,6 +33,7 @@ public record CommonItemRestrictionPacket(@NonNull PreparedRestrictionPredicate 
 
     @Override
     public void handle() {
+        CommonVGameStageMod.platformPacketHandler.handle(this);
         ClientNetworkHandlers.itemRestriction(predicate, targetCollection, hideTooltip, renderItemName, hideInJEI);
     }
 

@@ -13,12 +13,16 @@ import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import org.jspecify.annotations.NonNull;
+
+import java.util.Objects;
 
 public class KJSListeners {
     public static void register() {
         NeoForge.EVENT_BUS.addListener(KJSListeners::handleStageCreation);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, KJSListeners::handleAddReloadListener);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOW, KJSListeners::handlePlayerJoin);
     }
 
     private static void handleAddReloadListener(AddReloadListenerEvent event) {
@@ -26,16 +30,19 @@ public class KJSListeners {
         event.addListener((ResourceManagerReloadListener) resourceManager -> {
             var scriptManager = serverResources.kjs$getServerScriptManager();
             var registries = scriptManager.getRegistries();
+            var instance = ServerGameStageManager.instance();
+            instance.allowMutation();
+            instance.reset();
+            StageEvents.REGISTER.post(ScriptType.SERVER, new RegisterEventJS(registries, instance));
+            instance.disallowMutation();
             if (ServerGameStageManager.INSTANCE != null) {
-                ServerGameStageManager.INSTANCE.allowMutation();
-            }
-            StageEvents.REGISTER.post(ScriptType.SERVER, new RegisterEventJS(registries, ServerGameStageManager.instance()));
-            if (ServerGameStageManager.INSTANCE != null) {
-                ServerGameStageManager.INSTANCE.disallowMutation();
-
                 pushUpdate(ServerGameStageManager.INSTANCE);
             }
         });
+    }
+
+    private static void handlePlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
+        KJSListeners.pushUpdate(Objects.requireNonNull(ServerGameStageManager.INSTANCE));
     }
 
     private static void pushUpdate(@NonNull ServerGameStageManager instance) {
@@ -48,6 +55,7 @@ public class KJSListeners {
                 .allPlayers()
                 .forEach(p -> p.getGameStages().recompileAll(restrictionEntryCompiler));
         instance.sync(CommonInstances.platformPacketDistributor::sendToAllPlayers);
+        CommonInstances.platformPlayerProvider.allPlayers().forEach(p -> p.getGameStages().fullSync());
     }
 
     private static void handleStageCreation(StageCreationEvent event) {

@@ -1,8 +1,7 @@
 package de.dasbabypixel.gamestages.common.v1_21_1.data.restriction.compiled;
 
+import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.ItemCollection;
-import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
-import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager.Attribute;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonItemCollection;
 import net.minecraft.core.HolderSet;
 
@@ -11,7 +10,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 public class ItemCollectionCompiler {
-    public static final Attribute<ItemCollectionCompiler> ATTRIBUTE = new Attribute<>(ItemCollectionCompiler::new);
+    public static final AbstractGameStageManager.Attribute<ItemCollectionCompiler> ATTRIBUTE = new AbstractGameStageManager.Attribute<>(ItemCollectionCompiler::new);
     private final Map<CommonItemCollection<?>, CommonItemCollection.Direct> cache = new HashMap<>();
 
     private ItemCollectionCompiler() {

@@ -55,5 +55,6 @@ final class CachedCompiledRestrictionPredicate implements CompiledRestrictionPre
             test();
             cachedOldValue = false;
         }
+        test();
     }
 }

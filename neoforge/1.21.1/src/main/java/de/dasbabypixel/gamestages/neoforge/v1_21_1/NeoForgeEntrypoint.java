@@ -3,7 +3,6 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1;
 import de.dasbabypixel.gamestages.common.BuildConstants;
 import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
-import de.dasbabypixel.gamestages.common.entity.Player;
 import de.dasbabypixel.gamestages.common.listener.PlayerJoinListener;
 import de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonCodecs;
@@ -17,6 +16,7 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.PlatformPlayerStagesProv
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.entity.PlatformPlayerProviderImpl;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.NeoModProvider;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.network.NeoNetworkHandler;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.network.NeoPlatformPacketHandler;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.network.PlatformPacketDistributorImpl;
 import net.minecraft.core.Registry;
 import net.neoforged.bus.api.IEventBus;
@@ -26,6 +26,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
+import net.neoforged.neoforge.registries.RegisterEvent;
 import net.neoforged.neoforge.registries.RegistryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,12 +51,15 @@ public class NeoForgeEntrypoint {
 
         NeoForgeInstances.modProvider = new NeoModProvider();
 
+        CommonVGameStageMod.platformPacketHandler = new NeoPlatformPacketHandler();
+
         CommonVGameStageMod.init();
     }
 
     public NeoForgeEntrypoint(IEventBus modBus) {
         modBus.addListener(NeoNetworkHandler::register);
         modBus.addListener(this::handleRegistries);
+        modBus.addListener(this::handleRegister);
 
         NeoForge.EVENT_BUS.addListener(this::handleServerAboutToStart);
         NeoForge.EVENT_BUS.addListener(this::handleServerStopped);
@@ -68,6 +72,23 @@ public class NeoForgeEntrypoint {
         event.register(ITEM_COLLECTION_SERIALIZER_REGISTRY);
         event.register(RESTRICTION_PREDICATE_SERIALIZER_REGISTRY);
         event.register(PREPARED_RESTRICTION_PREDICATE_SERIALIZER_REGISTRY);
+    }
+
+    private void handleRegister(RegisterEvent event) {
+        event.register(CommonItemCollection.REGISTRY_KEY, registry -> {
+            registry.register(CommonVGameStageMod.location("direct"), CommonItemCollectionSerializer.DIRECT);
+            registry.register(CommonVGameStageMod.location("except"), CommonItemCollectionSerializer.EXCEPT);
+            registry.register(CommonVGameStageMod.location("union"), CommonItemCollectionSerializer.UNION);
+        });
+        event.register(CommonCodecs.RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY, registry -> {
+            registry.register(CommonVGameStageMod.location("game_stage"), RestrictionPredicateSerializer.GAME_STAGE);
+            registry.register(CommonVGameStageMod.location("and"), RestrictionPredicateSerializer.AND);
+            registry.register(CommonVGameStageMod.location("or"), RestrictionPredicateSerializer.OR);
+        });
+        event.register(CommonCodecs.PREPARED_RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY, registry -> {
+            registry.register(CommonVGameStageMod.location("composite"), PreparedRestrictionPredicateSerializer.COMPOSITE);
+            registry.register(CommonVGameStageMod.location("game_stage"), PreparedRestrictionPredicateSerializer.GAME_STAGE);
+        });
     }
 
     private void handlePlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {

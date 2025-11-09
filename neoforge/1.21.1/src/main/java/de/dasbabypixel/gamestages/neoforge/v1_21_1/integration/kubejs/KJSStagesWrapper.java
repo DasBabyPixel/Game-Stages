@@ -1,7 +1,7 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs;
 
 import de.dasbabypixel.gamestages.common.data.GameStage;
-import de.dasbabypixel.gamestages.common.data.server.PlayerStages;
+import de.dasbabypixel.gamestages.common.data.PlayerStages;
 import dev.latvian.mods.kubejs.stages.Stages;
 import net.minecraft.world.entity.player.Player;
 

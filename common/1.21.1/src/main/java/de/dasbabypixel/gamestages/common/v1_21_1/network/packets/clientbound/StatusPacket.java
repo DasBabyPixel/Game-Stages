@@ -1,10 +1,14 @@
 package de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound;
 
+import de.dasbabypixel.gamestages.common.client.ClientGameStageManager;
 import de.dasbabypixel.gamestages.common.client.network.ClientNetworkHandlers;
+import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryCompiler;
+import de.dasbabypixel.gamestages.common.entity.Player;
 import de.dasbabypixel.gamestages.common.network.Status;
 import de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.GameStagesPacket;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -22,6 +26,17 @@ public record StatusPacket(Status status) implements GameStagesPacket {
     @Override
     public void handle() {
         ClientNetworkHandlers.status(status);
+        switch (status) {
+            case END_SYNC -> {
+                var instance = ClientGameStageManager.INSTANCE;
+                var restrictionEntryCompiler = instance.get(RestrictionEntryCompiler.ATTRIBUTE);
+                for (var restriction : instance.restrictions()) {
+                    restrictionEntryCompiler.precompile(restriction);
+                }
+                var player = (Player) Minecraft.getInstance().player;
+                player.getGameStages().recompileAll(restrictionEntryCompiler);
+            }
+        }
     }
 
     @Override

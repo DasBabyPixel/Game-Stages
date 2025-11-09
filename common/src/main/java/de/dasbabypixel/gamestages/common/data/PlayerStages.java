@@ -1,7 +1,6 @@
-package de.dasbabypixel.gamestages.common.data.server;
+package de.dasbabypixel.gamestages.common.data;
 
 import de.dasbabypixel.gamestages.common.CommonInstances;
-import de.dasbabypixel.gamestages.common.data.GameStage;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryCompiler;
@@ -24,7 +23,7 @@ public class PlayerStages {
     }
 
     public void recompileAll(@NonNull RestrictionEntryCompiler restrictionEntryCompiler) {
-        var instance = Objects.requireNonNull(ServerGameStageManager.INSTANCE);
+        var instance = restrictionEntryCompiler.instance();
         compiledGameStages.clear();
         compiledRestrictionEntryMap.clear();
         var compiler = new RestrictionPredicateCompiler(player);
@@ -77,6 +76,25 @@ public class PlayerStages {
         CommonInstances.platformPlayerStagesProvider.setStages(player, unlockedStages);
         fullSync();
         return true;
+    }
+
+    public void syncUnlockedStages(List<GameStage> gameStages) {
+        var updated = new HashSet<GameStage>();
+        var keep = Set.copyOf(gameStages);
+        var it = unlockedStages.iterator();
+        while (it.hasNext()) {
+            var stage = it.next();
+            if (keep.contains(stage)) continue;
+            it.remove();
+            updated.add(stage);
+        }
+        for (var stage : gameStages) {
+            if (unlockedStages.add(stage)) {
+                updated.add(stage);
+            }
+        }
+        updated.forEach(this::update);
+        compiledGameStages.values().forEach(CompiledRestrictionPredicate::test);
     }
 
     public void fullSync() {
