@@ -1,12 +1,12 @@
 package de.dasbabypixel.gamestages.common.data.restriction.impl;
 
-import de.dasbabypixel.gamestages.common.data.ItemCollection;
+import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.types.ItemRestrictionEntry;
 import org.jspecify.annotations.NonNull;
 
 public abstract class AbstractItemRestrictionEntry<T extends AbstractItemRestrictionEntry<T, P>, P> extends AbstractRestrictionEntry<T, P> implements ItemRestrictionEntry<T, P> {
-    private final @NonNull ItemCollection<?> targetCollection;
+    private final @NonNull GameContent targetItems;
     private boolean canBeAttackedWith = false;
     private boolean canBeStoredInInventory = false;
     private boolean canBeStoredInContainers = false;
@@ -21,14 +21,14 @@ public abstract class AbstractItemRestrictionEntry<T extends AbstractItemRestric
     private boolean canInteractWithBlock = false;
     private boolean canBeDugWith = false;
 
-    public AbstractItemRestrictionEntry(@NonNull PreparedRestrictionPredicate predicate, @NonNull ItemCollection<?> targetCollection) {
+    public AbstractItemRestrictionEntry(@NonNull PreparedRestrictionPredicate predicate, @NonNull GameContent targetItems) {
         super(predicate);
-        this.targetCollection = targetCollection;
+        this.targetItems = targetItems;
     }
 
     @Override
-    public @NonNull ItemCollection<?> targetCollection() {
-        return targetCollection;
+    public @NonNull GameContent targetItems() {
+        return targetItems;
     }
 
     public boolean canBeAttackedWith() {

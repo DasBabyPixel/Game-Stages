@@ -2,7 +2,7 @@ package de.dasbabypixel.gamestages.common.data.server;
 
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 
-public class MutatableGameStageManager extends AbstractGameStageManager {
+public abstract class MutatableGameStageManager extends AbstractGameStageManager {
     private boolean allowMutation = false;
 
     @Override

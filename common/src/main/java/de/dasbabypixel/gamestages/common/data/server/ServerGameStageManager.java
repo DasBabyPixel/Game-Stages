@@ -5,14 +5,20 @@ import de.dasbabypixel.gamestages.common.network.Status;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 import static de.dasbabypixel.gamestages.common.CommonInstances.platformPacketCreator;
 
 public class ServerGameStageManager extends MutatableGameStageManager {
+    public static final List<Addon> ADDONS = new ArrayList<>();
     public static @Nullable ServerGameStageManager INSTANCE;
     private static boolean queuing = false;
+    private final List<Addon> addons = List.copyOf(ADDONS);
+
+    private ServerGameStageManager() {
+    }
 
     public static void stop() {
         Objects.requireNonNull(INSTANCE).disallowMutation();
@@ -52,5 +58,10 @@ public class ServerGameStageManager extends MutatableGameStageManager {
             packetConsumer.send(restriction.createPacket(this));
         }
         packetConsumer.send(platformPacketCreator.createStatusPacket(Status.END_SYNC));
+    }
+
+    @Override
+    public @NonNull List<@NonNull Addon> addons() {
+        return addons;
     }
 }

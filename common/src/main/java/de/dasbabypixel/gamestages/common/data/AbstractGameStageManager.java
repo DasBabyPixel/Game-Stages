@@ -1,5 +1,6 @@
 package de.dasbabypixel.gamestages.common.data;
 
+import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.types.RestrictionEntry;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -8,10 +9,12 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class AbstractGameStageManager {
+public abstract class AbstractGameStageManager {
     protected final Set<GameStage> gameStages = new HashSet<>();
     protected final List<RestrictionEntry<?, ?>> restrictions = new ArrayList<>();
     private final Map<Attribute<?>, Object> attributeMap = new HashMap<>();
+
+    public abstract @NonNull List<@NonNull Addon> addons();
 
     public void add(GameStage gameStage) {
         if (!mayMutate()) throw new IllegalStateException("Cannot mutate");
@@ -70,6 +73,14 @@ public class AbstractGameStageManager {
 
     protected boolean mayMutate() {
         return true;
+    }
+
+    public interface Addon {
+        void postCompile(@NonNull CompiledRestrictionEntry restrictionEntry);
+
+        void postCompileAll(@NonNull AbstractGameStageManager instance, @NonNull PlayerStages stages);
+
+        void clientPostSyncUnlockedStages(PlayerStages playerStages);
     }
 
     public record Attribute<T>(Function<@NonNull AbstractGameStageManager, ? extends @NonNull T> defaultValue) {

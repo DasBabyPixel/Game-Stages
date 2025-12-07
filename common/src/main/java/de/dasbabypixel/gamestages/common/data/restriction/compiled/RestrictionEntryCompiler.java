@@ -2,7 +2,6 @@ package de.dasbabypixel.gamestages.common.data.restriction.compiled;
 
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.restriction.types.RestrictionEntry;
-import de.dasbabypixel.gamestages.common.entity.Player;
 import org.jspecify.annotations.NonNull;
 
 import java.util.HashMap;
@@ -28,7 +27,7 @@ public class RestrictionEntryCompiler {
     }
 
     @SuppressWarnings("unchecked")
-    public @NonNull CompiledRestrictionEntry compile(@NonNull Player player, @NonNull RestrictionEntry<?, ?> entry, @NonNull CompiledRestrictionPredicate predicate) {
+    public @NonNull CompiledRestrictionEntry compile(@NonNull RestrictionEntry<?, ?> entry, @NonNull CompiledRestrictionPredicate predicate) {
         var preCompiled = Objects.requireNonNull(preCompiledCache.get(entry));
         return ((RestrictionEntry<?, Object>) entry).compile(instance, preCompiled, predicate);
     }

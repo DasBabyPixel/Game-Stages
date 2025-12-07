@@ -1,5 +1,7 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.jei;
 
+import de.dasbabypixel.gamestages.common.CommonInstances;
+import de.dasbabypixel.gamestages.common.client.ClientGameStageManager;
 import de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
@@ -21,17 +23,8 @@ public class StagesJEIPlugin implements IModPlugin {
     private static final Map<Item, List<ItemStack>> ITEM_CACHE = new HashMap<>();
     private static IJeiRuntime runtime;
 
-    private static Map<Item, List<ItemStack>> getItemCache() {
-        if (ITEM_CACHE.isEmpty()) populateCache();
-        return ITEM_CACHE;
-    }
-
-    private static void populateCache() {
-        var ingredientManager = runtime.getIngredientManager();
-        for (var ingredient : ingredientManager.getAllIngredients(VanillaTypes.ITEM_STACK)) {
-            ITEM_CACHE.computeIfAbsent(ingredient.getItem(), unused -> new ArrayList<>(1)).add(ingredient);
-        }
-        ITEM_CACHE.entrySet().forEach(e -> e.setValue(List.copyOf(e.getValue())));
+    static {
+        ClientGameStageManager.ADDONS.add(JEIAddon.ADDON);
     }
 
     public static void show(HolderSet<Item> items) {
@@ -60,13 +53,42 @@ public class StagesJEIPlugin implements IModPlugin {
                         .toList());
     }
 
+    private static void clearCache() {
+        ITEM_CACHE.clear();
+        CACHE.clear();
+    }
+
+    private static Map<Item, List<ItemStack>> getItemCache() {
+        if (ITEM_CACHE.isEmpty()) populateCache();
+        return ITEM_CACHE;
+    }
+
+    private static void populateCache() {
+        var ingredientManager = runtime.getIngredientManager();
+        for (var ingredient : ingredientManager.getAllIngredients(VanillaTypes.ITEM_STACK)) {
+            ITEM_CACHE.computeIfAbsent(ingredient.getItem(), unused -> new ArrayList<>(1)).add(ingredient);
+        }
+        ITEM_CACHE.entrySet().forEach(e -> e.setValue(List.copyOf(e.getValue())));
+    }
+
     @Override
     public void onRuntimeAvailable(@NonNull IJeiRuntime jeiRuntime) {
+        System.out.println("new runtime available");
+        System.out.println("new runtime available");
+        System.out.println("new runtime available");
+        System.out.println("new runtime available");
         runtime = jeiRuntime;
+        var player = CommonInstances.platformPlayerProvider.clientSelfPlayer();
+        if (player != null) {
+            for (var compiled : player.getGameStages().compiledRestrictionEntryMap().values()) {
+                JEIAddon.ADDON.postCompile(compiled);
+            }
+        }
     }
 
     @Override
     public void onRuntimeUnavailable() {
+        clearCache();
         runtime = null;
     }
 

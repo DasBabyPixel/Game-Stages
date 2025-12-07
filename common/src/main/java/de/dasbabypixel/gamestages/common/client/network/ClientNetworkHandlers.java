@@ -15,13 +15,13 @@ public class ClientNetworkHandlers {
      * This does not give any stages to the player
      */
     public static void syncRegisteredGameStages(List<GameStage> gameStages) {
-        ClientGameStageManager.INSTANCE.set(gameStages);
+        ClientGameStageManager.instance().set(gameStages);
     }
 
     public static void syncUnlockedGameStages(List<GameStage> gameStages) {
     }
 
-    public static void itemRestriction(@NonNull PreparedRestrictionPredicate predicate, @NonNull ItemCollection<?> targetCollection, boolean hideTooltip, boolean renderItemName, boolean hideInJEI) {
+    public static void itemRestriction(@NonNull PreparedRestrictionPredicate predicate, @NonNull ItemCollection targetCollection, boolean hideTooltip, boolean renderItemName, boolean hideInJEI) {
     }
 
     public static void status(Status status) {

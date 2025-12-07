@@ -9,7 +9,9 @@ public class NeoPlatformPacketHandler implements PlatformPacketHandler {
     @Override
     public void handle(CommonItemRestrictionPacket packet) {
         System.out.println("Add client restriciton");
-        ClientGameStageManager.INSTANCE.addRestriction(new NeoItemRestrictionEntry(packet.predicate(), packet.targetCollection()));
+        ClientGameStageManager
+                .instance()
+                .addRestriction(new NeoItemRestrictionEntry(packet.predicate(), packet.targetCollection()));
         System.out.println("done add cleitn restriction");
     }
 }

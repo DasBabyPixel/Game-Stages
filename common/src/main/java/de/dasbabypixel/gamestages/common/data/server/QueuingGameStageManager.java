@@ -14,6 +14,11 @@ public class QueuingGameStageManager extends MutatableGameStageManager {
     private final List<Consumer<MutatableGameStageManager>> recorded = new ArrayList<>();
 
     @Override
+    public @NonNull List<@NonNull Addon> addons() {
+        return List.of();
+    }
+
+    @Override
     public void add(GameStage gameStage) {
         super.add(gameStage);
         recorded.add(c -> c.add(gameStage));

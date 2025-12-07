@@ -1,6 +1,6 @@
 package de.dasbabypixel.gamestages.common.v1_21_1.data.restriction.types;
 
-import de.dasbabypixel.gamestages.common.data.ItemCollection;
+import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.impl.AbstractItemRestrictionEntry;
 import net.minecraft.network.chat.Component;
@@ -21,8 +21,8 @@ public abstract class CommonItemRestrictionEntry<T extends CommonItemRestriction
     private @Nullable Function<ItemStack, Component> jadeItemMessage;
     private @Nullable Function<ItemStack, Component> jadeBlockMessage;
 
-    public CommonItemRestrictionEntry(@NonNull PreparedRestrictionPredicate predicate, @NonNull ItemCollection<?> targetCollection) {
-        super(predicate, targetCollection);
+    public CommonItemRestrictionEntry(@NonNull PreparedRestrictionPredicate predicate, @NonNull GameContent targetItems) {
+        super(predicate, targetItems);
     }
 
     public @Nullable Function<ItemStack, Component> hiddenName() {

@@ -5,11 +5,9 @@ import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
 import de.dasbabypixel.gamestages.common.listener.PlayerJoinListener;
 import de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod;
-import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonCodecs;
+import de.dasbabypixel.gamestages.common.v1_21_1.data.*;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonCodecs.PreparedRestrictionPredicateSerializer;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonCodecs.RestrictionPredicateSerializer;
-import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonItemCollection;
-import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonItemCollectionSerializer;
 import de.dasbabypixel.gamestages.neoforge.NeoForgeInstances;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.Attachments;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.PlatformPlayerStagesProviderImpl;
@@ -31,10 +29,15 @@ import net.neoforged.neoforge.registries.RegistryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod.location;
+
 @Mod(BuildConstants.MOD_ID)
 public class NeoForgeEntrypoint {
     public static final Logger LOGGER = LoggerFactory.getLogger(NeoForgeEntrypoint.class);
-    public static final Registry<CommonItemCollectionSerializer<?>> ITEM_COLLECTION_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonItemCollection.REGISTRY_KEY)
+    public static final Registry<CommonGameContentSerializer<?>> GAME_CONTENT_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonGameContent.REGISTRY_KEY)
+            .sync(true)
+            .create();
+    public static final Registry<GameContentTypeSerializer<?>> GAME_CONTENT_TYPE_SERIALIZER_REGISTRY = new RegistryBuilder<>(GameContentTypeSerializer.REGISTRY_KEY)
             .sync(true)
             .create();
     public static final Registry<RestrictionPredicateSerializer<?>> RESTRICTION_PREDICATE_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonCodecs.RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY)
@@ -69,25 +72,31 @@ public class NeoForgeEntrypoint {
     }
 
     private void handleRegistries(NewRegistryEvent event) {
-        event.register(ITEM_COLLECTION_SERIALIZER_REGISTRY);
+        event.register(GAME_CONTENT_SERIALIZER_REGISTRY);
         event.register(RESTRICTION_PREDICATE_SERIALIZER_REGISTRY);
         event.register(PREPARED_RESTRICTION_PREDICATE_SERIALIZER_REGISTRY);
+        event.register(GAME_CONTENT_TYPE_SERIALIZER_REGISTRY);
     }
 
     private void handleRegister(RegisterEvent event) {
         event.register(CommonItemCollection.REGISTRY_KEY, registry -> {
-            registry.register(CommonVGameStageMod.location("direct"), CommonItemCollectionSerializer.DIRECT);
-            registry.register(CommonVGameStageMod.location("except"), CommonItemCollectionSerializer.EXCEPT);
-            registry.register(CommonVGameStageMod.location("union"), CommonItemCollectionSerializer.UNION);
+            registry.register(location("item_collection"), CommonGameContentSerializer.ITEM_COLLECTION);
+            registry.register(location("filter_type"), CommonGameContentSerializer.FILTER_TYPE);
+            registry.register(location("except"), CommonGameContentSerializer.EXCEPT);
+            registry.register(location("only"), CommonGameContentSerializer.ONLY);
+            registry.register(location("union"), CommonGameContentSerializer.UNION);
         });
         event.register(CommonCodecs.RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY, registry -> {
-            registry.register(CommonVGameStageMod.location("game_stage"), RestrictionPredicateSerializer.GAME_STAGE);
-            registry.register(CommonVGameStageMod.location("and"), RestrictionPredicateSerializer.AND);
-            registry.register(CommonVGameStageMod.location("or"), RestrictionPredicateSerializer.OR);
+            registry.register(location("game_stage"), RestrictionPredicateSerializer.GAME_STAGE);
+            registry.register(location("and"), RestrictionPredicateSerializer.AND);
+            registry.register(location("or"), RestrictionPredicateSerializer.OR);
         });
         event.register(CommonCodecs.PREPARED_RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY, registry -> {
-            registry.register(CommonVGameStageMod.location("composite"), PreparedRestrictionPredicateSerializer.COMPOSITE);
-            registry.register(CommonVGameStageMod.location("game_stage"), PreparedRestrictionPredicateSerializer.GAME_STAGE);
+            registry.register(location("composite"), PreparedRestrictionPredicateSerializer.COMPOSITE);
+            registry.register(location("game_stage"), PreparedRestrictionPredicateSerializer.GAME_STAGE);
+        });
+        event.register(GameContentTypeSerializer.REGISTRY_KEY, registry -> {
+            registry.register(location("item"), GameContentTypeSerializer.ITEM);
         });
     }
 

@@ -15,6 +15,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.util.ByIdMap;
 import org.jspecify.annotations.NonNull;
 
+import java.util.Objects;
 import java.util.function.IntFunction;
 
 public record StatusPacket(Status status) implements GameStagesPacket {
@@ -28,12 +29,12 @@ public record StatusPacket(Status status) implements GameStagesPacket {
         ClientNetworkHandlers.status(status);
         switch (status) {
             case END_SYNC -> {
-                var instance = ClientGameStageManager.INSTANCE;
+                var instance = ClientGameStageManager.instance();
                 var restrictionEntryCompiler = instance.get(RestrictionEntryCompiler.ATTRIBUTE);
                 for (var restriction : instance.restrictions()) {
                     restrictionEntryCompiler.precompile(restriction);
                 }
-                var player = (Player) Minecraft.getInstance().player;
+                var player = (Player) Objects.requireNonNull(Minecraft.getInstance().player);
                 player.getGameStages().recompileAll(restrictionEntryCompiler);
             }
         }
@@ -43,5 +44,4 @@ public record StatusPacket(Status status) implements GameStagesPacket {
     public @NonNull Type<? extends CustomPacketPayload> type() {
         return TYPE;
     }
-
 }

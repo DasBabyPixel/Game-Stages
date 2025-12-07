@@ -1,6 +1,7 @@
 package de.dasbabypixel.gamestages.common.data;
 
 import de.dasbabypixel.gamestages.common.CommonInstances;
+import de.dasbabypixel.gamestages.common.client.ClientGameStageManager;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryCompiler;
@@ -12,10 +13,10 @@ import org.jspecify.annotations.NonNull;
 import java.util.*;
 
 public class PlayerStages {
+    private final @NonNull Map<@NonNull RestrictionEntry<?, ?>, CompiledRestrictionEntry> compiledRestrictionEntryMap = new HashMap<>();
+    private final @NonNull Map<@NonNull GameStage, @NonNull CompiledRestrictionPredicate> compiledGameStages = new HashMap<>();
     private final @NonNull Player player;
     private final @NonNull Set<@NonNull GameStage> unlockedStages = new HashSet<>();
-    private final @NonNull Map<@NonNull GameStage, @NonNull CompiledRestrictionPredicate> compiledGameStages = new HashMap<>();
-    private final @NonNull Map<@NonNull RestrictionEntry<?, ?>, CompiledRestrictionEntry> compiledRestrictionEntryMap = new HashMap<>();
 
     public PlayerStages(@NonNull Player player) {
         this.player = player;
@@ -35,9 +36,17 @@ public class PlayerStages {
             var predicate = restriction.predicate();
             // Compiling also links dependencies
             var compiledPredicate = compiler.compile(predicate);
-            var compiledEntry = restrictionEntryCompiler.compile(player, restriction, compiledPredicate);
+            var compiledEntry = restrictionEntryCompiler.compile(restriction, compiledPredicate);
+
+            for (var addon : instance.addons()) {
+                addon.postCompile(compiledEntry);
+            }
 
             compiledRestrictionEntryMap.put(restriction, compiledEntry);
+        }
+
+        for (var addon : instance.addons()) {
+            addon.postCompileAll(instance, this);
         }
     }
 
@@ -95,6 +104,17 @@ public class PlayerStages {
         }
         updated.forEach(this::update);
         compiledGameStages.values().forEach(CompiledRestrictionPredicate::test);
+        for (var addon : ClientGameStageManager.instance().addons()) {
+            addon.clientPostSyncUnlockedStages(this);
+        }
+    }
+
+    public @NonNull Map<@NonNull GameStage, @NonNull CompiledRestrictionPredicate> compiledGameStages() {
+        return compiledGameStages;
+    }
+
+    public @NonNull Map<@NonNull RestrictionEntry<?, ?>, CompiledRestrictionEntry> compiledRestrictionEntryMap() {
+        return compiledRestrictionEntryMap;
     }
 
     public void fullSync() {
