@@ -11,6 +11,8 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.Item;
 import org.jspecify.annotations.NonNull;
 
+import java.util.Collection;
+
 public record CommonItemCollection(
         @NonNull HolderSet<@NonNull Item> items) implements ItemCollection, CommonGameContent, TypedGameContent {
     public static final CommonGameContentType<CommonItemCollection> TYPE = () -> GameContentTypeSerializer.ITEM;
@@ -27,5 +29,15 @@ public record CommonItemCollection(
     @Override
     public @NonNull GameContentType<?> type() {
         return TYPE;
+    }
+
+    @Override
+    public @NonNull Collection<@NonNull Object> content() {
+        return items.stream().map(s -> (Object) s).toList();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return items.size() == 0;
     }
 }

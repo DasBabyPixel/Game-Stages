@@ -80,9 +80,7 @@ public class StagesJEIPlugin implements IModPlugin {
         runtime = jeiRuntime;
         var player = CommonInstances.platformPlayerProvider.clientSelfPlayer();
         if (player != null) {
-            for (var compiled : player.getGameStages().compiledRestrictionEntryMap().values()) {
-                JEIAddon.ADDON.postCompile(compiled);
-            }
+            JEIAddon.ADDON.singleRefreshAll(player.getGameStages());
         }
     }
 

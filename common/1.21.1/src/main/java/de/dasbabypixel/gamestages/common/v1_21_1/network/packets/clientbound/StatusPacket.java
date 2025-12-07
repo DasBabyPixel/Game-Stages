@@ -2,6 +2,7 @@ package de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound;
 
 import de.dasbabypixel.gamestages.common.client.ClientGameStageManager;
 import de.dasbabypixel.gamestages.common.client.network.ClientNetworkHandlers;
+import de.dasbabypixel.gamestages.common.data.DuplicatesException;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryCompiler;
 import de.dasbabypixel.gamestages.common.entity.Player;
 import de.dasbabypixel.gamestages.common.network.Status;
@@ -35,7 +36,10 @@ public record StatusPacket(Status status) implements GameStagesPacket {
                     restrictionEntryCompiler.precompile(restriction);
                 }
                 var player = (Player) Objects.requireNonNull(Minecraft.getInstance().player);
-                player.getGameStages().recompileAll(restrictionEntryCompiler);
+                try {
+                    player.getGameStages().recompileAll(restrictionEntryCompiler);
+                } catch (DuplicatesException ignored) {
+                }
             }
         }
     }

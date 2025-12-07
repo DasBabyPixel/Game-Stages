@@ -2,7 +2,7 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.jei;
 
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.PlayerStages;
-import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
+import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonItemCollection;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.restriction.types.NeoItemRestrictionEntry;
 import org.jspecify.annotations.NonNull;
 
@@ -13,34 +13,37 @@ public class JEIAddon implements AbstractGameStageManager.Addon {
     }
 
     @Override
-    public void postCompile(@NonNull CompiledRestrictionEntry restrictionEntry) {
-        handleEntry(restrictionEntry);
-    }
-
-    @Override
     public void postCompileAll(@NonNull AbstractGameStageManager instance, @NonNull PlayerStages stages) {
-
-    }
-
-    @Override
-    public void clientPostSyncUnlockedStages(PlayerStages playerStages) {
-
-    }
-
-    private void handleEntry(CompiledRestrictionEntry restrictionEntry) {
-        if (restrictionEntry instanceof NeoItemRestrictionEntry.Compiled(var items, var predicate)) {
-            if (predicate.test()) {
-                StagesJEIPlugin.show(items.items());
-            } else {
-                StagesJEIPlugin.hide(items.items());
+        singleRefreshAll(stages);
+        var typeIndex = stages.typeIndexMap().get(CommonItemCollection.TYPE);
+        if (typeIndex == null) return;
+        for (var entry : typeIndex.contentListByEntry().entrySet()) {
+            var restrictionEntry = entry.getKey();
+            if (restrictionEntry instanceof NeoItemRestrictionEntry.Compiled compiled) {
+                compiled.predicate().addNotifier(newTest -> {
+                    var items = compiled.gameContent();
+                    if (newTest) {
+                        StagesJEIPlugin.show(items.items());
+                    } else {
+                        StagesJEIPlugin.hide(items.items());
+                    }
+                });
             }
-            predicate.addNotifier(newTest -> {
-                if (newTest) {
-                    StagesJEIPlugin.show(items.items());
+        }
+    }
+
+    public void singleRefreshAll(@NonNull PlayerStages stages) {
+        var typeIndex = stages.typeIndexMap().get(CommonItemCollection.TYPE);
+        if (typeIndex == null) return;
+        for (var entry : typeIndex.contentListByEntry().entrySet()) {
+            var restrictionEntry = entry.getKey();
+            if (restrictionEntry instanceof NeoItemRestrictionEntry.Compiled compiled) {
+                if (compiled.predicate().test()) {
+                    StagesJEIPlugin.show(compiled.gameContent().items());
                 } else {
-                    StagesJEIPlugin.hide(items.items());
+                    StagesJEIPlugin.hide(compiled.gameContent().items());
                 }
-            });
+            }
         }
     }
 }

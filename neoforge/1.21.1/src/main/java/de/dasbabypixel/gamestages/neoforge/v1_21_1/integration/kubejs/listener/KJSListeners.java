@@ -1,6 +1,7 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.listener;
 
 import de.dasbabypixel.gamestages.common.CommonInstances;
+import de.dasbabypixel.gamestages.common.data.DuplicatesException;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryCompiler;
 import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.KJSStagesWrapper;
@@ -51,9 +52,13 @@ public class KJSListeners {
             restrictionEntryCompiler.precompile(restriction);
         }
 
-        CommonInstances.platformPlayerProvider
-                .allPlayers()
-                .forEach(p -> p.getGameStages().recompileAll(restrictionEntryCompiler));
+        try {
+            CommonInstances.platformPlayerProvider
+                    .allPlayers()
+                    .forEach(p -> p.getGameStages().recompileAll(restrictionEntryCompiler));
+        } catch (DuplicatesException throwable) {
+            System.err.println("Failed GameStages reload because of duplicates");
+        }
         instance.sync(CommonInstances.platformPacketDistributor::sendToAllPlayers);
         CommonInstances.platformPlayerProvider.allPlayers().forEach(p -> p.getGameStages().fullSync());
     }

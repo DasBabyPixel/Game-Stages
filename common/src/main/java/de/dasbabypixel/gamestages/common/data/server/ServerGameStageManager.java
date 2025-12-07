@@ -12,10 +12,10 @@ import java.util.Objects;
 import static de.dasbabypixel.gamestages.common.CommonInstances.platformPacketCreator;
 
 public class ServerGameStageManager extends MutatableGameStageManager {
-    public static final List<Addon> ADDONS = new ArrayList<>();
+    public static final List<AddonFactory> ADDONS = new ArrayList<>();
     public static @Nullable ServerGameStageManager INSTANCE;
     private static boolean queuing = false;
-    private final List<Addon> addons = List.copyOf(ADDONS);
+    private final List<Addon> addons = List.copyOf(ADDONS.stream().map(AddonFactory::create).toList());
 
     private ServerGameStageManager() {
     }

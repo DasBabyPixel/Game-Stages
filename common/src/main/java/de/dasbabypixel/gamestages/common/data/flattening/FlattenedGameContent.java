@@ -1,5 +1,7 @@
-package de.dasbabypixel.gamestages.common.data;
+package de.dasbabypixel.gamestages.common.data.flattening;
 
+import de.dasbabypixel.gamestages.common.data.GameContentType;
+import de.dasbabypixel.gamestages.common.data.TypedGameContent;
 import org.jspecify.annotations.NonNull;
 
 import java.util.Map;

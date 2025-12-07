@@ -13,8 +13,21 @@ public abstract class AbstractGameStageManager {
     protected final Set<GameStage> gameStages = new HashSet<>();
     protected final List<RestrictionEntry<?, ?>> restrictions = new ArrayList<>();
     private final Map<Attribute<?>, Object> attributeMap = new HashMap<>();
+    private final Map<Class<?>, Addon> addonMap = new HashMap<>();
 
     public abstract @NonNull List<@NonNull Addon> addons();
+
+    @SuppressWarnings("unchecked")
+    public <T extends Addon> @NonNull T getAddon(@NonNull Class<T> cls) {
+        var addons = addons();
+        if (addons.isEmpty()) throw new IllegalStateException("No addons registered");
+        if (addonMap.isEmpty()) {
+            for (var addon : addons) {
+                addonMap.put(addon.getClass(), addon);
+            }
+        }
+        return Objects.requireNonNull((T) addonMap.get(cls));
+    }
 
     public void add(GameStage gameStage) {
         if (!mayMutate()) throw new IllegalStateException("Cannot mutate");
@@ -75,12 +88,19 @@ public abstract class AbstractGameStageManager {
         return true;
     }
 
+    public interface AddonFactory {
+        @NonNull Addon create();
+    }
+
     public interface Addon {
-        void postCompile(@NonNull CompiledRestrictionEntry restrictionEntry);
+        default void postCompile(@NonNull CompiledRestrictionEntry restrictionEntry) {
+        }
 
-        void postCompileAll(@NonNull AbstractGameStageManager instance, @NonNull PlayerStages stages);
+        default void postCompileAll(@NonNull AbstractGameStageManager instance, @NonNull PlayerStages stages) {
+        }
 
-        void clientPostSyncUnlockedStages(PlayerStages playerStages);
+        default void clientPostSyncUnlockedStages(PlayerStages playerStages) {
+        }
     }
 
     public record Attribute<T>(Function<@NonNull AbstractGameStageManager, ? extends @NonNull T> defaultValue) {

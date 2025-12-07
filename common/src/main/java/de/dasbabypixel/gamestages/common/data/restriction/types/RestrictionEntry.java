@@ -11,6 +11,8 @@ import org.jspecify.annotations.NonNull;
 public interface RestrictionEntry<T extends RestrictionEntry<T, PreCompiled>, PreCompiled> {
     @NonNull PreparedRestrictionPredicate predicate();
 
+    @NonNull RestrictionEntryOrigin origin();
+
     @NonNull T disallowDuplicates();
 
     @NonNull T allowDuplicates();

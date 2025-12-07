@@ -1,6 +1,7 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.network;
 
 import de.dasbabypixel.gamestages.common.client.ClientGameStageManager;
+import de.dasbabypixel.gamestages.common.data.restriction.types.RestrictionEntryOrigin;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.PlatformPacketHandler;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.CommonItemRestrictionPacket;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.restriction.types.NeoItemRestrictionEntry;
@@ -11,7 +12,7 @@ public class NeoPlatformPacketHandler implements PlatformPacketHandler {
         System.out.println("Add client restriciton");
         ClientGameStageManager
                 .instance()
-                .addRestriction(new NeoItemRestrictionEntry(packet.predicate(), packet.targetCollection()));
+                .addRestriction(new NeoItemRestrictionEntry(packet.predicate(), RestrictionEntryOrigin.SERVER, packet.targetCollection()));
         System.out.println("done add cleitn restriction");
     }
 }

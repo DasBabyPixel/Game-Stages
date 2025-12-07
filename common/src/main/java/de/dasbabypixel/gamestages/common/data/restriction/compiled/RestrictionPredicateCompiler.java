@@ -28,7 +28,7 @@ public class RestrictionPredicateCompiler {
                 .stream()
                 .map(this::compile0)
                 .toList() : List.<CachedCompiledRestrictionPredicate>of();
-        var compiled = new CachedCompiledRestrictionPredicate(player, predicate.predicate(), dependencies);
+        var compiled = new CachedCompiledRestrictionPredicate(player, predicate, predicate.predicate(), dependencies);
         dependencies.forEach(dep -> dep.addNotifier(ignored -> compiled.invalidate()));
         cache.put(predicate, compiled);
         return compiled;

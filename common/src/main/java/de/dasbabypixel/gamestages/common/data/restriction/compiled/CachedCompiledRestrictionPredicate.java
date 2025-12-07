@@ -1,5 +1,6 @@
 package de.dasbabypixel.gamestages.common.data.restriction.compiled;
 
+import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionPredicate;
 import de.dasbabypixel.gamestages.common.entity.Player;
 import org.jspecify.annotations.NonNull;
@@ -9,6 +10,7 @@ import java.util.List;
 
 final class CachedCompiledRestrictionPredicate implements CompiledRestrictionPredicate {
     private final @NonNull Player player;
+    private final @NonNull PreparedRestrictionPredicate original;
     private final @NonNull RestrictionPredicate predicate;
     private final @NonNull List<@NonNull CachedCompiledRestrictionPredicate> dependencies;
     private final @NonNull List<@NonNull UpdateNotifier> updateNotifiers = new ArrayList<>(0);
@@ -16,8 +18,9 @@ final class CachedCompiledRestrictionPredicate implements CompiledRestrictionPre
     private boolean cachedOldValue = false;
     private boolean cachedValue;
 
-    CachedCompiledRestrictionPredicate(@NonNull Player player, @NonNull RestrictionPredicate predicate, @NonNull List<@NonNull CachedCompiledRestrictionPredicate> dependencies) {
+    CachedCompiledRestrictionPredicate(@NonNull Player player, @NonNull PreparedRestrictionPredicate original, @NonNull RestrictionPredicate predicate, @NonNull List<@NonNull CachedCompiledRestrictionPredicate> dependencies) {
         this.player = player;
+        this.original = original;
         this.predicate = predicate;
         this.dependencies = dependencies;
     }
@@ -25,7 +28,11 @@ final class CachedCompiledRestrictionPredicate implements CompiledRestrictionPre
     @Override
     public void addNotifier(@NonNull UpdateNotifier updateNotifier) {
         updateNotifiers.add(updateNotifier);
-        System.out.println(updateNotifier);
+    }
+
+    @Override
+    public PreparedRestrictionPredicate predicate() {
+        return original;
     }
 
     @Override

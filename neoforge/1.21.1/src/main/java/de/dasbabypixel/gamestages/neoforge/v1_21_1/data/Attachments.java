@@ -12,8 +12,8 @@ import java.util.function.Supplier;
 
 public class Attachments {
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, BuildConstants.MOD_ID);
-    public static final Supplier<AttachmentType<List<GameStage>>> ATTACHMENT_REFERENCES = ATTACHMENT_TYPES.register("references", () -> AttachmentType
-            .<List<GameStage>>builder(() -> List.of())
+    public static final Supplier<AttachmentType<List<GameStage>>> ATTACHMENT_REFERENCES = ATTACHMENT_TYPES.register("game_stages", () -> AttachmentType
+            .builder(() -> List.<GameStage>of())
             .serialize(GameStagePayload.CODEC_LIST)
             .copyOnDeath()
             .build());

@@ -3,6 +3,7 @@ package de.dasbabypixel.gamestages.common.data.restriction.impl;
 import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.types.ItemRestrictionEntry;
+import de.dasbabypixel.gamestages.common.data.restriction.types.RestrictionEntryOrigin;
 import org.jspecify.annotations.NonNull;
 
 public abstract class AbstractItemRestrictionEntry<T extends AbstractItemRestrictionEntry<T, P>, P> extends AbstractRestrictionEntry<T, P> implements ItemRestrictionEntry<T, P> {
@@ -21,8 +22,8 @@ public abstract class AbstractItemRestrictionEntry<T extends AbstractItemRestric
     private boolean canInteractWithBlock = false;
     private boolean canBeDugWith = false;
 
-    public AbstractItemRestrictionEntry(@NonNull PreparedRestrictionPredicate predicate, @NonNull GameContent targetItems) {
-        super(predicate);
+    public AbstractItemRestrictionEntry(@NonNull PreparedRestrictionPredicate predicate, @NonNull RestrictionEntryOrigin origin, @NonNull GameContent targetItems) {
+        super(predicate, origin);
         this.targetItems = targetItems;
     }
 

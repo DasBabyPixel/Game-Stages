@@ -1,14 +1,19 @@
-package de.dasbabypixel.gamestages.common.v1_21_1.data;
+package de.dasbabypixel.gamestages.common.v1_21_1.data.f;
 
-import de.dasbabypixel.gamestages.common.data.*;
+import de.dasbabypixel.gamestages.common.data.GameContent;
+import de.dasbabypixel.gamestages.common.data.GameContentType;
+import de.dasbabypixel.gamestages.common.data.TypedGameContent;
+import de.dasbabypixel.gamestages.common.data.flattening.FlattenedGameContent;
+import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
+import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContent;
+import de.dasbabypixel.gamestages.common.v1_21_1.data.ItemFlattenerFactory;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
 
-public class GameContentFlattener {
-    public static final AbstractGameStageManager.Attribute<GameContentFlattener> ATTRIBUTE = new AbstractGameStageManager.Attribute<>(GameContentFlattener::new);
+public class CommonGameContentFlattener implements GameContentFlattener {
     private static final List<FlattenerFactory<?>> FACTORIES = new ArrayList<>();
     private static final Map<GameContentType<?>, FlattenerFactory<?>> FACTORY_BY_TYPE = new HashMap<>();
     private static final FlattenedGameContent EMPTY_FLATTENED;
@@ -26,9 +31,6 @@ public class GameContentFlattener {
 
     private final Map<GameContent, FlattenedGameContent> cache = new HashMap<>();
     private final Map<GameContentType<?>, Map<GameContent, Object>> typeCache = new HashMap<>();
-
-    private GameContentFlattener() {
-    }
 
     private static void fill(List<Flattener0<?>> flatteners, @Nullable GameContentType<?> requestType, Function<FlattenerFactory<?>, Flattener0<?>> fun) {
         if (requestType != null) {
@@ -56,12 +58,14 @@ public class GameContentFlattener {
         return value;
     }
 
+    @Override
     public @NonNull FlattenedGameContent flatten(@NonNull GameContent gameContent) {
         if (cache.containsKey(gameContent)) return Objects.requireNonNull(cache.get(gameContent));
         return cache(gameContent, (FlattenedGameContent) flattenInternal(gameContent, null));
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public <T extends TypedGameContent> @NonNull T flatten(@NonNull GameContent gameContent, @NonNull GameContentType<T> requestType) {
         if (typeCache.containsKey(requestType) && typeCache.get(requestType).containsKey(gameContent)) {
             return (T) Objects.requireNonNull(typeCache.get(requestType).get(gameContent));
@@ -137,22 +141,6 @@ public class GameContentFlattener {
             map.put(flattener.type(), flattener.flattener().complete());
         }
         return new FlattenedGameContent(map);
-    }
-
-    public interface FlattenerFactory<T extends TypedGameContent> {
-        @NonNull GameContentType<T> type();
-
-        @NonNull Flattener<T> createUnion();
-
-        @NonNull Flattener<T> createOnly();
-
-        @NonNull Flattener<T> createExcept();
-    }
-
-    public interface Flattener<T extends TypedGameContent> {
-        void accept(@NonNull T list);
-
-        @NonNull T complete();
     }
 
     private record Flattener0<T extends TypedGameContent>(GameContentType<T> type, Flattener<T> flattener) {
