@@ -4,7 +4,7 @@ import de.dasbabypixel.gamestages.common.BuildConstants;
 import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
-import de.dasbabypixel.gamestages.common.v1_21_1.data.f.CommonGameContentFlattener;
+import de.dasbabypixel.gamestages.common.v1_21_1.data.flattener.CommonGameContentFlattener;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.PlatformPacketCreatorImpl;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.PlatformPacketHandler;
 import net.minecraft.resources.ResourceLocation;

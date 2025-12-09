@@ -6,6 +6,7 @@ import org.jspecify.annotations.NonNull;
 
 public interface CommonGameContentSerializer<T extends CommonGameContent> {
     @NonNull CommonGameContentSerializer<CommonItemCollection> ITEM_COLLECTION = () -> CommonItemCollection.STREAM_CODEC;
+    @NonNull CommonGameContentSerializer<CommonFluidCollection> FLUID_COLLECTION = () -> CommonFluidCollection.STREAM_CODEC;
     @NonNull CommonGameContentSerializer<CommonGameContent.Except> EXCEPT = () -> CommonGameContent.Except.STREAM_CODEC;
     @NonNull CommonGameContentSerializer<CommonGameContent.Only> ONLY = () -> CommonGameContent.Only.STREAM_CODEC;
     @NonNull CommonGameContentSerializer<CommonGameContent.Union> UNION = () -> CommonGameContent.Union.STREAM_CODEC;

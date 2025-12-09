@@ -16,6 +16,7 @@ public interface GameContentTypeSerializer<T extends TypedGameContent> {
             .registry(REGISTRY_KEY)
             .dispatch(x -> ((CommonGameContentType<?>) x).serializer(), GameContentTypeSerializer::streamCodec);
     @NonNull GameContentTypeSerializer<CommonItemCollection> ITEM = () -> StreamCodec.unit(CommonItemCollection.TYPE);
+    @NonNull GameContentTypeSerializer<CommonFluidCollection> FLUID = () -> StreamCodec.unit(CommonFluidCollection.TYPE);
 
     @NonNull StreamCodec<RegistryFriendlyByteBuf, GameContentType<T>> streamCodec();
 }

@@ -1,4 +1,4 @@
-package de.dasbabypixel.gamestages.common.v1_21_1.data.f;
+package de.dasbabypixel.gamestages.common.v1_21_1.data.flattener;
 
 import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.GameContentType;
@@ -6,7 +6,6 @@ import de.dasbabypixel.gamestages.common.data.TypedGameContent;
 import de.dasbabypixel.gamestages.common.data.flattening.FlattenedGameContent;
 import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContent;
-import de.dasbabypixel.gamestages.common.v1_21_1.data.ItemFlattenerFactory;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -16,17 +15,14 @@ import java.util.function.Function;
 public class CommonGameContentFlattener implements GameContentFlattener {
     private static final List<FlattenerFactory<?>> FACTORIES = new ArrayList<>();
     private static final Map<GameContentType<?>, FlattenerFactory<?>> FACTORY_BY_TYPE = new HashMap<>();
-    private static final FlattenedGameContent EMPTY_FLATTENED;
 
     static {
         FACTORIES.add(new ItemFlattenerFactory());
+        FACTORIES.add(new FluidFlattenerFactory());
 
-        var emptyMap = new HashMap<GameContentType<?>, TypedGameContent>();
         for (var factory : FACTORIES) {
             FACTORY_BY_TYPE.put(factory.type(), factory);
-            emptyMap.put(factory.type(), factory.createUnion().complete());
         }
-        EMPTY_FLATTENED = new FlattenedGameContent(emptyMap);
     }
 
     private final Map<GameContent, FlattenedGameContent> cache = new HashMap<>();
@@ -113,7 +109,7 @@ public class CommonGameContentFlattener implements GameContentFlattener {
             case TypedGameContent typed -> {
                 var type = typed.type();
                 if (requestType == type) return typed;
-                if (requestType != null) return EMPTY_FLATTENED;
+                if (requestType != null) return FACTORY_BY_TYPE.get(requestType).createUnion().complete();
 
                 var map = new HashMap<GameContentType<?>, TypedGameContent>();
                 for (var factory : FACTORIES) {

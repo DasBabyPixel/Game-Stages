@@ -9,38 +9,38 @@ import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestr
 import de.dasbabypixel.gamestages.common.data.restriction.types.RestrictionEntryOrigin;
 import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
 import de.dasbabypixel.gamestages.common.network.CustomPacket;
-import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonItemCollection;
-import de.dasbabypixel.gamestages.common.v1_21_1.data.restriction.types.CommonItemRestrictionEntry;
-import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.CommonItemRestrictionPacket;
+import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonFluidCollection;
+import de.dasbabypixel.gamestages.common.v1_21_1.data.restriction.types.CommonFluidRestrictionEntry;
+import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.CommonFluidRestrictionPacket;
 import org.jspecify.annotations.NonNull;
 
-public class NeoItemRestrictionEntry extends CommonItemRestrictionEntry<NeoItemRestrictionEntry, NeoItemRestrictionEntry.PreCompiled> {
-    public NeoItemRestrictionEntry(@NonNull PreparedRestrictionPredicate predicate, @NonNull RestrictionEntryOrigin origin, @NonNull GameContent targetItems) {
-        super(predicate, origin, targetItems);
+public class NeoFluidRestrictionEntry extends CommonFluidRestrictionEntry<NeoFluidRestrictionEntry, NeoFluidRestrictionEntry.PreCompiled> {
+    public NeoFluidRestrictionEntry(@NonNull PreparedRestrictionPredicate predicate, @NonNull RestrictionEntryOrigin origin, @NonNull GameContent targetFluids) {
+        super(predicate, origin, targetFluids);
     }
 
     @Override
     public @NonNull CustomPacket createPacket(@NonNull ServerGameStageManager instance) {
-        var items = instance
+        var fluids = instance
                 .get(GameContentFlattener.Attribute.INSTANCE)
-                .flatten(targetItems(), CommonItemCollection.TYPE);
-        return new CommonItemRestrictionPacket(predicate(), items, origin().toString(), hideTooltip(), renderItemName(), hideInJEI());
+                .flatten(targetFluids(), CommonFluidCollection.TYPE);
+        return new CommonFluidRestrictionPacket(predicate(), fluids, origin().toString(), hideInJEI());
     }
 
     @Override
-    public NeoItemRestrictionEntry.@NonNull PreCompiled precompile(@NonNull AbstractGameStageManager instance) {
-        var items = instance
+    public @NonNull PreCompiled precompile(@NonNull AbstractGameStageManager instance) {
+        var fluids = instance
                 .get(GameContentFlattener.Attribute.INSTANCE)
-                .flatten(targetItems(), CommonItemCollection.TYPE);
-        return new PreCompiled(items);
+                .flatten(targetFluids(), CommonFluidCollection.TYPE);
+        return new PreCompiled(fluids);
     }
 
     @Override
     public @NonNull CompiledRestrictionEntry compile(@NonNull AbstractGameStageManager instance, @NonNull PreCompiled preCompiled, @NonNull CompiledRestrictionPredicate predicate) {
-        return new Compiled(this, preCompiled.items, predicate);
+        return new Compiled(this, preCompiled.fluids, predicate);
     }
 
-    public record Compiled(@NonNull NeoItemRestrictionEntry entry, @NonNull CommonItemCollection gameContent,
+    public record Compiled(@NonNull NeoFluidRestrictionEntry entry, @NonNull CommonFluidCollection gameContent,
                            @NonNull CompiledRestrictionPredicate predicate) implements CompiledRestrictionEntry {
         @Override
         public @NonNull RestrictionEntryOrigin origin() {
@@ -48,6 +48,6 @@ public class NeoItemRestrictionEntry extends CommonItemRestrictionEntry<NeoItemR
         }
     }
 
-    public record PreCompiled(@NonNull CommonItemCollection items) {
+    public record PreCompiled(@NonNull CommonFluidCollection fluids) {
     }
 }

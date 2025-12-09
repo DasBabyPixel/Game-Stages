@@ -2,7 +2,6 @@ package de.dasbabypixel.gamestages.common.v1_21_1.data;
 
 import de.dasbabypixel.gamestages.common.data.GameContentType;
 import de.dasbabypixel.gamestages.common.data.ItemCollection;
-import de.dasbabypixel.gamestages.common.data.TypedGameContent;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -14,7 +13,7 @@ import org.jspecify.annotations.NonNull;
 import java.util.Collection;
 
 public record CommonItemCollection(
-        @NonNull HolderSet<@NonNull Item> items) implements ItemCollection, CommonGameContent, TypedGameContent {
+        @NonNull HolderSet<@NonNull Item> items) implements ItemCollection, CommonGameContent {
     public static final CommonGameContentType<CommonItemCollection> TYPE = () -> GameContentTypeSerializer.ITEM;
     public static final CommonItemCollection EMPTY = new CommonItemCollection(HolderSet.empty());
     public static final StreamCodec<RegistryFriendlyByteBuf, CommonItemCollection> STREAM_CODEC = ByteBufCodecs

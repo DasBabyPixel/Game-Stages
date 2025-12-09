@@ -1,7 +1,9 @@
-package de.dasbabypixel.gamestages.common.v1_21_1.data;
+package de.dasbabypixel.gamestages.common.v1_21_1.data.flattener;
 
 import de.dasbabypixel.gamestages.common.data.GameContentType;
-import de.dasbabypixel.gamestages.common.v1_21_1.data.f.CommonGameContentFlattener;
+import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener.Flattener;
+import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener.FlattenerFactory;
+import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonItemCollection;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.world.item.Item;
@@ -13,15 +15,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-public class ItemFlattenerFactory implements CommonGameContentFlattener.FlattenerFactory<CommonItemCollection> {
+public class ItemFlattenerFactory implements FlattenerFactory<CommonItemCollection> {
     @Override
     public @NonNull GameContentType<CommonItemCollection> type() {
         return CommonItemCollection.TYPE;
     }
 
     @Override
-    public CommonGameContentFlattener.@NonNull Flattener<CommonItemCollection> createUnion() {
-        return new CommonGameContentFlattener.Flattener<>() {
+    public @NonNull Flattener<CommonItemCollection> createUnion() {
+        return new Flattener<>() {
             private final List<HolderSet<Item>> holderSets = new ArrayList<>();
 
             @Override
@@ -39,8 +41,8 @@ public class ItemFlattenerFactory implements CommonGameContentFlattener.Flattene
     }
 
     @Override
-    public CommonGameContentFlattener.@NonNull Flattener<CommonItemCollection> createOnly() {
-        return new CommonGameContentFlattener.Flattener<>() {
+    public @NonNull Flattener<CommonItemCollection> createOnly() {
+        return new Flattener<>() {
             private Set<Holder<Item>> inclusions;
             private Stream<Holder<Item>> base;
 
@@ -62,8 +64,8 @@ public class ItemFlattenerFactory implements CommonGameContentFlattener.Flattene
     }
 
     @Override
-    public CommonGameContentFlattener.@NonNull Flattener<CommonItemCollection> createExcept() {
-        return new CommonGameContentFlattener.Flattener<>() {
+    public @NonNull Flattener<CommonItemCollection> createExcept() {
+        return new Flattener<>() {
             private Set<Holder<Item>> exclusions;
             private Stream<Holder<Item>> base;
 

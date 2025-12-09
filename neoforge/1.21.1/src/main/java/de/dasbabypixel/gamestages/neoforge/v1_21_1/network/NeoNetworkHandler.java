@@ -1,10 +1,7 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.network;
 
 import de.dasbabypixel.gamestages.common.v1_21_1.network.GameStagesPacket;
-import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.CommonItemRestrictionPacket;
-import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.StatusPacket;
-import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.SyncRegisteredGameStagesPacket;
-import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.SyncUnlockedGameStagesPacket;
+import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.*;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.NeoForgeEntrypoint;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -40,6 +37,7 @@ public class NeoNetworkHandler {
             playToClient(SyncUnlockedGameStagesPacket.TYPE, SyncUnlockedGameStagesPacket.STREAM_CODEC);
             playToClient(StatusPacket.TYPE, StatusPacket.STREAM_CODEC);
             playToClient(CommonItemRestrictionPacket.TYPE, CommonItemRestrictionPacket.STREAM_CODEC);
+            playToClient(CommonFluidRestrictionPacket.TYPE, CommonFluidRestrictionPacket.STREAM_CODEC);
         }
     }
 }

@@ -2,6 +2,7 @@ package de.dasbabypixel.gamestages.common.v1_21_1.data;
 
 import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.GameContentType;
+import de.dasbabypixel.gamestages.common.data.TypedGameContent;
 import de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod;
 import dev.latvian.mods.rhino.util.HideFromJS;
 import net.minecraft.core.Registry;
@@ -40,8 +41,11 @@ public interface CommonGameContent extends GameContent {
     @SuppressWarnings("unchecked")
     @Override
     default @NonNull CommonGameContent union(@NonNull GameContent @NonNull ... other) {
-        var list = new ArrayList<CommonGameContent>(other.length + 1);
-        list.add(this);
+        var len = other.length + 1;
+        var empty = this instanceof TypedGameContent typed && typed.isEmpty();
+        if (empty) len--;
+        var list = new ArrayList<CommonGameContent>(len);
+        if (!empty) list.add(this);
         Object otherList = Arrays.asList(other);
         list.addAll((Collection<? extends CommonGameContent>) otherList);
         return new CommonGameContent.Union(list);

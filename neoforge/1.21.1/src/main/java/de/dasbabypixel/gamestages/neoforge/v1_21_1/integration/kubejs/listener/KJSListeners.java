@@ -56,7 +56,8 @@ public class KJSListeners {
             CommonInstances.platformPlayerProvider
                     .allPlayers()
                     .forEach(p -> p.getGameStages().recompileAll(restrictionEntryCompiler));
-        } catch (DuplicatesException throwable) {
+        } catch (DuplicatesException d) {
+            d.print(System.err::println);
             System.err.println("Failed GameStages reload because of duplicates");
         }
         instance.sync(CommonInstances.platformPacketDistributor::sendToAllPlayers);

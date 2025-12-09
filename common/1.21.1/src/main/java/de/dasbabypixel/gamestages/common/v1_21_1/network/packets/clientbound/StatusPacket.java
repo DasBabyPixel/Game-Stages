@@ -9,7 +9,10 @@ import de.dasbabypixel.gamestages.common.network.Status;
 import de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.GameStagesPacket;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -38,7 +41,12 @@ public record StatusPacket(Status status) implements GameStagesPacket {
                 var player = (Player) Objects.requireNonNull(Minecraft.getInstance().player);
                 try {
                     player.getGameStages().recompileAll(restrictionEntryCompiler);
-                } catch (DuplicatesException ignored) {
+                } catch (DuplicatesException d) {
+                    var p = (LocalPlayer) player;
+                    d.print(s -> {
+                        System.err.println(s);
+                        p.sendSystemMessage(Component.literal(s).withStyle(ChatFormatting.RED));
+                    });
                 }
             }
         }

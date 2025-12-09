@@ -1,12 +1,15 @@
 package de.dasbabypixel.gamestages.common.data;
 
 import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
-import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
+import de.dasbabypixel.gamestages.common.data.restriction.DuplicateReport;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryCompiler;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionPredicateCompiler;
 import de.dasbabypixel.gamestages.common.entity.Player;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 
 public class RecompilationTask {
     private final PlayerStages playerStages;
@@ -66,11 +69,9 @@ public class RecompilationTask {
         }
 
         if (!reports.isEmpty()) {
-            System.err.println("[GameStages] Found Duplicates (" + reports.size() + ")");
-            reports.forEach(DuplicateReport::print);
             playerStages.typeIndexMap().clear();
             playerStages.compiledRestrictionEntryMap().clear();
-            throw new DuplicatesException();
+            throw new DuplicatesException(reports);
         }
     }
 
@@ -106,24 +107,6 @@ public class RecompilationTask {
         for (var gameStage : instance.gameStages()) {
             var compiled = predicateCompiler.compile(gameStage);
             playerStages.compiledGameStages().put(gameStage, compiled);
-        }
-    }
-
-    public static class DuplicateReport {
-        private final Object object;
-        private final Set<CompiledRestrictionEntry> entries = new HashSet<>();
-
-        public DuplicateReport(Object object, CompiledRestrictionEntry mainEntry, Set<CompiledRestrictionEntry> duplicates) {
-            this.object = object;
-            this.entries.add(mainEntry);
-            this.entries.addAll(duplicates);
-        }
-
-        public void print() {
-            System.err.println("For: " + object);
-            for (var entry : entries) {
-                System.err.println(" - " + entry.predicate().predicate() + " (" + entry.origin() + ")");
-            }
         }
     }
 }

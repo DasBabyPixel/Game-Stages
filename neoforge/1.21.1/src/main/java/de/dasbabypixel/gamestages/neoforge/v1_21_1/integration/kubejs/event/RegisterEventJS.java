@@ -6,6 +6,7 @@ import de.dasbabypixel.gamestages.common.data.GameStage;
 import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.types.RestrictionEntryOrigin;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.restriction.types.NeoFluidRestrictionEntry;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.restriction.types.NeoItemRestrictionEntry;
 import dev.latvian.mods.kubejs.event.KubeEvent;
 import dev.latvian.mods.kubejs.script.SourceLine;
@@ -35,9 +36,23 @@ public final class RegisterEventJS implements KubeEvent {
         return parser.parseItems(cx, items);
     }
 
+    public @NonNull GameContent fluids(@NonNull Context cx, @NonNull Object @NonNull ... fluids) {
+        return parser.parseFluids(cx, fluids);
+    }
+
+    public @NonNull GameContent mods(@NonNull Context cx, @NonNull String @NonNull ... mods) {
+        return parser.parseMods(cx, mods);
+    }
+
     public @NonNull NeoItemRestrictionEntry restrictItems(@NonNull Context cx, @NonNull PreparedRestrictionPredicate predicate, @NonNull Object @NonNull ... items) {
         var itemsContent = parser.parseItems(cx, items);
         var source = SourceLine.of(cx).toString();
         return stageManager.addRestriction(new NeoItemRestrictionEntry(predicate, RestrictionEntryOrigin.string(source), itemsContent));
+    }
+
+    public @NonNull NeoFluidRestrictionEntry restrictFluids(@NonNull Context cx, @NonNull PreparedRestrictionPredicate predicate, @NonNull Object @NonNull ... items) {
+        var fluidsContent = parser.parseFluids(cx, items);
+        var source = SourceLine.of(cx).toString();
+        return stageManager.addRestriction(new NeoFluidRestrictionEntry(predicate, RestrictionEntryOrigin.string(source), fluidsContent));
     }
 }
