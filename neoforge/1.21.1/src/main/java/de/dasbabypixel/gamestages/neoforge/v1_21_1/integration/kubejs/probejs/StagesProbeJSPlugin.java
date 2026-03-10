@@ -8,6 +8,7 @@ import moe.wolfgirl.probejs.lang.typescript.ScriptDump;
 import moe.wolfgirl.probejs.lang.typescript.TypeScriptFile;
 import moe.wolfgirl.probejs.lang.typescript.code.ImportInfo;
 import moe.wolfgirl.probejs.lang.typescript.code.member.ClassDecl;
+import moe.wolfgirl.probejs.lang.typescript.code.type.Types;
 import moe.wolfgirl.probejs.plugin.ProbeJSPlugin;
 
 import java.util.Map;
@@ -38,6 +39,31 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
         }
         registerEventJS.declaration.addClass(ImportInfo.type(new ClassPath(ItemCollection.class)));
         registerEventJS.declaration.addClass(ImportInfo.type(new ClassPath(FluidCollection.class)));
+    }
+
+    @Override
+    public void addGlobals(ScriptDump scriptDump) {
+        scriptDump.addGlobal("destructurable", Types.primitive("""
+                type FunctionKeys<T> = {
+                  [K in keyof T]: T[K] extends (...args: any[]) => any ? K : never
+                }[keyof T];
+                
+                function destructurable<T extends object>(
+                  event: T
+                ): Pick<T, FunctionKeys<T>> {
+                  const out = {} as Pick<T, FunctionKeys<T>>;
+                
+                  for (const key in event) {
+                    const value = event[key];
+                    if (typeof value === "function") {
+                      // Bind and preserve type
+                      out[key as FunctionKeys<T>] = value.bind(event);
+                    }
+                  }
+                
+                  return out;
+                }
+                """));
     }
 
     private TypeScriptFile file(Map<ClassPath, TypeScriptFile> globalClasses, Class<?> cls) {

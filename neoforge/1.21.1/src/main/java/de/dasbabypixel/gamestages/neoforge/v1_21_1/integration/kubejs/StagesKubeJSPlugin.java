@@ -13,6 +13,10 @@ import dev.latvian.mods.kubejs.plugin.KubeJSPlugins;
 import dev.latvian.mods.kubejs.script.BindingRegistry;
 import dev.latvian.mods.kubejs.script.ScriptManager;
 import dev.latvian.mods.kubejs.script.TypeWrapperRegistry;
+import dev.latvian.mods.rhino.BaseFunction;
+import dev.latvian.mods.rhino.Context;
+import dev.latvian.mods.rhino.Function;
+import dev.latvian.mods.rhino.Scriptable;
 
 import java.lang.invoke.MethodHandles;
 import java.util.List;
@@ -50,6 +54,12 @@ public class StagesKubeJSPlugin implements KubeJSPlugin {
         bindings.add("GameStage", GameStage.class);
         bindings.add("ItemCollection", ItemCollection.class);
         bindings.add("Restrictions", Restrictions.class);
+        bindings.add("destructurable", new BaseFunction(bindings.scope(), null) {
+            @Override
+            public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                return destructurableImpl(cx, scope, args);
+            }
+        });
     }
 
     @Override
@@ -71,4 +81,34 @@ public class StagesKubeJSPlugin implements KubeJSPlugin {
     public void afterScriptsLoaded(ScriptManager manager) {
         asserLoaded();
     }
+
+    private Scriptable destructurableImpl(Context cx, Scriptable scope, Object[] args) {
+        if (args.length == 0) {
+            throw Context.reportRuntimeError("destructurable(event): missing event parameter", cx);
+        }
+
+        Object event = args[0];
+
+        Scriptable in = cx.toObject(event, scope);
+        Scriptable out = cx.newObject(scope);
+
+        for (Object idObj : in.getIds(cx)) {
+            String id = idObj.toString();
+            Object val = in.get(cx, id, in);
+
+            if (val instanceof Function f) {
+                // bind method to original 'in'
+                Function bound = new BaseFunction(scope, null) {
+                    @Override
+                    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                        return f.call(cx, scope, in, args);
+                    }
+                };
+                out.put(cx, id, out, bound);
+            }
+        }
+
+        return out;
+    }
+
 }
