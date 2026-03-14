@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import static java.util.function.Predicate.not;
+
 public class FluidFlattenerFactory implements FlattenerFactory<CommonFluidCollection> {
     @Override
     public @NonNull GameContentType<CommonFluidCollection> type() {
@@ -80,7 +82,7 @@ public class FluidFlattenerFactory implements FlattenerFactory<CommonFluidCollec
             @Override
             public @NonNull CommonFluidCollection complete() {
                 if (base == null) return CommonFluidCollection.EMPTY;
-                var holderSet = HolderSet.direct(base.filter(h -> !exclusions.contains(h)).toList());
+                var holderSet = HolderSet.direct(base.filter(not(exclusions::contains)).toList());
                 return new CommonFluidCollection(holderSet);
             }
         };

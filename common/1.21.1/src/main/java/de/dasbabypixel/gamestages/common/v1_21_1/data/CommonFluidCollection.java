@@ -1,8 +1,9 @@
 package de.dasbabypixel.gamestages.common.v1_21_1.data;
 
-import de.dasbabypixel.gamestages.common.data.FluidCollection;
+import de.dasbabypixel.gamestages.common.addons.fluid.FluidCollection;
 import de.dasbabypixel.gamestages.common.data.GameContentType;
 import net.minecraft.core.HolderSet;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -14,11 +15,21 @@ import java.util.Collection;
 
 public record CommonFluidCollection(
         @NonNull HolderSet<@NonNull Fluid> fluids) implements FluidCollection, CommonGameContent {
-    public static final CommonGameContentType<CommonFluidCollection> TYPE = () -> GameContentTypeSerializer.FLUID;
+    public static final CommonGameContentType<CommonFluidCollection> TYPE = new CommonGameContentType.AbstractGameContentType<>() {
+        @Override
+        public @NonNull CommonFluidCollection modContent(String modId) {
+            var set = HolderSet.direct(BuiltInRegistries.FLUID
+                    .holders()
+                    .filter(r -> modId.equals(r.key().location().getNamespace()))
+                    .toList());
+            return new CommonFluidCollection(set);
+        }
+    };
     public static final CommonFluidCollection EMPTY = new CommonFluidCollection(HolderSet.empty());
     public static final StreamCodec<RegistryFriendlyByteBuf, CommonFluidCollection> STREAM_CODEC = ByteBufCodecs
             .holderSet(Registries.FLUID)
             .map(CommonFluidCollection::new, CommonFluidCollection::fluids);
+    public static final @NonNull CommonGameContentSerializer<CommonFluidCollection> SERIALIZER = () -> CommonFluidCollection.STREAM_CODEC;
 
     @Override
     public @NonNull GameContentType<?> type() {
@@ -37,6 +48,6 @@ public record CommonFluidCollection(
 
     @Override
     public @NonNull CommonGameContentSerializer<?> serializer() {
-        return CommonGameContentSerializer.FLUID_COLLECTION;
+        return SERIALIZER;
     }
 }

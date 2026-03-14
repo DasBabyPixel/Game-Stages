@@ -1,3 +1,5 @@
+import net.neoforged.moddevgradle.internal.RunGameTask
+
 plugins {
     id("loader-version-neoforge")
 }
@@ -8,21 +10,40 @@ loaderVersionNeo.parchment("1.21.1", "2024.11.17")
 
 neoForge {
     interfaceInjectionData.from("interfaces.json")
-}
 
-neoForge {
+    validateAccessTransformers = true
+
     accessTransformers {
         from("src/main/resources/META-INF/accesstransformer.cfg")
+    }
+}
+
+tasks.named<RunGameTask>("runServer") {
+    gameDirectory.set(file("run/server"))
+}
+
+repositories {
+    maven("https://maven.blamejared.com/") {
+        // location of the maven that hosts JEI files since January 2023
+        name = "Jared's maven"
+    }
+    maven("https://modmaven.dev") {
+        // location of a maven mirror for JEI files, as a fallback
+        name = "ModMaven"
     }
 }
 
 dependencies {
     gameStagesComponent(projects.common1211)
 
+    val jeiVersion = "19.27.0.340"
+
     implementation("curse.maven:kubejs-238086:7198768")
     implementation("curse.maven:rhino-416294:7104526")
     implementation("curse.maven:probejs-585406:7105159")
-    implementation("curse.maven:jei-238222:7181665")
+//    implementation("curse.maven:jei-238222:7181665")
+    compileOnly("mezz.jei:jei-1.21.1-neoforge-api:$jeiVersion")
+    runtimeOnly("mezz.jei:jei-1.21.1-neoforge:$jeiVersion")
     implementation("curse.maven:jade-324717:6853386")
     implementation("curse.maven:sodium-394468:6382651")
     implementation("curse.maven:sodium-extra-447673:5913377")

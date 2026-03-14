@@ -7,7 +7,7 @@ import java.util.Collection;
 public interface TypedGameContent extends GameContent {
     @NonNull GameContentType<?> type();
 
-    @NonNull Collection<@NonNull Object> content();
+    @NonNull Collection<? extends @NonNull Object> content();
 
     boolean isEmpty();
 }

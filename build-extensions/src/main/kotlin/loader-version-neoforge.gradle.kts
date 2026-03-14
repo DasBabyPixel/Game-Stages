@@ -28,6 +28,7 @@ tasks.jar {
 neoForge {
     runs {
         register("client") { client() }
+        register("server") { server() }
     }
     mods {
         register("gamestages") {

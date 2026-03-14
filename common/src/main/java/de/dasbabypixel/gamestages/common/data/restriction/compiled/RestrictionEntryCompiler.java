@@ -1,7 +1,7 @@
 package de.dasbabypixel.gamestages.common.data.restriction.compiled;
 
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
-import de.dasbabypixel.gamestages.common.data.restriction.types.RestrictionEntry;
+import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
 import org.jspecify.annotations.NonNull;
 
 import java.util.HashMap;

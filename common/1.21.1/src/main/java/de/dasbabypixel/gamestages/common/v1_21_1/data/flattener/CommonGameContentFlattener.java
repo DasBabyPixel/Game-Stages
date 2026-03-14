@@ -6,6 +6,7 @@ import de.dasbabypixel.gamestages.common.data.TypedGameContent;
 import de.dasbabypixel.gamestages.common.data.flattening.FlattenedGameContent;
 import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContent;
+import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContentType;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -14,21 +15,17 @@ import java.util.function.Function;
 
 public class CommonGameContentFlattener implements GameContentFlattener {
     private static final List<FlattenerFactory<?>> FACTORIES = new ArrayList<>();
-    private static final Map<GameContentType<?>, FlattenerFactory<?>> FACTORY_BY_TYPE = new HashMap<>();
-
-    static {
-        FACTORIES.add(new ItemFlattenerFactory());
-        FACTORIES.add(new FluidFlattenerFactory());
-
-        for (var factory : FACTORIES) {
-            FACTORY_BY_TYPE.put(factory.type(), factory);
-        }
-    }
+    private static final Map<CommonGameContentType<?>, FlattenerFactory<?>> FACTORY_BY_TYPE = new HashMap<>();
 
     private final Map<GameContent, FlattenedGameContent> cache = new HashMap<>();
     private final Map<GameContentType<?>, Map<GameContent, Object>> typeCache = new HashMap<>();
 
-    private static void fill(List<Flattener0<?>> flatteners, @Nullable GameContentType<?> requestType, Function<FlattenerFactory<?>, Flattener0<?>> fun) {
+    public static void addFlattener(FlattenerFactory<?> factory) {
+        FACTORIES.add(factory);
+        FACTORY_BY_TYPE.put((CommonGameContentType<?>) factory.type(), factory);
+    }
+
+    private static void fill(List<Flattener0<?>> flatteners, @Nullable CommonGameContentType<?> requestType, Function<FlattenerFactory<?>, Flattener0<?>> fun) {
         if (requestType != null) {
             flatteners.add(fun.apply(Objects.requireNonNull(FACTORY_BY_TYPE.get(requestType))));
             return;
@@ -38,7 +35,7 @@ public class CommonGameContentFlattener implements GameContentFlattener {
         }
     }
 
-    private static void accept(List<Flattener0<?>> flatteners, @Nullable GameContentType<?> requestType, Object content) {
+    private static void accept(List<Flattener0<?>> flatteners, @Nullable CommonGameContentType<?> requestType, Object content) {
         for (var flattener : flatteners) {
             flattener.accept(requestType, content);
         }
@@ -49,7 +46,7 @@ public class CommonGameContentFlattener implements GameContentFlattener {
         return content;
     }
 
-    private <T extends TypedGameContent> T cache(GameContent input, GameContentType<T> type, T value) {
+    private <T extends TypedGameContent> T cache(GameContent input, CommonGameContentType<T> type, T value) {
         typeCache.computeIfAbsent(type, unused -> new HashMap<>()).put(input, value);
         return value;
     }
@@ -66,15 +63,16 @@ public class CommonGameContentFlattener implements GameContentFlattener {
         if (typeCache.containsKey(requestType) && typeCache.get(requestType).containsKey(gameContent)) {
             return (T) Objects.requireNonNull(typeCache.get(requestType).get(gameContent));
         }
-        return cache(gameContent, requestType, (T) flattenInternal(gameContent, requestType));
+        var type = (CommonGameContentType<T>) requestType;
+        return cache(gameContent, type, (T) flattenInternal(gameContent, type));
     }
 
-    private Object flatten0(@NonNull GameContent gameContent, @Nullable GameContentType<?> requestType) {
+    private Object flatten0(@NonNull GameContent gameContent, @Nullable CommonGameContentType<?> requestType) {
         if (requestType == null) return flatten(gameContent);
         else return flatten(gameContent, requestType);
     }
 
-    private @NonNull Object flattenInternal(@NonNull GameContent gameContent, @Nullable GameContentType<?> requestType) {
+    private @NonNull Object flattenInternal(@NonNull GameContent gameContent, @Nullable CommonGameContentType<?> requestType) {
         switch (gameContent) {
             case CommonGameContent.Composite composite -> {
                 var flatteners = new ArrayList<Flattener0<?>>(1);
@@ -105,6 +103,18 @@ public class CommonGameContentFlattener implements GameContentFlattener {
             }
             case CommonGameContent.FilterType(var base, var type) -> {
                 return flatten(base, type);
+            }
+            case CommonGameContent.Mod(var modId) -> {
+                if (requestType == null) {
+                    var map = new HashMap<GameContentType<?>, TypedGameContent>();
+                    for (var type : FACTORY_BY_TYPE.keySet()) {
+                        var content = type.modContent(modId);
+                        map.put(type, content);
+                    }
+                    return new FlattenedGameContent(map);
+                } else {
+                    return requestType.modContent(modId);
+                }
             }
             case TypedGameContent typed -> {
                 var type = typed.type();

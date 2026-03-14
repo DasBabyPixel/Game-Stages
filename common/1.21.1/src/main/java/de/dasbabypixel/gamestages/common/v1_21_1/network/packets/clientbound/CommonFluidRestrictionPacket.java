@@ -2,6 +2,7 @@ package de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound;
 
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.fluid.VFluidAddon;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonFluidCollection;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.GameStagesPacket;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -25,7 +26,7 @@ public record CommonFluidRestrictionPacket(@NonNull PreparedRestrictionPredicate
 
     @Override
     public void handle() {
-        CommonVGameStageMod.platformPacketHandler.handle(this);
+        VFluidAddon.instance().handle(this);
     }
 
     private void encode(RegistryFriendlyByteBuf byteBuf) {

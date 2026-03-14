@@ -1,11 +1,11 @@
 package de.dasbabypixel.gamestages.common.data;
 
 import de.dasbabypixel.gamestages.common.CommonInstances;
-import de.dasbabypixel.gamestages.common.client.ClientGameStageManager;
+import de.dasbabypixel.gamestages.common.addon.AddonManager;
+import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryCompiler;
-import de.dasbabypixel.gamestages.common.data.restriction.types.RestrictionEntry;
 import de.dasbabypixel.gamestages.common.entity.Player;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -91,7 +91,7 @@ public class PlayerStages {
         }
         updated.forEach(this::update);
         compiledGameStages.values().forEach(CompiledRestrictionPredicate::test);
-        for (var addon : ClientGameStageManager.instance().addons()) {
+        for (var addon : AddonManager.instance().addons()) {
             addon.clientPostSyncUnlockedStages(this);
         }
     }

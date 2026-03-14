@@ -1,7 +1,6 @@
 package de.dasbabypixel.gamestages.common.data;
 
-import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
-import de.dasbabypixel.gamestages.common.data.restriction.types.RestrictionEntry;
+import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -13,21 +12,6 @@ public abstract class AbstractGameStageManager {
     protected final Set<GameStage> gameStages = new HashSet<>();
     protected final List<RestrictionEntry<?, ?>> restrictions = new ArrayList<>();
     private final Map<Attribute<?>, Object> attributeMap = new HashMap<>();
-    private final Map<Class<?>, Addon> addonMap = new HashMap<>();
-
-    public abstract @NonNull List<@NonNull Addon> addons();
-
-    @SuppressWarnings("unchecked")
-    public <T extends Addon> @NonNull T getAddon(@NonNull Class<T> cls) {
-        var addons = addons();
-        if (addons.isEmpty()) throw new IllegalStateException("No addons registered");
-        if (addonMap.isEmpty()) {
-            for (var addon : addons) {
-                addonMap.put(addon.getClass(), addon);
-            }
-        }
-        return Objects.requireNonNull((T) addonMap.get(cls));
-    }
 
     public void add(GameStage gameStage) {
         if (!mayMutate()) throw new IllegalStateException("Cannot mutate");
@@ -86,21 +70,6 @@ public abstract class AbstractGameStageManager {
 
     protected boolean mayMutate() {
         return true;
-    }
-
-    public interface AddonFactory {
-        @NonNull Addon create();
-    }
-
-    public interface Addon {
-        default void postCompile(@NonNull CompiledRestrictionEntry restrictionEntry) {
-        }
-
-        default void postCompileAll(@NonNull AbstractGameStageManager instance, @NonNull PlayerStages stages) {
-        }
-
-        default void clientPostSyncUnlockedStages(PlayerStages playerStages) {
-        }
     }
 
     public record Attribute<T>(Function<@NonNull AbstractGameStageManager, ? extends @NonNull T> defaultValue) {

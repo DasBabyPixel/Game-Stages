@@ -1,45 +1,47 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs;
 
 import de.dasbabypixel.gamestages.common.data.GameStage;
-import de.dasbabypixel.gamestages.common.data.ItemCollection;
 import de.dasbabypixel.gamestages.common.data.restriction.Restrictions;
+import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContent;
 import de.dasbabypixel.gamestages.neoforge.integration.Mods;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonKJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.StageEvents;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.listener.KJSListeners;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.probejs.StagesProbeJSPlugin;
 import dev.latvian.mods.kubejs.event.EventGroupRegistry;
 import dev.latvian.mods.kubejs.plugin.KubeJSPlugin;
-import dev.latvian.mods.kubejs.plugin.KubeJSPlugins;
 import dev.latvian.mods.kubejs.script.BindingRegistry;
 import dev.latvian.mods.kubejs.script.ScriptManager;
+import dev.latvian.mods.kubejs.script.ScriptType;
 import dev.latvian.mods.kubejs.script.TypeWrapperRegistry;
+import dev.latvian.mods.kubejs.script.TypeWrapperRegistry.ContextFromFunction;
 import dev.latvian.mods.rhino.BaseFunction;
 import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.Function;
 import dev.latvian.mods.rhino.Scriptable;
 
-import java.lang.invoke.MethodHandles;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-@SuppressWarnings("unchecked")
 public class StagesKubeJSPlugin implements KubeJSPlugin {
-    static {
-        try {
-            if (Mods.PROBEJS.isLoaded()) {
-                var lookup = MethodHandles.privateLookupIn(KubeJSPlugins.class, MethodHandles.lookup());
-                var varHandle = lookup.findStaticVarHandle(KubeJSPlugins.class, "LIST", List.class);
-                var list = (List<KubeJSPlugin>) varHandle.get();
-                list.add(new StagesProbeJSPlugin());
-            }
-        } catch (IllegalAccessException | NoSuchFieldException t) {
-            throw new RuntimeException(t);
-        }
-    }
+    private final Map<NeoAddon, NeoAddonKJS> addonMap = new HashMap<>();
+    private boolean populated = false;
 
     private void asserLoaded() {
         if (!Mods.KUBEJS.isLoaded()) {
             throw new IllegalStateException("KubeJS must be loaded at this point");
         }
+    }
+
+    public Map<NeoAddon, NeoAddonKJS> addonMap() {
+        if (!populated) {
+            for (var addon : NeoAddonManager.instance().addons()) {
+                addonMap.put(addon, addon.createKubeJSSupport());
+            }
+            populated = true;
+        }
+        return addonMap;
     }
 
     @Override
@@ -51,8 +53,8 @@ public class StagesKubeJSPlugin implements KubeJSPlugin {
     @Override
     public void registerBindings(BindingRegistry bindings) {
         asserLoaded();
+
         bindings.add("GameStage", GameStage.class);
-        bindings.add("ItemCollection", ItemCollection.class);
         bindings.add("Restrictions", Restrictions.class);
         bindings.add("destructurable", new BaseFunction(bindings.scope(), null) {
             @Override
@@ -64,6 +66,18 @@ public class StagesKubeJSPlugin implements KubeJSPlugin {
 
     @Override
     public void registerTypeWrappers(TypeWrapperRegistry registry) {
+        asserLoaded();
+        if (registry.scriptType() == ScriptType.SERVER) {
+
+            registry.register(ModCollectionWrapper.class, (ContextFromFunction<ModCollectionWrapper>) (context, o) -> {
+                var mod = o.toString();
+                return new ModCollectionWrapper(new CommonGameContent.Mod(mod));
+            });
+
+            for (var value : addonMap().values()) {
+                value.registerTypeWrappers(registry);
+            }
+        }
     }
 
     @Override

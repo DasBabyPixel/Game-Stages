@@ -53,15 +53,25 @@ public interface CommonGameContent extends GameContent {
 
     @Override
     default @NonNull CommonGameContent filterType(@NonNull GameContentType<?> type) {
-        return new FilterType(this, type);
+        return new FilterType(this, (CommonGameContentType<?>) type);
     }
 
     interface Composite extends CommonGameContent {
         @NonNull Collection<? extends GameContent> content();
     }
 
-    record FilterType(@NonNull CommonGameContent base, @NonNull GameContentType<?> type) implements CommonGameContent {
-        public static final StreamCodec<RegistryFriendlyByteBuf, FilterType> STREAM_CODEC = StreamCodec.composite(CommonGameContent.STREAM_CODEC, FilterType::base, GameContentTypeSerializer.STREAM_CODEC, FilterType::type, FilterType::new);
+    record Mod(@NonNull String modId) implements CommonGameContent {
+        public static final StreamCodec<RegistryFriendlyByteBuf, Mod> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.STRING_UTF8, Mod::modId, Mod::new);
+
+        @Override
+        public @NonNull CommonGameContentSerializer<?> serializer() {
+            return CommonGameContentSerializer.MOD;
+        }
+    }
+
+    record FilterType(@NonNull CommonGameContent base,
+                      @NonNull CommonGameContentType<?> type) implements CommonGameContent {
+        public static final StreamCodec<RegistryFriendlyByteBuf, FilterType> STREAM_CODEC = StreamCodec.composite(CommonGameContent.STREAM_CODEC, FilterType::base, CommonGameContentType.STREAM_CODEC, FilterType::type, FilterType::new);
 
         @Override
         public @NonNull CommonGameContentSerializer<FilterType> serializer() {

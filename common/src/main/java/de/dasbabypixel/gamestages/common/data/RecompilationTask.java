@@ -1,5 +1,6 @@
 package de.dasbabypixel.gamestages.common.data;
 
+import de.dasbabypixel.gamestages.common.addon.AddonManager;
 import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.data.restriction.DuplicateReport;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryCompiler;
@@ -81,7 +82,7 @@ public class RecompilationTask {
     }
 
     public void firePostCompile() {
-        for (var addon : instance.addons()) {
+        for (var addon : AddonManager.instance().addons()) {
             addon.postCompileAll(instance, playerStages);
         }
     }
@@ -94,7 +95,7 @@ public class RecompilationTask {
             var compiledPredicate = predicateCompiler.compile(predicate);
             var compiledEntry = restrictionEntryCompiler.compile(restriction, compiledPredicate);
 
-            for (var addon : instance.addons()) {
+            for (var addon : AddonManager.instance().addons()) {
                 addon.postCompile(compiledEntry);
             }
 

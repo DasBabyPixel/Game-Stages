@@ -10,9 +10,9 @@ import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(Player.class)
 @Implements(@Interface(iface = de.dasbabypixel.gamestages.common.entity.Player.class, prefix = "gamestages$"))
-public abstract class MCPlayerMixin {
+public abstract class MCPlayerMixin implements de.dasbabypixel.gamestages.common.entity.Player {
     @Unique
-    private final PlayerStages game_Stages$playerStages = new PlayerStages((de.dasbabypixel.gamestages.common.entity.Player) this);
+    private final PlayerStages game_Stages$playerStages = new PlayerStages(this);
 
     public @NonNull PlayerStages gamestages$getGameStages() {
         return game_Stages$playerStages;

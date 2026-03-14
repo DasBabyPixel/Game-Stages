@@ -4,10 +4,10 @@ import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.data.DuplicatesException;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryCompiler;
 import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.KJSStagesWrapper;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.RegisterEventJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.StageEvents;
-import dev.latvian.mods.kubejs.core.ReloadableServerResourcesKJS;
 import dev.latvian.mods.kubejs.script.ScriptType;
 import dev.latvian.mods.kubejs.stages.StageCreationEvent;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
@@ -27,14 +27,25 @@ public class KJSListeners {
     }
 
     private static void handleAddReloadListener(AddReloadListenerEvent event) {
-        var serverResources = ((ReloadableServerResourcesKJS) event.getServerResources());
+        var serverResources = event.getServerResources();
+        var registryAccess = event.getRegistryAccess();
+        for (var addon : NeoAddonManager.instance().addons()) {
+            addon.initResources(serverResources, registryAccess);
+        }
         event.addListener((ResourceManagerReloadListener) resourceManager -> {
-            var scriptManager = serverResources.kjs$getServerScriptManager();
-            var registries = scriptManager.getRegistries();
             var instance = ServerGameStageManager.instance();
             instance.allowMutation();
             instance.reset();
-            StageEvents.REGISTER.post(ScriptType.SERVER, new RegisterEventJS(registries, instance));
+
+            for (var addon : NeoAddonManager.instance().addons()) {
+                addon.beforeRegisterEvent(instance, serverResources, registryAccess);
+            }
+
+            StageEvents.REGISTER.post(ScriptType.SERVER, new RegisterEventJS(instance));
+
+            for (var addon : NeoAddonManager.instance().addons()) {
+                addon.afterRegisterEvent(instance, serverResources, registryAccess);
+            }
             instance.disallowMutation();
             if (ServerGameStageManager.INSTANCE != null) {
                 pushUpdate(ServerGameStageManager.INSTANCE);

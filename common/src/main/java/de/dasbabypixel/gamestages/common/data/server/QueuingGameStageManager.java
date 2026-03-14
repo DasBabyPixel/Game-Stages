@@ -2,7 +2,7 @@ package de.dasbabypixel.gamestages.common.data.server;
 
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.GameStage;
-import de.dasbabypixel.gamestages.common.data.restriction.types.RestrictionEntry;
+import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
 import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
@@ -12,11 +12,6 @@ import java.util.function.Consumer;
 public class QueuingGameStageManager extends MutatableGameStageManager {
     public static final QueuingGameStageManager INSTANCE = new QueuingGameStageManager();
     private final List<Consumer<MutatableGameStageManager>> recorded = new ArrayList<>();
-
-    @Override
-    public @NonNull List<@NonNull Addon> addons() {
-        return List.of();
-    }
 
     @Override
     public void add(GameStage gameStage) {

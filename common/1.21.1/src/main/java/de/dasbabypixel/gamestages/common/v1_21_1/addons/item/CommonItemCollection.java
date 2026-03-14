@@ -1,0 +1,56 @@
+package de.dasbabypixel.gamestages.common.v1_21_1.addons.item;
+
+import de.dasbabypixel.gamestages.common.addons.item.ItemCollection;
+import de.dasbabypixel.gamestages.common.data.GameContentType;
+import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContent;
+import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContentSerializer;
+import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContentType;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.world.item.Item;
+import org.jspecify.annotations.NonNull;
+
+import java.util.Collection;
+
+public record CommonItemCollection(
+        @NonNull HolderSet<@NonNull Item> items) implements ItemCollection, CommonGameContent {
+    public static final CommonItemCollection EMPTY = new CommonItemCollection(HolderSet.empty());
+    public static final StreamCodec<RegistryFriendlyByteBuf, CommonItemCollection> STREAM_CODEC = ByteBufCodecs
+            .holderSet(Registries.ITEM)
+            .map(CommonItemCollection::new, CommonItemCollection::items);
+    public static final @NonNull CommonGameContentSerializer<CommonItemCollection> SERIALIZER = () -> CommonItemCollection.STREAM_CODEC;
+    public static final CommonGameContentType<CommonItemCollection> TYPE = new CommonGameContentType.AbstractGameContentType<>() {
+        @Override
+        public @NonNull CommonItemCollection modContent(String modId) {
+            var set = HolderSet.direct(BuiltInRegistries.ITEM
+                    .holders()
+                    .filter(r -> modId.equals(r.key().location().getNamespace()))
+                    .toList());
+            return new CommonItemCollection(set);
+        }
+    };
+
+    @Override
+    public @NonNull CommonGameContentSerializer<CommonItemCollection> serializer() {
+        return SERIALIZER;
+    }
+
+    @Override
+    public @NonNull GameContentType<?> type() {
+        return TYPE;
+    }
+
+    @Override
+    public @NonNull Collection<@NonNull Object> content() {
+        return items.stream().map(s -> (Object) s).toList();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return items.size() == 0;
+    }
+}
