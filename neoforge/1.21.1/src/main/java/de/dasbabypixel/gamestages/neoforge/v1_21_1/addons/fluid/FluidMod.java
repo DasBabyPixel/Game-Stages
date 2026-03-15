@@ -8,6 +8,6 @@ import static de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager.
 @Mod(BuildConstants.MOD_ID)
 public class FluidMod {
     public FluidMod() {
-        registerAddon(NeoFluidAddon::new);
+        registerAddon("fluid", NeoFluidAddon::new);
     }
 }

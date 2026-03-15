@@ -18,7 +18,6 @@ import de.dasbabypixel.gamestages.common.v1_21_1.data.flattener.CommonGameConten
 import de.dasbabypixel.gamestages.neoforge.NeoForgeInstances;
 import de.dasbabypixel.gamestages.neoforge.integration.Mods;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.EventRegistryImpl;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.commands.StageArgumentType;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.commands.StagesCommand;
@@ -91,6 +90,8 @@ public class NeoForgeEntrypoint {
         NeoForge.EVENT_BUS.addListener(this::handleServerAboutToStart);
         NeoForge.EVENT_BUS.addListener(this::handleServerStopped);
         NeoForge.EVENT_BUS.addListener(this::handlePlayerJoin);
+
+        ReloadHandler.registerListeners();
     }
 
     private synchronized void loadAndFreezeAddons() {
@@ -99,10 +100,14 @@ public class NeoForgeEntrypoint {
 
         NeoAddonManager.init();
         InterModComms.getMessages(BuildConstants.MOD_ID, s -> s.equals("register_addon")).forEach(msg -> {
-            var addon = (NeoAddon) msg.messageSupplier().get();
-            NeoAddonManager.instance().addAddon(addon);
+            var r = (NeoAddonManager.Registration) msg.messageSupplier().get();
+            NeoAddonManager.instance().addAddon(r.id(), r.addon());
         });
         NeoAddonManager.done();
+        var m = NeoAddonManager.instance();
+        for (var addon : m.addons()) {
+            addon.onRegister(m);
+        }
     }
 
     private synchronized ContentRegistryImpl contentRegistry() {

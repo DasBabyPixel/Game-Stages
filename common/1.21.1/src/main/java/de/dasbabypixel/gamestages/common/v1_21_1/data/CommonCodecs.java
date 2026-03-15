@@ -4,8 +4,7 @@ import de.dasbabypixel.gamestages.common.data.GameStage;
 import de.dasbabypixel.gamestages.common.data.restriction.CompositePreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionPredicate;
-import de.dasbabypixel.gamestages.common.data.restriction.predicates.And;
-import de.dasbabypixel.gamestages.common.data.restriction.predicates.Or;
+import de.dasbabypixel.gamestages.common.data.restriction.predicates.*;
 import de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.Registry;
@@ -29,6 +28,9 @@ public class CommonCodecs {
             case GameStage ignored -> RestrictionPredicateSerializer.GAME_STAGE;
             case And ignored -> RestrictionPredicateSerializer.AND;
             case Or ignored -> RestrictionPredicateSerializer.OR;
+            case Not ignored -> RestrictionPredicateSerializer.NOT;
+            case True ignored -> RestrictionPredicateSerializer.TRUE;
+            case False ignored -> RestrictionPredicateSerializer.FALSE;
             default -> throw new IllegalStateException("Unexpected value: " + predicate);
         };
     }
@@ -54,9 +56,15 @@ public class CommonCodecs {
         StreamCodec<ByteBuf, GameStage> GAME_STAGE_STREAM_CODEC = ByteBufCodecs.STRING_UTF8.map(GameStage::new, GameStage::name);
         StreamCodec<ByteBuf, And> AND_STREAM_CODEC = StreamCodec.unit(And.INSTANCE);
         StreamCodec<ByteBuf, Or> OR_STREAM_CODEC = StreamCodec.unit(Or.INSTANCE);
+        StreamCodec<ByteBuf, Not> NOT_STREAM_CODEC = StreamCodec.unit(Not.INSTANCE);
+        StreamCodec<ByteBuf, True> TRUE_STREAM_CODEC = StreamCodec.unit(True.INSTANCE);
+        StreamCodec<ByteBuf, False> FALSE_STREAM_CODEC = StreamCodec.unit(False.INSTANCE);
         RestrictionPredicateSerializer<GameStage> GAME_STAGE = () -> GAME_STAGE_STREAM_CODEC;
         RestrictionPredicateSerializer<And> AND = () -> AND_STREAM_CODEC;
         RestrictionPredicateSerializer<Or> OR = () -> OR_STREAM_CODEC;
+        RestrictionPredicateSerializer<Not> NOT = () -> NOT_STREAM_CODEC;
+        RestrictionPredicateSerializer<True> TRUE = () -> TRUE_STREAM_CODEC;
+        RestrictionPredicateSerializer<False> FALSE = () -> FALSE_STREAM_CODEC;
 
         StreamCodec<? super RegistryFriendlyByteBuf, T> streamCodec();
     }

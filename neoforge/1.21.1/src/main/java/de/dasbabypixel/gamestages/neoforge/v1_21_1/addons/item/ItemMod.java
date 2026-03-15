@@ -8,6 +8,6 @@ import static de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager.
 @Mod(BuildConstants.MOD_ID)
 public class ItemMod {
     public ItemMod() {
-        registerAddon(NeoItemAddon::new);
+        registerAddon("item", NeoItemAddon::new);
     }
 }

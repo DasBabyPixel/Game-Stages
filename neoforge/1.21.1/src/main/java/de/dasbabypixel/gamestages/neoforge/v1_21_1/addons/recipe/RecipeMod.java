@@ -8,6 +8,6 @@ import static de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager.
 @Mod(BuildConstants.MOD_ID)
 public class RecipeMod {
     public RecipeMod() {
-        registerAddon(NeoRecipeAddon::new);
+        registerAddon("recipe", NeoRecipeAddon::new);
     }
 }

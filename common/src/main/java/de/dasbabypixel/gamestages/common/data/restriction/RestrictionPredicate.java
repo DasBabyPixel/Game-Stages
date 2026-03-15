@@ -7,24 +7,28 @@ import org.jspecify.annotations.NonNull;
 import java.util.List;
 
 public interface RestrictionPredicate {
-    default @NonNull CompositePreparedRestrictionPredicate prepare() {
+    default @NonNull PreparedRestrictionPredicate prepare() {
         return prepare(List.of());
     }
 
-    default @NonNull CompositePreparedRestrictionPredicate prepare(@NonNull PreparedRestrictionPredicate dependency1) {
+    default @NonNull PreparedRestrictionPredicate prepare(@NonNull PreparedRestrictionPredicate dependency1) {
         return prepare(List.of(dependency1));
     }
 
-    default @NonNull CompositePreparedRestrictionPredicate prepare(@NonNull PreparedRestrictionPredicate dependency1, @NonNull PreparedRestrictionPredicate dependency2) {
+    default @NonNull PreparedRestrictionPredicate prepare(@NonNull PreparedRestrictionPredicate dependency1, @NonNull PreparedRestrictionPredicate dependency2) {
         return prepare(List.of(dependency1, dependency2));
     }
 
-    default @NonNull CompositePreparedRestrictionPredicate prepare(@NonNull PreparedRestrictionPredicate @NonNull ... dependencies) {
+    default @NonNull PreparedRestrictionPredicate prepare(@NonNull PreparedRestrictionPredicate @NonNull ... dependencies) {
         return prepare(List.of(dependencies));
     }
 
-    default @NonNull CompositePreparedRestrictionPredicate prepare(@NonNull List<PreparedRestrictionPredicate> dependencies) {
-        return new CompositePreparedRestrictionPredicate(this, dependencies);
+    default @NonNull PreparedRestrictionPredicate prepare(@NonNull List<PreparedRestrictionPredicate> dependencies) {
+        return new CompositePreparedRestrictionPredicate(this, optimize(dependencies));
+    }
+
+    default List<PreparedRestrictionPredicate> optimize(List<PreparedRestrictionPredicate> list) {
+        return list;
     }
 
     boolean accepts(@NonNull List<? extends @NonNull PreparedRestrictionPredicate> dependencies);
@@ -32,8 +36,7 @@ public interface RestrictionPredicate {
     boolean test(@NonNull List<? extends @NonNull CompiledRestrictionPredicate> dependencies, @NonNull Player player);
 
     @Override
-    @NonNull
-    String toString();
+    @NonNull String toString();
 
     default void append(@NonNull StringBuilder builder, @NonNull List<? extends @NonNull PreparedRestrictionPredicate> dependencies) {
         if (dependencies.isEmpty()) {

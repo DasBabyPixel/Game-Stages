@@ -32,7 +32,7 @@ public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
 
     @Override
     public void beforeRegisterEvent(AbstractGameStageManager gameStageManager, ReloadableServerResources serverResources, RegistryAccess registryAccess) {
-        var recipeTree = new NeoRecipeTree(serverResources.getRecipeManager(), registryAccess);
+        var recipeTree = new NeoRecipeIndex(serverResources.getRecipeManager(), this, gameStageManager, registryAccess);
         System.out.println(recipeTree.findRelated(Items.OAK_PLANKS).size());
     }
 

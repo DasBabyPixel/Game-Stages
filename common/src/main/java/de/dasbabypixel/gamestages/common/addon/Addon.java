@@ -15,6 +15,15 @@ public interface Addon {
     default void postCompileAll(@NonNull AbstractGameStageManager instance, @NonNull PlayerStages stages) {
     }
 
-    default void clientPostSyncUnlockedStages(PlayerStages playerStages) {
+    default void preReload(@NonNull AbstractGameStageManager instance) {
+    }
+
+    default void postReload(@NonNull AbstractGameStageManager instance) {
+    }
+
+    default void clientPostSyncUnlockedStages(@NonNull PlayerStages playerStages) {
+    }
+
+    default void onRegister(@NonNull AddonManager<? extends Addon> addonManager) {
     }
 }
