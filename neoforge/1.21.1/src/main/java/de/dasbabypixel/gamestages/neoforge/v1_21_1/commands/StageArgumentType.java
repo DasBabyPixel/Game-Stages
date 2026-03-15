@@ -37,9 +37,6 @@ public class StageArgumentType implements ArgumentType<StageArgumentType.Provide
 
     @Override
     public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
-        System.out.println("Suggest" + Thread.currentThread().getName());
-        System.out.println("Suggest" + Thread.currentThread().getName());
-        System.out.println("Suggest" + Thread.currentThread().getName());
         AbstractGameStageManager manager;
         if (FMLEnvironment.dist.isClient()) {
             if (context.getSource() instanceof ClientSuggestionProvider) {

@@ -15,53 +15,19 @@ public class JEIAddon implements NeoAddon {
     @Override
     public void postCompileAll(@NonNull AbstractGameStageManager instance, @NonNull PlayerStages stages) {
         if (instance instanceof ClientGameStageManager) {
+            // Only execute JEI logic when the manager is for the client
+            // In single-player there is a server and client manager
             singleRefreshAll(instance, stages);
 
             for (var addon : StagesJEIPlugin.addons()) {
                 addon.postCompileAll(instance, stages);
             }
-            System.out.println("Client postcompile done");
-            System.out.println("Client postcompile done");
-            System.out.println("Client postcompile done");
-            System.out.println("Client postcompile done");
-            System.out.println("Client postcompile done");
-        } else {
-            System.out.println("Ignoring server postCompile");
-            System.out.println("Ignoring server postCompile");
-            System.out.println("Ignoring server postCompile");
-            System.out.println("Ignoring server postCompile");
-            System.out.println("Ignoring server postCompile");
         }
-
-//        iterate(stages, CommonFluidCollection.TYPE, entry -> {
-//            if (entry instanceof NeoFluidRestrictionEntry.Compiled(var e, var gameContent, var predicate)) {
-//                if (!e.hideInJEI()) return;
-//                predicate.addNotifier(newTest -> updateVisibility(newTest, gameContent.fluids(), StagesJEIPlugin::showFluids, StagesJEIPlugin::hideFluids));
-//            }
-//        });
-//        iterate(stages, CommonRecipeCollection.TYPE, entry -> {
-//            if (entry instanceof NeoRecipeRestrictionEntry.Compiled(var e, var gameContent, var predicate)) {
-//                if (!e.hideInJEI()) return;
-//                predicate.addNotifier(newTest -> System.out.println(gameContent.content().size() + ": " + newTest));
-//            }
-//        });
     }
 
     public void singleRefreshAll(@NonNull AbstractGameStageManager instance, @NonNull PlayerStages stages) {
         for (var addon : StagesJEIPlugin.addons()) {
             addon.singleRefreshAll(instance, stages);
         }
-//        iterate(stages, CommonFluidCollection.TYPE, entry -> {
-//            if (entry instanceof NeoFluidRestrictionEntry.Compiled(var e, var gameContent, var predicate)) {
-//                if (!e.hideInJEI()) return;
-//                updateVisibility(predicate.test(), gameContent.fluids(), StagesJEIPlugin::showFluids, StagesJEIPlugin::hideFluids);
-//            }
-//        });
-//        iterate(stages, CommonRecipeCollection.TYPE, entry -> {
-//            if (entry instanceof NeoRecipeRestrictionEntry.Compiled(var e, var gameContent, var predicate)) {
-//                if (!e.hideInJEI()) return;
-//                System.out.println(gameContent.content().size() + ": " + predicate.test());
-//            }
-//        });
     }
 }

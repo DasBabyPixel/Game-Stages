@@ -5,10 +5,7 @@ import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPre
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemRestrictionPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.VItemAddon;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.EventRegistry;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonJEI;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonKJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.*;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.RegisterEventJS;
 import dev.latvian.mods.kubejs.script.SourceLine;
 import dev.latvian.mods.kubejs.script.TypeWrapperRegistry;
@@ -33,7 +30,12 @@ public class NeoItemAddon extends VItemAddon implements NeoAddon {
 
     @Override
     public NeoAddonJEI createJEISupport() {
-        return new ItemJEI(this);
+        return new ItemJEI();
+    }
+
+    @Override
+    public NeoAddonProbeJS createProbeJSSupport() {
+        return new ItemProbeJS();
     }
 
     public static class KJS implements NeoAddonKJS {

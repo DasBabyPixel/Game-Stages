@@ -3,8 +3,11 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import de.dasbabypixel.gamestages.common.data.GameStage;
+import de.dasbabypixel.gamestages.common.data.PlayerStages;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -25,7 +28,11 @@ public class StagesCommand {
         );
         cmd.then(Commands.literal("remove")
                 .then(Commands.argument("target", EntityArgument.players())
-                        .then(Commands.argument("stage", new StageArgumentType(true))
+                        .then(Commands.argument("stage", new StageArgumentType(false))
+                                .suggests((context, builder) -> {
+                                    var targets  = EntityArgument.getPlayers(context, "target");
+                                    return SharedSuggestionProvider.suggest(targets.stream().map(Player::getGameStages).map(PlayerStages::getAll).flatMap(Set::stream).map(GameStage::name).distinct(), builder);
+                                })
                                 .executes(StagesCommand::removeTargetStage)
                         )
                 )

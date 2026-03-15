@@ -5,9 +5,7 @@ import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPre
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.fluid.VFluidAddon;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.CommonFluidRestrictionPacket;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.EventRegistry;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonKJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.*;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.RegisterEventJS;
 import dev.latvian.mods.kubejs.script.SourceLine;
 import dev.latvian.mods.kubejs.script.TypeWrapperRegistry;
@@ -26,6 +24,16 @@ public class NeoFluidAddon extends VFluidAddon implements NeoAddon {
     @Override
     public NeoAddonKJS createKubeJSSupport() {
         return new KJS();
+    }
+
+    @Override
+    public NeoAddonJEI createJEISupport() {
+        return new FluidJEI();
+    }
+
+    @Override
+    public NeoAddonProbeJS createProbeJSSupport() {
+        return new FluidProbeJS();
     }
 
     public static class KJS implements NeoAddonKJS {

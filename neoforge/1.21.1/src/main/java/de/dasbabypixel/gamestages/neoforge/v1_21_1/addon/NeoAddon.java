@@ -16,6 +16,11 @@ public interface NeoAddon extends VAddon {
         };
     }
 
+    default NeoAddonProbeJS createProbeJSSupport() {
+        return new NeoAddonProbeJS() {
+        };
+    }
+
     default void initResources(ReloadableServerResources serverResources, RegistryAccess registryAccess) {
     }
 

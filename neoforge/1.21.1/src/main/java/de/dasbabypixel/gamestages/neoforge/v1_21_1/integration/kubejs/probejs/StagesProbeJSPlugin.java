@@ -1,8 +1,8 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.probejs;
 
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.fluid.FluidCollectionWrapper;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.item.ItemCollectionWrapper;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.RecipeCollectionWrapper;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonProbeJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.ModCollectionWrapper;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.EventJSBase;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.RegisterEventJS;
@@ -12,11 +12,26 @@ import moe.wolfgirl.probejs.lang.typescript.TypeScriptFile;
 import moe.wolfgirl.probejs.lang.typescript.code.type.Types;
 import moe.wolfgirl.probejs.plugin.ProbeJSPlugin;
 
+import java.util.HashMap;
 import java.util.Map;
 
-import static moe.wolfgirl.probejs.lang.typescript.code.type.Types.*;
+import static moe.wolfgirl.probejs.lang.typescript.code.type.Types.or;
+import static moe.wolfgirl.probejs.lang.typescript.code.type.Types.primitive;
 
 public class StagesProbeJSPlugin extends ProbeJSPlugin {
+    private final Map<NeoAddon, NeoAddonProbeJS> addonMap = new HashMap<>();
+    private boolean populated;
+
+    private Map<NeoAddon, NeoAddonProbeJS> addonMap() {
+        if (!populated) {
+            populated = true;
+            for (var addon : NeoAddonManager.instance().addons()) {
+                addonMap.put(addon, addon.createProbeJSSupport());
+            }
+        }
+        return addonMap;
+    }
+
     @Override
     public void modifyClasses(ScriptDump scriptDump, Map<ClassPath, TypeScriptFile> globalClasses) {
         this.findClassFile(globalClasses, EventJSBase.class).codeList.clear();
@@ -25,14 +40,12 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
 
     @Override
     public void assignType(ScriptDump scriptDump) {
-        var item = or(primitive("`${Special.Item}`"), primitive("`.${Special.Item}`"), primitive("`#${Special.ItemTag}`"), primitive("`@${Special.Mod}`"), type(ItemCollectionWrapper.class).asArray());
-        scriptDump.assignType(ItemCollectionWrapper.class, item);
-        var fluid = or(primitive("`${Special.Fluid}`"), primitive("`.${Special.Fluid}`"), primitive("`#${Special.FluidTag}`"), primitive("`@${Special.Mod}`"), type(FluidCollectionWrapper.class).asArray());
-        scriptDump.assignType(FluidCollectionWrapper.class, fluid);
-        var recipe = or(primitive("`${Special.RecipeId}`"), primitive("`@${Special.Mod}`"), type(RecipeCollectionWrapper.class).asArray());
-        scriptDump.assignType(RecipeCollectionWrapper.class, recipe);
         var mod = or(primitive("`${Special.Mod}`"));
         scriptDump.assignType(ModCollectionWrapper.class, mod);
+
+        for (var addon : addonMap().values()) {
+            addon.assignType(scriptDump);
+        }
     }
 
     @Override

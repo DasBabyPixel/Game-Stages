@@ -99,8 +99,6 @@ public class NeoForgeEntrypoint {
 
         NeoAddonManager.init();
         InterModComms.getMessages(BuildConstants.MOD_ID, s -> s.equals("register_addon")).forEach(msg -> {
-            System.out.println("receive " + Thread.currentThread().getName());
-            System.out.println(msg);
             var addon = (NeoAddon) msg.messageSupplier().get();
             NeoAddonManager.instance().addAddon(addon);
         });

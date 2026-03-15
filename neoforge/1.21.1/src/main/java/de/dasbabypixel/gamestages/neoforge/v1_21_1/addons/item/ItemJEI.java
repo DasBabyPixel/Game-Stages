@@ -19,7 +19,7 @@ public class ItemJEI implements NeoAddonJEI {
     private boolean cachePopulated = false;
     private IJeiRuntime runtime;
 
-    public ItemJEI(NeoItemAddon addon) {
+    public ItemJEI() {
     }
 
     private Map<Item, List<ItemStack>> getItemCache() {

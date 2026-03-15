@@ -7,9 +7,7 @@ import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeCollection;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeRestrictionPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.VRecipeAddon;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.EventRegistry;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonKJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.*;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.RegisterEventJS;
 import dev.latvian.mods.kubejs.script.SourceLine;
 import dev.latvian.mods.kubejs.script.TypeWrapperRegistry;
@@ -41,6 +39,16 @@ public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
     @Override
     public NeoAddonKJS createKubeJSSupport() {
         return new KJS();
+    }
+
+    @Override
+    public NeoAddonJEI createJEISupport() {
+        return new RecipeJEI();
+    }
+
+    @Override
+    public NeoAddonProbeJS createProbeJSSupport() {
+        return new RecipeProbeJS();
     }
 
     private static class KJS implements NeoAddonKJS {
