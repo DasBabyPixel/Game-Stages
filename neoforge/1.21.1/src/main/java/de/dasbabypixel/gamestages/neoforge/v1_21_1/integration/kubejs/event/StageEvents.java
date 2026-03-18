@@ -1,5 +1,6 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event;
 
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.RegisterEventJS;
 import dev.latvian.mods.kubejs.event.EventGroup;
 import dev.latvian.mods.kubejs.event.EventHandler;
 

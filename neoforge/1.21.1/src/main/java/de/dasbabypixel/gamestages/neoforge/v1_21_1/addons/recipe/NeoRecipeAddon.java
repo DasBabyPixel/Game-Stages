@@ -8,7 +8,7 @@ import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeColle
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeRestrictionPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.VRecipeAddon;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.*;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.RegisterEventJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.RegisterEventJS;
 import dev.latvian.mods.kubejs.script.SourceLine;
 import dev.latvian.mods.kubejs.script.TypeWrapperRegistry;
 import net.minecraft.core.RegistryAccess;

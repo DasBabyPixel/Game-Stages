@@ -25,7 +25,7 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.Attachments;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.PlatformPlayerStagesProviderImpl;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.entity.PlatformPlayerProviderImpl;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.NeoModProvider;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.RegisterEventJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.RegisterEventJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.probejs.StagesProbeJSPlugin;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.network.NeoNetworkHandler;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.network.PlatformPacketDistributorImpl;

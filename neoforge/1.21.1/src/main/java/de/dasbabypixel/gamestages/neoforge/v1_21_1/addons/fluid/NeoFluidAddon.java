@@ -6,7 +6,7 @@ import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.fluid.VFluidAddon;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.CommonFluidRestrictionPacket;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.*;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.RegisterEventJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.RegisterEventJS;
 import dev.latvian.mods.kubejs.script.SourceLine;
 import dev.latvian.mods.kubejs.script.TypeWrapperRegistry;
 

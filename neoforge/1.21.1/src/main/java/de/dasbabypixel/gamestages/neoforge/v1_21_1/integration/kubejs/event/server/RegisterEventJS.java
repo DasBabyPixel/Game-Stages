@@ -1,9 +1,11 @@
-package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event;
+package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server;
 
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.GameStage;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.CollectionWrapper;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.ModContentWrapper;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.EventJSBase;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.EventType;
 import org.jspecify.annotations.NonNull;
 
 public final class RegisterEventJS extends EventJSBase<RegisterEventJS> {
