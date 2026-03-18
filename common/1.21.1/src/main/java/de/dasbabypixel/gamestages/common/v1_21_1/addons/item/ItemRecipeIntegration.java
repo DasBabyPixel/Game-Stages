@@ -8,6 +8,7 @@ public class ItemRecipeIntegration {
     public void register(AddonManager<?> addonManager) {
         addonManager.addMessageListener(RecipeMessages.ORIGIN_ID, ResolveItemStackPredicate.ID, (addon, objectMessage) -> {
             var message = (ResolveItemStackPredicate) objectMessage;
+            var item = message.itemStack.getItem();
             
         });
     }

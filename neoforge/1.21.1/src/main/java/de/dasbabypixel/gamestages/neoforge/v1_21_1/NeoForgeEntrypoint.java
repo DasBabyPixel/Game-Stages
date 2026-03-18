@@ -26,6 +26,7 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.PlatformPlayerStagesProv
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.entity.PlatformPlayerProviderImpl;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.NeoModProvider;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.RegisterEventJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.probejs.StagesProbeJSPlugin;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.network.NeoNetworkHandler;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.network.PlatformPacketDistributorImpl;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
@@ -137,6 +138,10 @@ public class NeoForgeEntrypoint {
                 addon.createKubeJSSupport().registerEventExtensions(eventRegistry);
             }
             eventRegistry.freeze();
+
+            if (Mods.PROBEJS.isLoaded()) {
+                StagesProbeJSPlugin.eventRegistry = eventRegistry;
+            }
         }
     }
 

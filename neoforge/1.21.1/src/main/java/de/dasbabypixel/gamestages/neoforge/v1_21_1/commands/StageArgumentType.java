@@ -61,6 +61,7 @@ public class StageArgumentType implements ArgumentType<StageArgumentType.Provide
 
         return context -> {
             var stage = new GameStage(stageName);
+            if (!enforceExistence) return stage;
 
             AbstractGameStageManager manager;
 

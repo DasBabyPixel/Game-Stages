@@ -1,24 +1,32 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.probejs;
 
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.EventRegistryImpl;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonProbeJS;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.ModCollectionWrapper;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.ModContentWrapper;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.EventJSBase;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.RegisterEventJS;
+import dev.latvian.mods.kubejs.event.KubeEvent;
 import moe.wolfgirl.probejs.lang.java.clazz.ClassPath;
 import moe.wolfgirl.probejs.lang.typescript.ScriptDump;
 import moe.wolfgirl.probejs.lang.typescript.TypeScriptFile;
+import moe.wolfgirl.probejs.lang.typescript.code.Code;
+import moe.wolfgirl.probejs.lang.typescript.code.member.ClassDecl;
+import moe.wolfgirl.probejs.lang.typescript.code.member.MethodDecl;
+import moe.wolfgirl.probejs.lang.typescript.code.member.ParamDecl;
+import moe.wolfgirl.probejs.lang.typescript.code.type.BaseType;
+import moe.wolfgirl.probejs.lang.typescript.code.type.TSVariableType;
 import moe.wolfgirl.probejs.lang.typescript.code.type.Types;
 import moe.wolfgirl.probejs.plugin.ProbeJSPlugin;
+import net.minecraft.commands.synchronization.SingletonArgumentInfo;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-import static moe.wolfgirl.probejs.lang.typescript.code.type.Types.or;
 import static moe.wolfgirl.probejs.lang.typescript.code.type.Types.primitive;
 
 public class StagesProbeJSPlugin extends ProbeJSPlugin {
+    private static final BaseType TYPE_EVENT_JS_BASE = Types.type(EventJSBase.class);
+    public static EventRegistryImpl eventRegistry;
     private final Map<NeoAddon, NeoAddonProbeJS> addonMap = new HashMap<>();
     private boolean populated;
 
@@ -34,14 +42,78 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
 
     @Override
     public void modifyClasses(ScriptDump scriptDump, Map<ClassPath, TypeScriptFile> globalClasses) {
-        this.findClassFile(globalClasses, EventJSBase.class).codeList.clear();
-        this.findClassFile(globalClasses, RegisterEventJS.class).codeList.clear();
+        globalClasses.remove(new ClassPath(SingletonArgumentInfo.Template.class));
+
+        var typeConverter = scriptDump.transpiler.typeConverter;
+        for (var entry : eventRegistry.types().entrySet()) {
+            var cls = entry.getKey();
+            var eventType = entry.getValue();
+
+            var classFile = findClassFile(globalClasses, cls);
+            var newCode = new ArrayList<Code>();
+            for (var code : classFile.codeList) {
+                if (code instanceof ClassDecl decl) {
+                    decl = new ClassDecl(decl.name, null, List.of(Types.type(KubeEvent.class)), List.of());
+                    newCode.add(decl);
+
+                    for (var entry2 : eventType.functions().entrySet()) {
+                        var name = entry2.getKey();
+                        var function = entry2.getValue();
+                        var descriptor = function.descriptor();
+                        var returnType = typeConverter.convertType(descriptor.returnType().probeType());
+
+                        var variableTypes = new ArrayList<TSVariableType>();
+                        var params = new ArrayList<ParamDecl>();
+                        var nameId = 0;
+                        for (var i = 0; i < descriptor.parameters().length; i++) {
+                            var param = descriptor.parameters()[i];
+                            var last = i == descriptor.parameters().length - 1;
+                            var varArg = last && descriptor.varArgs();
+                            var paramName = "arg" + (nameId++);
+                            var paramType = varArg ? typeConverter.convertType(param
+                                    .probeType()
+                                    .componentType()) : typeConverter.convertType(param.probeType());
+                            params.add(new ParamDecl(paramName, paramType, varArg, false));
+                        }
+
+                        var m = new MethodDecl(name, variableTypes, params, returnType);
+                        decl.methods.add(m);
+                    }
+                }
+            }
+            classFile.codeList.clear();
+            for (var code : newCode) {
+                classFile.addCode(code);
+            }
+        }
+    }
+
+    @Override
+    public Set<Class<?>> provideJavaClass(ScriptDump scriptDump) {
+        var eventClasses = new HashSet<Class<?>>();
+        for (var entry : eventRegistry.types().entrySet()) {
+            eventClasses.add(entry.getKey());
+            for (var function : entry.getValue().functions().values()) {
+                eventClasses.add(function.descriptor().returnType().probeType().asClass());
+                for (var i = 0; i < function.descriptor().parameters().length; i++) {
+                    var parameter = function.descriptor().parameters()[i];
+                    var last = i == function.descriptor().parameters().length - 1;
+                    if (last && function.descriptor().varArgs()) {
+                        eventClasses.add(parameter.probeType().asClass().componentType());
+                    } else {
+                        eventClasses.add(parameter.probeType().asClass());
+                    }
+                }
+            }
+        }
+        System.out.println(eventClasses);
+        return eventClasses;
     }
 
     @Override
     public void assignType(ScriptDump scriptDump) {
-        var mod = or(primitive("`${Special.Mod}`"));
-        scriptDump.assignType(ModCollectionWrapper.class, mod);
+        var mod = primitive("`${Special.Mod}`").asArray();
+        scriptDump.assignType(ModContentWrapper.class, mod);
 
         for (var addon : addonMap().values()) {
             addon.assignType(scriptDump);
@@ -50,7 +122,7 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
 
     @Override
     public void addGlobals(ScriptDump scriptDump) {
-        var destructurable = Types.primitive("""
+        var destructurable = primitive("""
                 type FunctionKeys<T> = {
                   [K in keyof T]: T[K] extends (...args: any[]) => any ? K : never
                 }[keyof T];

@@ -2,26 +2,20 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event;
 
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.GameStage;
-import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContent;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.JSParserBase;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.CollectionWrapper;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.ModContentWrapper;
 import org.jspecify.annotations.NonNull;
-
-import java.util.Arrays;
 
 public final class RegisterEventJS extends EventJSBase<RegisterEventJS> {
     public static final EventType<RegisterEventJS> TYPE = new EventType<>(RegisterEventJS.class);
 
     static {
         TYPE.addFunction("registerStage", (event, cx, args) -> {
-            var stage = new GameStage(cx.toString(args[0]));
+            var stage = new GameStage((String) args[0]);
             event.stageManager.add(stage);
             return stage;
-        });
-        TYPE.addFunction("mods", (event, cx, args) -> JSParserBase.parse(Arrays
-                .stream(args)
-                .map(cx::toString)
-                .map(CommonGameContent.Mod::new)
-                .toList()));
+        }, GameStage.class, String.class);
+        TYPE.addFunctionVarArgs("mods", (event, cx, args) -> args[0], CollectionWrapper.class, CollectionWrapper.class, ModContentWrapper[].class);
     }
 
     private final @NonNull AbstractGameStageManager stageManager;

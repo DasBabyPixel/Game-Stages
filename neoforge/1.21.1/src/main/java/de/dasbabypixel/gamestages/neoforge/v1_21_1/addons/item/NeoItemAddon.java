@@ -9,9 +9,6 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.*;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.RegisterEventJS;
 import dev.latvian.mods.kubejs.script.SourceLine;
 import dev.latvian.mods.kubejs.script.TypeWrapperRegistry;
-import dev.latvian.mods.rhino.type.TypeInfo;
-
-import static de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.KJSHelper.drop;
 
 public class NeoItemAddon extends VItemAddon implements NeoAddon {
     @Override
@@ -43,17 +40,16 @@ public class NeoItemAddon extends VItemAddon implements NeoAddon {
 
         @Override
         public void registerEventExtensions(EventRegistry registry) {
-            var predicateType = TypeInfo.of(PreparedRestrictionPredicate.class);
             var type = registry.get(RegisterEventJS.class);
-            type.addFunction("items", (event, cx, args) -> itemParser.parse(cx, args));
-            type.addFunction("restrictItems", (event, cx, args) -> {
-                var itemsContent = itemParser.parse(cx, drop(args, 1));
-                var predicate = (PreparedRestrictionPredicate) cx.jsToJava(args[0], predicateType);
+            type.addFunctionVarArgs("items", (event, cx, args) -> args[0], ItemCollectionWrapper.class, ItemCollectionWrapper.class, ItemCollectionWrapper[].class);
+            type.addFunctionVarArgs("restrictItems", (event, cx, args) -> {
+                var itemsContent = ((ItemCollectionWrapper) args[1]).content();
+                var predicate = (PreparedRestrictionPredicate) args[0];
                 var source = SourceLine.of(cx).toString();
                 return event
                         .stageManager()
                         .addRestriction(new NeoItemRestrictionEntry(predicate, RestrictionEntryOrigin.string(source), itemsContent));
-            });
+            }, ItemCollectionWrapper.class, NeoItemRestrictionEntry.class, PreparedRestrictionPredicate.class, ItemCollectionWrapper[].class);
         }
 
         @Override

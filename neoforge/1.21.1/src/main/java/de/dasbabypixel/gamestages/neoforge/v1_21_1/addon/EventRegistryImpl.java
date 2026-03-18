@@ -20,6 +20,10 @@ public class EventRegistryImpl implements EventRegistry {
         types.put(cls, type);
     }
 
+    public Map<Class<?>, EventType<?>> types() {
+        return types;
+    }
+
     public void freeze() {
         for (var value : types.values()) {
             value.freeze();

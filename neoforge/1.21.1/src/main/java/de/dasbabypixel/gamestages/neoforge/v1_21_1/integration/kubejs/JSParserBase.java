@@ -14,6 +14,7 @@ import net.minecraft.tags.TagKey;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -24,7 +25,8 @@ public class JSParserBase {
 
     public JSParserBase() {
         registerHandler(Wrapper.class, WrapperHandler.INSTANCE);
-        registerHandler(Collection.class, CollectionParser.INSTANCE);
+        registerHandler(ContentWrapper.class, ContentWrapperHandler.INSTANCE);
+        registerHandler(Iterable.class, IterableParser.INSTANCE);
         registerHandler(CommonGameContent.class, ContentIdentityHandler.INSTANCE);
     }
 
@@ -34,7 +36,8 @@ public class JSParserBase {
         return new CommonGameContent.Union((List<CommonGameContent>) list);
     }
 
-    public CommonGameContent parse(Context cx, Object... inputs) {
+    @SafeVarargs
+    public final <T> CommonGameContent parse(Context cx, T... inputs) {
         try {
             var list = parse(inputs);
             return parse(list);
@@ -43,21 +46,29 @@ public class JSParserBase {
         }
     }
 
-    protected List<CommonGameContent> parse(Object... inputs) throws ParseException {
-        var parseQueue = new ArrayDeque<>(Arrays.asList(inputs));
+    @SafeVarargs
+    protected final <T> List<CommonGameContent> parse(T... inputs) throws ParseException {
+        var parseQueue = new ArrayDeque<Object>(Arrays.asList(inputs));
         var usedHandlers = new ArrayList<Handler<?>>();
         var content = new ArrayList<CommonGameContent>();
 
         for (var input = parseQueue.poll(); input != null; input = parseQueue.poll()) {
-            do {
+            while (true) {
+                if (input instanceof CommonGameContent c) {
+                    content.add(c);
+                    break;
+                }
+
                 var handler = getHandler(input.getClass());
                 usedHandlers.add(handler);
                 input = handler.read(input, parseQueue::add);
                 if (input instanceof CommonGameContent c) {
                     content.add(c);
-                    input = null;
+                    break;
                 }
-            } while (input != null);
+
+                if (input == null) break;
+            }
         }
 
         for (var usedHandler : usedHandlers) {
@@ -72,7 +83,6 @@ public class JSParserBase {
         registerHandler(cls, new RegistryParser<>(registry, transform));
         registerHandler(Holder.class, new RegistryParserCollector<>(contentCreator));
         registerHandler(TagKey.class, new TagParser<>(registry, contentCreator));
-
         registerHandler(CharSequence.class, (value, parseAppender) -> {
             var string = value.toString();
             if (string.startsWith("@")) {
@@ -95,6 +105,7 @@ public class JSParserBase {
 
     @SuppressWarnings("unchecked")
     private Handler<Object> getHandler(Class<?> cls) throws ParseException {
+        if (cls.isArray()) return ArrayHandler.INSTANCE;
         if (handlerCache.containsKey(cls)) {
             return (Handler<Object>) handlerCache.get(cls);
         }
@@ -125,6 +136,29 @@ public class JSParserBase {
         }
     }
 
+    public record ArrayHandler() implements Handler<Object> {
+        public static final ArrayHandler INSTANCE = new ArrayHandler();
+
+        @Override
+        public @Nullable Object read(Object value, Consumer<Object> parseAppender) {
+            var len = Array.getLength(value);
+            if (len == 1) return Array.get(value, 0);
+            for (var i = 0; i < len; i++) {
+                parseAppender.accept(Array.get(value, i));
+            }
+            return null;
+        }
+    }
+
+    public record ContentWrapperHandler() implements Handler<ContentWrapper> {
+        public static final ContentWrapperHandler INSTANCE = new ContentWrapperHandler();
+
+        @Override
+        public @Nullable Object read(ContentWrapper value, Consumer<Object> parseAppender) {
+            return value.content();
+        }
+    }
+
     public record WrapperHandler() implements Handler<Wrapper> {
         public static final WrapperHandler INSTANCE = new WrapperHandler();
 
@@ -135,17 +169,19 @@ public class JSParserBase {
     }
 
     @SuppressWarnings("rawtypes")
-    public record CollectionParser() implements Handler<Collection> {
-        public static final CollectionParser INSTANCE = new CollectionParser();
+    public record IterableParser() implements Handler<Iterable> {
+        public static final IterableParser INSTANCE = new IterableParser();
 
         @Override
-        public @Nullable Object read(Collection value, Consumer<Object> parseAppender) {
-            if (value.size() == 1) {
-                return value.iterator().next();
-            }
-            for (var o : value) {
-                parseAppender.accept(o);
-            }
+        public @Nullable Object read(Iterable value, Consumer<Object> parseAppender) {
+            var it = value.iterator();
+            if (!it.hasNext()) return null;
+            var first = it.next();
+            if (!it.hasNext()) return first;
+            parseAppender.accept(first);
+            do {
+                parseAppender.accept(it.next());
+            } while (it.hasNext());
             return null;
         }
     }

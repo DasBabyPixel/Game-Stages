@@ -9,9 +9,6 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.*;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.RegisterEventJS;
 import dev.latvian.mods.kubejs.script.SourceLine;
 import dev.latvian.mods.kubejs.script.TypeWrapperRegistry;
-import dev.latvian.mods.rhino.type.TypeInfo;
-
-import static de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.KJSHelper.drop;
 
 public class NeoFluidAddon extends VFluidAddon implements NeoAddon {
     @Override
@@ -41,17 +38,16 @@ public class NeoFluidAddon extends VFluidAddon implements NeoAddon {
 
         @Override
         public void registerEventExtensions(EventRegistry registry) {
-            var predicateType = TypeInfo.of(PreparedRestrictionPredicate.class);
             var type = registry.get(RegisterEventJS.class);
-            type.addFunction("fluids", (event, cx, args) -> fluidParser.parse(cx, args));
-            type.addFunction("restrictFluids", (event, cx, args) -> {
-                var fluidsContent = fluidParser.parse(cx, drop(args, 1));
-                var predicate = (PreparedRestrictionPredicate) cx.jsToJava(args[0], predicateType);
+            type.addFunctionVarArgs("fluids", (event, cx, args) -> args[0], FluidCollectionWrapper.class, FluidCollectionWrapper.class, FluidCollectionWrapper[].class);
+            type.addFunctionVarArgs("restrictFluids", (event, cx, args) -> {
+                var fluidsContent = ((FluidCollectionWrapper) args[1]).content();
+                var predicate = (PreparedRestrictionPredicate) args[0];
                 var source = SourceLine.of(cx).toString();
                 return event
                         .stageManager()
                         .addRestriction(new NeoFluidRestrictionEntry(predicate, RestrictionEntryOrigin.string(source), fluidsContent));
-            });
+            }, FluidCollectionWrapper.class, NeoFluidRestrictionEntry.class, PreparedRestrictionPredicate.class, FluidCollectionWrapper[].class);
         }
 
         @Override

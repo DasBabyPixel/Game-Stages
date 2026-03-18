@@ -11,12 +11,8 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.*;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.RegisterEventJS;
 import dev.latvian.mods.kubejs.script.SourceLine;
 import dev.latvian.mods.kubejs.script.TypeWrapperRegistry;
-import dev.latvian.mods.rhino.type.TypeInfo;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.server.ReloadableServerResources;
-import net.minecraft.world.item.Items;
-
-import static de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.KJSHelper.drop;
 
 public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
     @Override
@@ -33,7 +29,7 @@ public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
     @Override
     public void beforeRegisterEvent(AbstractGameStageManager gameStageManager, ReloadableServerResources serverResources, RegistryAccess registryAccess) {
         var recipeTree = new NeoRecipeIndex(serverResources.getRecipeManager(), this, gameStageManager, registryAccess);
-        System.out.println(recipeTree.findRelated(Items.OAK_PLANKS).size());
+//        System.out.println(recipeTree.findRelated(Items.OAK_PLANKS).size());
     }
 
     @Override
@@ -56,17 +52,16 @@ public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
 
         @Override
         public void registerEventExtensions(EventRegistry registry) {
-            var predicateType = TypeInfo.of(PreparedRestrictionPredicate.class);
             var type = registry.get(RegisterEventJS.class);
-            type.addFunction("recipes", (event, cx, args) -> recipeParser.parse(cx, args));
-            type.addFunction("restrictRecipes", (event, cx, args) -> {
-                var recipesContent = recipeParser.parse(cx, drop(args, 1));
-                var predicate = (PreparedRestrictionPredicate) cx.jsToJava(args[0], predicateType);
+            type.addFunctionVarArgs("recipes", (event, cx, args) -> args[0], RecipeCollectionWrapper.class, RecipeCollectionWrapper.class, RecipeCollectionWrapper[].class);
+            type.addFunctionVarArgs("restrictRecipes", (event, cx, args) -> {
+                var recipesContent = ((RecipeCollectionWrapper) args[1]).content();
+                var predicate = (PreparedRestrictionPredicate) args[0];
                 var source = SourceLine.of(cx).toString();
                 return event
                         .stageManager()
                         .addRestriction(new NeoRecipeRestrictionEntry(predicate, RestrictionEntryOrigin.string(source), recipesContent));
-            });
+            }, RecipeCollectionWrapper.class, NeoRecipeRestrictionEntry.class, PreparedRestrictionPredicate.class, RecipeCollectionWrapper[].class);
         }
 
         @Override

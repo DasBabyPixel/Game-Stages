@@ -80,12 +80,13 @@ public class RecipeIndex {
         index(holder, entry);
     }
 
+    // Ingredient -> Predicate
+
     protected PreparedRestrictionPredicate resolveItemStackPredicate(ItemStack itemStack, @Nullable Ingredient ingredient) {
         var msg = AddonManager
                 .instance()
                 .sendMessage(recipeAddon, RecipeMessages.ORIGIN_ID, ResolveItemStackPredicate.ID, ResolveItemStackPredicate::new, itemStack, ingredient);
         return msg == null ? True.INSTANCE.prepare() : msg.predicate;
-
     }
 
     protected PreparedRestrictionPredicate resolveIngredientPredicate(Ingredient ingredient) {

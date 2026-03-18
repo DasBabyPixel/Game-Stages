@@ -1,5 +1,6 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs;
 
+import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.GameStage;
 import de.dasbabypixel.gamestages.common.data.restriction.Restrictions;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContent;
@@ -69,9 +70,16 @@ public class StagesKubeJSPlugin implements KubeJSPlugin {
         asserLoaded();
         if (registry.scriptType() == ScriptType.SERVER) {
 
-            registry.register(ModCollectionWrapper.class, (ContextFromFunction<ModCollectionWrapper>) (context, o) -> {
+            var anyContentParser = new JSParserBase();
+            registry.register(CollectionWrapper.class, (ContextFromFunction<CollectionWrapper>) (context, o) -> new CollectionWrapper(anyContentParser.parse(context, o)));
+            registry.register(ModContentWrapper.class, (ContextFromFunction<ModContentWrapper>) (context, o) -> {
                 var mod = o.toString();
-                return new ModCollectionWrapper(new CommonGameContent.Mod(mod));
+                return new ModContentWrapper(new CommonGameContent.Mod(mod));
+            });
+            registry.register(GameContent.class, (ContextFromFunction<GameContent>) (context, o) -> {
+                if (o instanceof GameContent g) return g;
+                if (o instanceof ContentWrapper w) return w.content();
+                throw new ClassCastException("Cannot convert " + o.getClass().getName() + " to GameContent");
             });
 
             for (var value : addonMap().values()) {

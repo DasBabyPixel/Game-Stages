@@ -28,7 +28,7 @@ public abstract class EventJSBase<Self extends EventJSBase<Self>> extends HashMa
     @Override
     public BaseFunction get(Object key) {
         var keyString = String.valueOf(key);
-        return type.functions().get(keyString);
+        return type.functions().get(keyString).invoker();
     }
 
     public interface Function<E extends EventJSBase<E>> {

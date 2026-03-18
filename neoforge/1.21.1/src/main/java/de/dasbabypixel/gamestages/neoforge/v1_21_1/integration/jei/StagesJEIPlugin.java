@@ -22,7 +22,7 @@ public class StagesJEIPlugin implements IModPlugin {
     private static boolean populated = false;
 
     static {
-        NeoAddonManager.registerAddon(() -> JEIAddon.ADDON);
+        NeoAddonManager.registerAddon("jei", () -> JEIAddon.ADDON);
     }
 
     public static Map<NeoAddon, NeoAddonJEI> addonMap() {
