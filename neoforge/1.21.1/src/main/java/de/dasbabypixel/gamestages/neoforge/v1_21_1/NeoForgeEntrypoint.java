@@ -22,7 +22,6 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.commands.StageArgumentType;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.commands.StagesCommand;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.Attachments;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.PlatformPlayerStagesProviderImpl;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.entity.PlatformPlayerProviderImpl;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.NeoModProvider;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.RegisterEventJS;
@@ -67,7 +66,6 @@ public class NeoForgeEntrypoint {
 
     static {
         CommonInstances.platformPacketDistributor = new PlatformPacketDistributorImpl();
-        CommonInstances.platformPlayerStagesProvider = new PlatformPlayerStagesProviderImpl();
         CommonInstances.platformPlayerProvider = new PlatformPlayerProviderImpl();
 
         NeoForgeInstances.modProvider = new NeoModProvider();
@@ -197,7 +195,8 @@ public class NeoForgeEntrypoint {
     }
 
     private void handleServerAboutToStart(ServerAboutToStartEvent event) {
-        ServerGameStageManager.init();
+        var dataDirectory = event.getServer().storageSource.getLevelDirectory().path().resolve("gamestages");
+        ServerGameStageManager.init(dataDirectory);
     }
 
     private void handleServerStopped(ServerStoppedEvent event) {

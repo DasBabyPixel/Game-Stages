@@ -3,8 +3,9 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.GameStage;
-import de.dasbabypixel.gamestages.common.data.PlayerStages;
+import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -31,7 +32,7 @@ public class StagesCommand {
                         .then(Commands.argument("stage", new StageArgumentType(false))
                                 .suggests((context, builder) -> {
                                     var targets  = EntityArgument.getPlayers(context, "target");
-                                    return SharedSuggestionProvider.suggest(targets.stream().map(Player::getGameStages).map(PlayerStages::getAll).flatMap(Set::stream).map(GameStage::name).distinct(), builder);
+                                    return SharedSuggestionProvider.suggest(targets.stream().map(ServerPlayer::getGameStages).map(BaseStages::getAll).flatMap(Set::stream).map(GameStage::name).distinct(), builder);
                                 })
                                 .executes(StagesCommand::removeTargetStage)
                         )

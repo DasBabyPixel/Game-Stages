@@ -1,15 +1,15 @@
 package de.dasbabypixel.gamestages.common.data.restriction.compiled;
 
+import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionPredicate;
-import de.dasbabypixel.gamestages.common.entity.Player;
 import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 final class CachedCompiledRestrictionPredicate implements CompiledRestrictionPredicate {
-    private final @NonNull Player player;
+    private final @NonNull BaseStages stages;
     private final @NonNull PreparedRestrictionPredicate original;
     private final @NonNull RestrictionPredicate predicate;
     private final @NonNull List<@NonNull CachedCompiledRestrictionPredicate> dependencies;
@@ -18,8 +18,8 @@ final class CachedCompiledRestrictionPredicate implements CompiledRestrictionPre
     private boolean cachedOldValue = false;
     private boolean cachedValue;
 
-    CachedCompiledRestrictionPredicate(@NonNull Player player, @NonNull PreparedRestrictionPredicate original, @NonNull RestrictionPredicate predicate, @NonNull List<@NonNull CachedCompiledRestrictionPredicate> dependencies) {
-        this.player = player;
+    CachedCompiledRestrictionPredicate(@NonNull BaseStages stages, @NonNull PreparedRestrictionPredicate original, @NonNull RestrictionPredicate predicate, @NonNull List<@NonNull CachedCompiledRestrictionPredicate> dependencies) {
+        this.stages = stages;
         this.original = original;
         this.predicate = predicate;
         this.dependencies = dependencies;
@@ -36,8 +36,8 @@ final class CachedCompiledRestrictionPredicate implements CompiledRestrictionPre
     }
 
     @Override
-    public @NonNull Player targetPlayer() {
-        return player;
+    public @NonNull BaseStages stages() {
+        return stages;
     }
 
     @Override
@@ -45,7 +45,7 @@ final class CachedCompiledRestrictionPredicate implements CompiledRestrictionPre
         if (cached) return cachedValue;
         cached = true;
         var oldValue = cachedValue;
-        cachedValue = predicate.test(dependencies, player);
+        cachedValue = predicate.test(dependencies, stages);
         if (cachedOldValue && cachedValue == oldValue) {
             return cachedValue;
         }

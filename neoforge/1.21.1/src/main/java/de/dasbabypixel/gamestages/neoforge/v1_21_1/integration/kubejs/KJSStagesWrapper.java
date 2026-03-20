@@ -1,7 +1,8 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs;
 
+import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.GameStage;
-import de.dasbabypixel.gamestages.common.data.PlayerStages;
+import de.dasbabypixel.gamestages.common.data.server.ServerPlayerStages;
 import dev.latvian.mods.kubejs.stages.Stages;
 import net.minecraft.world.entity.player.Player;
 
@@ -9,7 +10,7 @@ import java.util.Collection;
 
 public class KJSStagesWrapper implements Stages {
     private final Player player;
-    private final PlayerStages stages;
+    private final BaseStages stages;
 
     public KJSStagesWrapper(Player player) {
         this.player = player;
@@ -48,6 +49,6 @@ public class KJSStagesWrapper implements Stages {
 
     @Override
     public void sync() {
-        stages.fullSync();
+        ((ServerPlayerStages) stages).fullSync();
     }
 }

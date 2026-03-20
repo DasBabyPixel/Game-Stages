@@ -1,7 +1,7 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.fluid;
 
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
-import de.dasbabypixel.gamestages.common.data.PlayerStages;
+import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonFluidCollection;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonJEI;
 import mezz.jei.api.neoforge.NeoForgeTypes;
@@ -31,7 +31,7 @@ public class FluidJEI implements NeoAddonJEI {
     }
 
     @Override
-    public void postCompileAll(@NonNull AbstractGameStageManager instance, @NonNull PlayerStages stages) {
+    public void postCompileAll(@NonNull AbstractGameStageManager instance, @NonNull BaseStages stages) {
         iterate(stages, CommonFluidCollection.TYPE, entry -> {
             if (entry instanceof NeoFluidRestrictionEntry.Compiled(var e, var gameContent, var predicate)) {
                 if (!e.hideInJEI()) return;
@@ -41,7 +41,7 @@ public class FluidJEI implements NeoAddonJEI {
     }
 
     @Override
-    public void singleRefreshAll(@NonNull AbstractGameStageManager instance, @NonNull PlayerStages stages) {
+    public void singleRefreshAll(@NonNull AbstractGameStageManager instance, @NonNull BaseStages stages) {
         iterate(stages, CommonFluidCollection.TYPE, entry -> {
             if (entry instanceof NeoFluidRestrictionEntry.Compiled(var e, var gameContent, var predicate)) {
                 if (!e.hideInJEI()) return;

@@ -1,9 +1,8 @@
 package de.dasbabypixel.gamestages.common.data;
 
-import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionPredicate;
-import de.dasbabypixel.gamestages.common.entity.Player;
+import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
@@ -15,8 +14,8 @@ public record GameStage(String name) implements RestrictionPredicate, PreparedRe
     }
 
     @Override
-    public boolean test(@NonNull List<? extends CompiledRestrictionPredicate> dependencies, @NonNull Player player) {
-        return player.getGameStages().hasUnlocked(this);
+    public boolean test(@NonNull List<? extends CompiledRestrictionPredicate> dependencies, @NonNull BaseStages stages) {
+        return stages.hasUnlocked(this);
     }
 
     @Override

@@ -1,8 +1,8 @@
 package de.dasbabypixel.gamestages.common.data.restriction.compiled;
 
+import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.restriction.CompositePreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
-import de.dasbabypixel.gamestages.common.entity.Player;
 import org.jspecify.annotations.NonNull;
 
 import java.util.HashMap;
@@ -10,11 +10,11 @@ import java.util.List;
 import java.util.Map;
 
 public class RestrictionPredicateCompiler {
-    private final @NonNull Player player;
+    private final @NonNull BaseStages stages;
     private final Map<PreparedRestrictionPredicate, CachedCompiledRestrictionPredicate> cache = new HashMap<>();
 
-    public RestrictionPredicateCompiler(@NonNull Player player) {
-        this.player = player;
+    public RestrictionPredicateCompiler(@NonNull BaseStages stages) {
+        this.stages = stages;
     }
 
     public @NonNull CompiledRestrictionPredicate compile(@NonNull PreparedRestrictionPredicate predicate) {
@@ -28,7 +28,7 @@ public class RestrictionPredicateCompiler {
                 .stream()
                 .map(this::compile0)
                 .toList() : List.<CachedCompiledRestrictionPredicate>of();
-        var compiled = new CachedCompiledRestrictionPredicate(player, predicate, predicate.predicate(), dependencies);
+        var compiled = new CachedCompiledRestrictionPredicate(stages, predicate, predicate.predicate(), dependencies);
         dependencies.forEach(dep -> dep.addNotifier(ignored -> compiled.invalidate()));
         cache.put(predicate, compiled);
         return compiled;

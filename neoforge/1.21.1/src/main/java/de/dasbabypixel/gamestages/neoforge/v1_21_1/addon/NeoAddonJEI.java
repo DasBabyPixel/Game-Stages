@@ -1,7 +1,7 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addon;
 
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
-import de.dasbabypixel.gamestages.common.data.PlayerStages;
+import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.TypedGameContent;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContentType;
@@ -19,7 +19,7 @@ public interface NeoAddonJEI {
         }
     }
 
-    default <T extends TypedGameContent> void iterate(PlayerStages stages, CommonGameContentType<T> type, Consumer<CompiledRestrictionEntry> consumer) {
+    default <T extends TypedGameContent> void iterate(BaseStages stages, CommonGameContentType<T> type, Consumer<CompiledRestrictionEntry> consumer) {
         var typeIndex = stages.typeIndexMap().get(type);
         if (typeIndex == null) return;
         for (var entry : typeIndex.contentListByEntry().keySet()) {
@@ -33,9 +33,9 @@ public interface NeoAddonJEI {
     default void onRuntimeUnavailable() {
     }
 
-    default void postCompileAll(@NonNull AbstractGameStageManager instance, @NonNull PlayerStages stages) {
+    default void postCompileAll(@NonNull AbstractGameStageManager instance, @NonNull BaseStages stages) {
     }
 
-    default void singleRefreshAll(@NonNull AbstractGameStageManager instance, @NonNull PlayerStages stages) {
+    default void singleRefreshAll(@NonNull AbstractGameStageManager instance, @NonNull BaseStages stages) {
     }
 }

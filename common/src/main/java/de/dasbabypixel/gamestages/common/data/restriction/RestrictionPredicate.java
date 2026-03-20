@@ -1,7 +1,7 @@
 package de.dasbabypixel.gamestages.common.data.restriction;
 
+import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
-import de.dasbabypixel.gamestages.common.entity.Player;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public interface RestrictionPredicate {
 
     boolean accepts(@NonNull List<? extends @NonNull PreparedRestrictionPredicate> dependencies);
 
-    boolean test(@NonNull List<? extends @NonNull CompiledRestrictionPredicate> dependencies, @NonNull Player player);
+    boolean test(@NonNull List<? extends @NonNull CompiledRestrictionPredicate> dependencies, @NonNull BaseStages stages);
 
     @Override
     @NonNull String toString();

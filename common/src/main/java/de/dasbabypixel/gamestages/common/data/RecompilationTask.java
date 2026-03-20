@@ -5,7 +5,6 @@ import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.data.restriction.DuplicateReport;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryCompiler;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionPredicateCompiler;
-import de.dasbabypixel.gamestages.common.entity.Player;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -13,31 +12,31 @@ import java.util.List;
 import java.util.Objects;
 
 public class RecompilationTask {
-    private final PlayerStages playerStages;
+    private final BaseStages stages;
     private final RestrictionEntryCompiler restrictionEntryCompiler;
     private final AbstractGameStageManager instance;
     private final RestrictionPredicateCompiler predicateCompiler;
 
-    public RecompilationTask(PlayerStages playerStages, RestrictionEntryCompiler restrictionEntryCompiler, AbstractGameStageManager instance, Player player) {
-        this.playerStages = playerStages;
+    public RecompilationTask(BaseStages stages, RestrictionEntryCompiler restrictionEntryCompiler, AbstractGameStageManager instance) {
+        this.stages = stages;
         this.restrictionEntryCompiler = restrictionEntryCompiler;
         this.instance = instance;
-        this.predicateCompiler = new RestrictionPredicateCompiler(player);
+        this.predicateCompiler = new RestrictionPredicateCompiler(stages);
     }
 
     public void findDuplicates() {
         var flattener = instance.get(GameContentFlattener.Attribute.INSTANCE);
 
-        var typeIndexMap = playerStages.typeIndexMap();
+        var typeIndexMap = stages.typeIndexMap();
         typeIndexMap.clear();
 
-        var compiledMap = playerStages.compiledRestrictionEntryMap();
+        var compiledMap = stages.compiledRestrictionEntryMap();
         for (var compiledEntry : compiledMap.values()) {
             var flattened = flattener.flatten(compiledEntry.gameContent());
             for (var type : flattened.types()) {
                 var typed = flattened.get(type);
                 if (typed.isEmpty()) continue;
-                var typeIndex = typeIndexMap.computeIfAbsent(type, ignored -> new PlayerStages.TypeIndex());
+                var typeIndex = typeIndexMap.computeIfAbsent(type, ignored -> new BaseStages.TypeIndex());
 
                 var contents = typed.content();
                 typeIndex.contentListByEntry().putIfAbsent(compiledEntry, List.copyOf(contents));
@@ -70,8 +69,8 @@ public class RecompilationTask {
         }
 
         if (!reports.isEmpty()) {
-            playerStages.typeIndexMap().clear();
-            playerStages.compiledRestrictionEntryMap().clear();
+            stages.typeIndexMap().clear();
+            stages.compiledRestrictionEntryMap().clear();
             throw new DuplicatesException(reports);
         }
     }
@@ -83,12 +82,12 @@ public class RecompilationTask {
 
     public void firePostCompile() {
         for (var addon : AddonManager.instance().addons()) {
-            addon.postCompileAll(instance, playerStages);
+            addon.postCompileAll(instance, stages);
         }
     }
 
     private void recompileEntries() {
-        playerStages.compiledRestrictionEntryMap().clear();
+        stages.compiledRestrictionEntryMap().clear();
         for (var restriction : instance.restrictions()) {
             var predicate = restriction.predicate();
             // Compiling also links dependencies
@@ -99,15 +98,15 @@ public class RecompilationTask {
                 addon.postCompile(compiledEntry);
             }
 
-            playerStages.compiledRestrictionEntryMap().put(restriction, compiledEntry);
+            stages.compiledRestrictionEntryMap().put(restriction, compiledEntry);
         }
     }
 
     private void recompileGameStages() {
-        playerStages.compiledGameStages().clear();
+        stages.compiledGameStages().clear();
         for (var gameStage : instance.gameStages()) {
             var compiled = predicateCompiler.compile(gameStage);
-            playerStages.compiledGameStages().put(gameStage, compiled);
+            stages.compiledGameStages().put(gameStage, compiled);
         }
     }
 }

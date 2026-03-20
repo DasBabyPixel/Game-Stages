@@ -6,7 +6,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.Collection;
 
 public interface PlatformPlayerProvider {
-    @Nullable Player clientSelfPlayer();
+    @Nullable ClientPlayer clientSelfPlayer();
 
-    @NonNull Collection<? extends Player> allPlayers();
+    @NonNull Collection<? extends ServerPlayer> allPlayers();
 }

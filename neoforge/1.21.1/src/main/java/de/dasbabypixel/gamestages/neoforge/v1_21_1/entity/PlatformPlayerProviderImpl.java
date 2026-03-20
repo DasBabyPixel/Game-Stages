@@ -1,7 +1,8 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.entity;
 
+import de.dasbabypixel.gamestages.common.entity.ClientPlayer;
 import de.dasbabypixel.gamestages.common.entity.PlatformPlayerProvider;
-import de.dasbabypixel.gamestages.common.entity.Player;
+import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
 import net.minecraft.client.Minecraft;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.jspecify.annotations.NonNull;
@@ -11,12 +12,12 @@ import java.util.Objects;
 
 public class PlatformPlayerProviderImpl implements PlatformPlayerProvider {
     @Override
-    public Player clientSelfPlayer() {
+    public ClientPlayer clientSelfPlayer() {
         return Minecraft.getInstance().player;
     }
 
     @Override
-    public @NonNull Collection<? extends Player> allPlayers() {
+    public @NonNull Collection<? extends ServerPlayer> allPlayers() {
         return Objects.requireNonNull(ServerLifecycleHooks.getCurrentServer()).getPlayerList().getPlayers();
     }
 }

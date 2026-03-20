@@ -1,10 +1,10 @@
 package de.dasbabypixel.gamestages.common.data.restriction.predicates;
 
+import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.restriction.CompositePreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
-import de.dasbabypixel.gamestages.common.entity.Player;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public record True() implements RestrictionPredicate {
     }
 
     @Override
-    public boolean test(@NonNull List<? extends @NonNull CompiledRestrictionPredicate> dependencies, @NonNull Player player) {
+    public boolean test(@NonNull List<? extends @NonNull CompiledRestrictionPredicate> dependencies, @NonNull BaseStages stages) {
         return true;
     }
 

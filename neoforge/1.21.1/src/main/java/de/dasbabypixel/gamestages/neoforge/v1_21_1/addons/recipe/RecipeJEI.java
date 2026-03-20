@@ -1,19 +1,18 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe;
 
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
-import de.dasbabypixel.gamestages.common.data.PlayerStages;
+import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeCollection;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonJEI;
 import mezz.jei.api.constants.RecipeTypes;
 import mezz.jei.api.runtime.IJeiRuntime;
-import net.minecraft.world.entity.player.Player;
 import org.jspecify.annotations.NonNull;
 
 public class RecipeJEI implements NeoAddonJEI {
     private IJeiRuntime runtime;
 
     @Override
-    public void singleRefreshAll(@NonNull AbstractGameStageManager instance, @NonNull PlayerStages stages) {
+    public void singleRefreshAll(@NonNull AbstractGameStageManager instance, @NonNull BaseStages stages) {
         iterate(stages, CommonRecipeCollection.TYPE, entry -> {
             if (entry instanceof NeoRecipeRestrictionEntry.Compiled(var e, var gameContent, var predicate)) {
                 if (!e.hideInJEI()) return;
@@ -23,7 +22,7 @@ public class RecipeJEI implements NeoAddonJEI {
     }
 
     @Override
-    public void postCompileAll(@NonNull AbstractGameStageManager instance, @NonNull PlayerStages stages) {
+    public void postCompileAll(@NonNull AbstractGameStageManager instance, @NonNull BaseStages stages) {
         iterate(stages, CommonRecipeCollection.TYPE, entry -> {
             if (entry instanceof NeoRecipeRestrictionEntry.Compiled(var e, var gameContent, var predicate)) {
                 if (!e.hideInJEI()) return;
@@ -31,8 +30,8 @@ public class RecipeJEI implements NeoAddonJEI {
             }
         });
 
-        var player = stages.getPlayer();
-        var registries = ((Player) player).registryAccess();
+//        var player = stages.getPlayer();
+//        var registries = ((Player) player).registryAccess();
         runtime.getRecipeManager().createRecipeLookup(RecipeTypes.CRAFTING).includeHidden().get().forEach(holder -> {
             var recipe = holder.value();
 //            System.out.println(recipe.getResultItem(registries));
