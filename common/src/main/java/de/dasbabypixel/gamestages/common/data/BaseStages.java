@@ -5,7 +5,6 @@ import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestr
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryCompiler;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
@@ -13,9 +12,12 @@ public abstract class BaseStages {
     protected final @NonNull Map<@NonNull RestrictionEntry<?, ?>, @NonNull CompiledRestrictionEntry> compiledRestrictionEntryMap = new HashMap<>();
     protected final @NonNull Map<@NonNull GameStage, @NonNull CompiledRestrictionPredicate> compiledGameStages = new HashMap<>();
     protected final @NonNull Map<@NonNull GameContentType<?>, TypeIndex> typeIndexMap = new HashMap<>();
-    private @Nullable Set<@NonNull GameStage> unlockedStages;
+    private final Set<@NonNull GameStage> unlockedStages;
 
-    protected abstract Set<GameStage> fetchUnlockedStages();
+
+    public BaseStages(Set<GameStage> stages) {
+        unlockedStages = new HashSet<>(stages);
+    }
 
     /**
      * Invalidates the stage for recalculation
@@ -79,9 +81,6 @@ public abstract class BaseStages {
     }
 
     protected Set<GameStage> getUnlockedStages() {
-        if (unlockedStages == null) {
-            unlockedStages = new HashSet<>(fetchUnlockedStages());
-        }
         return unlockedStages;
     }
 

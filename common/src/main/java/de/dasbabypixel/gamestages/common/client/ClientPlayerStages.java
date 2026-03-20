@@ -10,9 +10,8 @@ import java.util.List;
 import java.util.Set;
 
 public class ClientPlayerStages extends BaseStages {
-    @Override
-    protected Set<GameStage> fetchUnlockedStages() {
-        return Set.of();
+    public ClientPlayerStages() {
+        super(Set.of());
     }
 
     public void syncUnlockedStages(List<GameStage> gameStages) {

@@ -5,7 +5,9 @@ import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.addon.ContentRegistry;
 import de.dasbabypixel.gamestages.common.addon.ContentRegistryImpl;
 import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
+import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
 import de.dasbabypixel.gamestages.common.listener.PlayerJoinListener;
+import de.dasbabypixel.gamestages.common.listener.PlayerQuitListener;
 import de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VContentRegistry;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonCodecs;
@@ -31,6 +33,7 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.network.PlatformPacketDistrib
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.InterModComms;
 import net.neoforged.fml.common.Mod;
@@ -40,6 +43,8 @@ import net.neoforged.fml.event.lifecycle.InterModProcessEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
@@ -48,6 +53,8 @@ import net.neoforged.neoforge.registries.RegistryBuilder;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.UUID;
 
 import static de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod.location;
 
@@ -89,6 +96,10 @@ public class NeoForgeEntrypoint {
         NeoForge.EVENT_BUS.addListener(this::handleServerAboutToStart);
         NeoForge.EVENT_BUS.addListener(this::handleServerStopped);
         NeoForge.EVENT_BUS.addListener(this::handlePlayerJoin);
+        NeoForge.EVENT_BUS.addListener(this::handlePlayerQuit);
+        NeoForge.EVENT_BUS.addListener(this::handleChunkLoad);
+        NeoForge.EVENT_BUS.addListener(this::handleChunkUnload);
+        NeoForge.EVENT_BUS.addListener(this::handleBlockPlace);
 
         ReloadHandler.registerListeners();
     }
@@ -189,9 +200,46 @@ public class NeoForgeEntrypoint {
         StagesCommand.register(event.getDispatcher());
     }
 
+    private void handleChunkLoad(ChunkEvent.Load event) {
+        // TODO
+    }
+
+    private void handleChunkUnload(ChunkEvent.Unload unload) {
+        // TODO
+    }
+
+    private void handleBlockPlace(BlockEvent.EntityPlaceEvent event) {
+        var entity = event.getEntity();
+        if (entity == null) return;
+        var source = entity.getData(Attachments.SOURCE);
+        var owner = source.owner();
+        if (owner == null) return;
+        var level = event.getLevel();
+        if (level.getServer() == null) return;
+        if (event instanceof BlockEvent.EntityMultiPlaceEvent e) {
+            for (var s : e.getReplacedBlockSnapshots()) {
+                var blockEntity = level.getBlockEntity(s.getPos());
+                if (blockEntity != null) handleBlockPlaceInternal(blockEntity, owner);
+            }
+        } else {
+            var blockEntity = level.getBlockEntity(event.getPos());
+            if (blockEntity != null) handleBlockPlaceInternal(blockEntity, owner);
+        }
+    }
+
+    private void handleBlockPlaceInternal(BlockEntity blockEntity, UUID owner) {
+        System.out.println("Attach origin to " + blockEntity.getBlockPos());
+        blockEntity.getData(Attachments.SOURCE).setOwner(owner);
+    }
+
     private void handlePlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         var player = event.getEntity();
         PlayerJoinListener.handleJoin(player);
+    }
+
+    private void handlePlayerQuit(PlayerEvent.PlayerLoggedOutEvent event) {
+        var player = event.getEntity();
+        PlayerQuitListener.handleQuit((ServerPlayer) player);
     }
 
     private void handleServerAboutToStart(ServerAboutToStartEvent event) {

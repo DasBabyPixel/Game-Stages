@@ -4,9 +4,12 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.UUID;
 
 public interface PlatformPlayerProvider {
     @Nullable ClientPlayer clientSelfPlayer();
 
     @NonNull Collection<? extends ServerPlayer> allPlayers();
+
+    @Nullable ServerPlayer getPlayer(UUID uuid);
 }

@@ -16,15 +16,18 @@ public class ServerGameStageManager extends MutatableGameStageManager {
     public static @Nullable ServerGameStageManager INSTANCE;
     private static boolean queuing = false;
     private final StagesFileProvider stagesFileProvider;
+    private final StagesCache stagesCache;
 
     private ServerGameStageManager(Path dataDirectory) {
         this.stagesFileProvider = new StagesFileProvider(dataDirectory.resolve("unlocked"));
+        this.stagesCache = new StagesCache(this);
     }
 
     public static void stop() {
         Objects.requireNonNull(INSTANCE).disallowMutation();
         try {
             INSTANCE.stagesFileProvider.shutdown();
+            INSTANCE.stagesCache.shutdown();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -54,6 +57,10 @@ public class ServerGameStageManager extends MutatableGameStageManager {
             QueuingGameStageManager.INSTANCE.begin();
         }
         return QueuingGameStageManager.INSTANCE;
+    }
+
+    public StagesCache playerStagesCache() {
+        return stagesCache;
     }
 
     public StagesFileProvider stagesFileProvider() {
