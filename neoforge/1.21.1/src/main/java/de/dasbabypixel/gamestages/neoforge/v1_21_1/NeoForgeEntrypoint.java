@@ -24,12 +24,16 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.commands.StageArgumentType;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.commands.StagesCommand;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.Attachments;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.entity.IBlockEntity;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.entity.PlatformPlayerProviderImpl;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.NeoModProvider;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.RegisterEventJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.probejs.StagesProbeJSPlugin;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.network.NeoNetworkHandler;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.network.PlatformPacketDistributorImpl;
+import dev.ftb.mods.ftbteams.api.event.PlayerJoinedPartyTeamEvent;
+import dev.ftb.mods.ftbteams.api.event.PlayerLeftPartyTeamEvent;
+import dev.ftb.mods.ftbteams.api.event.TeamEvent;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
@@ -54,6 +58,8 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 import static de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod.location;
@@ -102,6 +108,12 @@ public class NeoForgeEntrypoint {
         NeoForge.EVENT_BUS.addListener(this::handleBlockPlace);
 
         ReloadHandler.registerListeners();
+
+        if (Mods.FTB_TEAMS.isLoaded()) {
+            TeamEvent.DELETED.register(this::onTeamDelete);
+            TeamEvent.PLAYER_JOINED_PARTY.register(this::onTeamJoin);
+            TeamEvent.PLAYER_LEFT_PARTY.register(this::onTeamLeave);
+        }
     }
 
     private synchronized void loadAndFreezeAddons() {
@@ -200,11 +212,43 @@ public class NeoForgeEntrypoint {
         StagesCommand.register(event.getDispatcher());
     }
 
+    private void onTeamJoin(PlayerJoinedPartyTeamEvent event) {
+        System.out.println("join team " + event.getTeam().getId());
+        event.getPlayer().getGameStages().setTeam(event.getTeam().getId());
+    }
+
+    private void onTeamLeave(PlayerLeftPartyTeamEvent event) {
+        System.out.println("leave team " + event.getTeam().getId());
+        if (event.getPlayer() == null) {
+            var cache = Objects.requireNonNull(ServerGameStageManager.INSTANCE).playerStagesCache();
+            var stages = cache.requirePlayer(event.getPlayerId());
+            stages.setTeam(null);
+            cache.release(stages);
+        } else {
+            event.getPlayer().getGameStages().setTeam(null);
+        }
+    }
+
+    private void onTeamDelete(TeamEvent event) {
+        var id = event.getTeam().getId();
+        System.out.println("Delete team " + id);
+    }
+
     private void handleChunkLoad(ChunkEvent.Load event) {
+        var chunk = event.getChunk();
+        var level = chunk.getLevel();
+        if (level == null) return;
+        if (level.getServer() == null) {
+        }
         // TODO
     }
 
-    private void handleChunkUnload(ChunkEvent.Unload unload) {
+    private void handleChunkUnload(ChunkEvent.Unload event) {
+        var chunk = event.getChunk();
+        var level = chunk.getLevel();
+        if (level == null) return;
+        if (level.getServer() == null) {
+        }
         // TODO
     }
 
@@ -212,24 +256,31 @@ public class NeoForgeEntrypoint {
         var entity = event.getEntity();
         if (entity == null) return;
         var source = entity.getData(Attachments.SOURCE);
-        var owner = source.owner();
-        if (owner == null) return;
+        var owners = source.owners();
+        if (owners.isEmpty()) return;
         var level = event.getLevel();
         if (level.getServer() == null) return;
+
         if (event instanceof BlockEvent.EntityMultiPlaceEvent e) {
             for (var s : e.getReplacedBlockSnapshots()) {
                 var blockEntity = level.getBlockEntity(s.getPos());
-                if (blockEntity != null) handleBlockPlaceInternal(blockEntity, owner);
+                if (blockEntity != null) handleBlockPlaceInternal(blockEntity, owners);
             }
         } else {
             var blockEntity = level.getBlockEntity(event.getPos());
-            if (blockEntity != null) handleBlockPlaceInternal(blockEntity, owner);
+            if (blockEntity != null) handleBlockPlaceInternal(blockEntity, owners);
         }
     }
 
-    private void handleBlockPlaceInternal(BlockEntity blockEntity, UUID owner) {
+    private void handleBlockBreak(BlockEvent.BreakEvent event) {
+    }
+
+    private void handleBlockPlaceInternal(BlockEntity blockEntity, Set<UUID> owners) {
         System.out.println("Attach origin to " + blockEntity.getBlockPos());
-        blockEntity.getData(Attachments.SOURCE).setOwner(owner);
+        var data = blockEntity.getData(Attachments.SOURCE);
+        data.setOwners(owners);
+        blockEntity.setChanged();
+        ((IBlockEntity) blockEntity).reloadOwners();
     }
 
     private void handlePlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {

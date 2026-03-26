@@ -5,6 +5,9 @@ import de.dasbabypixel.gamestages.common.data.GameStage;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.util.GameStagePayload;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.attachment.IAttachmentHolder;
@@ -12,10 +15,8 @@ import net.neoforged.neoforge.common.util.INBTSerializable;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Supplier;
 
 public class Attachments {
@@ -30,29 +31,44 @@ public class Attachments {
             .build());
 
     public static class Source implements INBTSerializable<CompoundTag> {
-        private UUID owner;
+        private final Set<UUID> owners = new HashSet<>();
 
         public Source(IAttachmentHolder h) {
-            if (h instanceof Player player) owner = player.getUUID();
+            if (h instanceof Player player) {
+                owners.add(player.getUUID());
+            }
         }
 
         public Source(UUID owner) {
-            this.owner = owner;
+            this.owners.add(owner);
         }
 
-        public @Nullable UUID owner() {
-            return owner;
+        public Set<UUID> owners() {
+            return owners;
         }
 
-        public void setOwner(@Nullable UUID owner) {
-            this.owner = owner;
+        public void addOwner(UUID owner) {
+            this.owners.add(owner);
+        }
+
+        public void setOwners(Collection<UUID> owners) {
+            this.owners.clear();
+            this.owners.addAll(owners);
+        }
+
+        public void addOwners(Collection<UUID> owners) {
+            this.owners.addAll(owners);
         }
 
         @Override
         public CompoundTag serializeNBT(HolderLookup.@NonNull Provider provider) {
             var tag = new CompoundTag();
-            if (owner != null) {
-                tag.putUUID("owner", owner);
+            if (!owners.isEmpty()) {
+                var ownerList = new ListTag(owners.size());
+                for (var owner : owners) {
+                    ownerList.add(NbtUtils.createUUID(owner));
+                }
+                tag.put("owners", ownerList);
             }
             return tag;
         }
@@ -60,9 +76,12 @@ public class Attachments {
         @Override
         public void deserializeNBT(HolderLookup.@NonNull Provider provider, @NonNull CompoundTag compoundTag) {
             if (compoundTag.contains("owner")) {
-                owner = compoundTag.getUUID("owner");
-            } else {
-                owner = null;
+                owners.add(compoundTag.getUUID("owner"));
+            } else if (compoundTag.contains("owners")) {
+                var ownerList = compoundTag.getList("owners", Tag.TAG_INT_ARRAY);
+                for (var tag : ownerList) {
+                    owners.add(NbtUtils.loadUUID(tag));
+                }
             }
         }
     }

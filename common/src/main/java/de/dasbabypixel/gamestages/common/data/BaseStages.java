@@ -14,7 +14,6 @@ public abstract class BaseStages {
     protected final @NonNull Map<@NonNull GameContentType<?>, TypeIndex> typeIndexMap = new HashMap<>();
     private final Set<@NonNull GameStage> unlockedStages;
 
-
     public BaseStages(Set<GameStage> stages) {
         unlockedStages = new HashSet<>(stages);
     }
