@@ -14,9 +14,13 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.HandlerThread;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import org.jspecify.annotations.NonNull;
+
+import java.util.Objects;
 
 public class NeoNetworkHandler {
     public static void register(RegisterPayloadHandlersEvent event) {
+        Objects.requireNonNull(event);
         var registrar = event.registrar("1");
         registrar.executesOn(HandlerThread.NETWORK);
 
@@ -30,17 +34,17 @@ public class NeoNetworkHandler {
         registry.playClientBound(StatusPacket.TYPE, StatusPacket.STREAM_CODEC);
     }
 
-    private record PacketRegistryImpl(PayloadRegistrar registrar) implements PacketRegistry {
-        private static <T extends GameStagesPacket> void handle(T packet, IPayloadContext context) {
+    private record PacketRegistryImpl(@NonNull PayloadRegistrar registrar) implements PacketRegistry {
+        @Override
+        public <T extends GameStagesPacket> void playClientBound(CustomPacketPayload.@NonNull Type<T> type, @NonNull StreamCodec<? super RegistryFriendlyByteBuf, T> codec) {
+            registrar.playToClient(type, codec, PacketRegistryImpl::handle);
+        }
+
+        private static <T extends GameStagesPacket> void handle(@NonNull T packet, @NonNull IPayloadContext context) {
             context.enqueueWork(packet::handle).exceptionally(t -> {
                 NeoForgeEntrypoint.LOGGER.error("Failed to handle packet", t);
                 return null;
             });
-        }
-
-        @Override
-        public <T extends GameStagesPacket> void playClientBound(CustomPacketPayload.Type<T> type, StreamCodec<? super RegistryFriendlyByteBuf, T> codec) {
-            registrar.playToClient(type, codec, PacketRegistryImpl::handle);
         }
     }
 }

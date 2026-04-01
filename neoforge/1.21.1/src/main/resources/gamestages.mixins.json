@@ -5,6 +5,7 @@
   "mixins": [
     "MCAbstractClientPlayerMixin",
     "MCBlockEntityMixin",
+    "MCItemStackMixin",
     "MCPlayerMixin",
     "MCServerPlayerMixin"
   ],

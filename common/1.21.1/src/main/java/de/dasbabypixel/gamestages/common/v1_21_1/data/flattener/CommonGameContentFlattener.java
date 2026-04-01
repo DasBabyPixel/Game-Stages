@@ -14,32 +14,11 @@ import java.util.*;
 import java.util.function.Function;
 
 public class CommonGameContentFlattener implements GameContentFlattener {
-    private static final List<FlattenerFactory<?>> FACTORIES = new ArrayList<>();
-    private static final Map<CommonGameContentType<?>, FlattenerFactory<?>> FACTORY_BY_TYPE = new HashMap<>();
+    private static final List<@NonNull FlattenerFactory<?>> FACTORIES = new ArrayList<>();
+    private static final Map<@NonNull CommonGameContentType<?>, FlattenerFactory<?>> FACTORY_BY_TYPE = new HashMap<>();
 
     private final Map<GameContent, FlattenedGameContent> cache = new HashMap<>();
     private final Map<GameContentType<?>, Map<GameContent, Object>> typeCache = new HashMap<>();
-
-    public static void addFlattener(FlattenerFactory<?> factory) {
-        FACTORIES.add(factory);
-        FACTORY_BY_TYPE.put((CommonGameContentType<?>) factory.type(), factory);
-    }
-
-    private static void fill(List<Flattener0<?>> flatteners, @Nullable CommonGameContentType<?> requestType, Function<FlattenerFactory<?>, Flattener0<?>> fun) {
-        if (requestType != null) {
-            flatteners.add(fun.apply(Objects.requireNonNull(FACTORY_BY_TYPE.get(requestType))));
-            return;
-        }
-        for (var factory : FACTORIES) {
-            flatteners.add(fun.apply(factory));
-        }
-    }
-
-    private static void accept(List<Flattener0<?>> flatteners, @Nullable CommonGameContentType<?> requestType, Object content) {
-        for (var flattener : flatteners) {
-            flattener.accept(requestType, content);
-        }
-    }
 
     private FlattenedGameContent cache(GameContent input, FlattenedGameContent content) {
         cache.put(input, content);
@@ -60,8 +39,10 @@ public class CommonGameContentFlattener implements GameContentFlattener {
     @SuppressWarnings("unchecked")
     @Override
     public <T extends TypedGameContent> @NonNull T flatten(@NonNull GameContent gameContent, @NonNull GameContentType<T> requestType) {
-        if (typeCache.containsKey(requestType) && typeCache.get(requestType).containsKey(gameContent)) {
-            return (T) Objects.requireNonNull(typeCache.get(requestType).get(gameContent));
+        if (typeCache.containsKey(requestType) && Objects
+                .requireNonNull(typeCache.get(requestType))
+                .containsKey(gameContent)) {
+            return (T) Objects.requireNonNull(Objects.requireNonNull(typeCache.get(requestType)).get(gameContent));
         }
         var type = (CommonGameContentType<T>) requestType;
         return cache(gameContent, type, (T) flattenInternal(gameContent, type));
@@ -119,7 +100,8 @@ public class CommonGameContentFlattener implements GameContentFlattener {
             case TypedGameContent typed -> {
                 var type = typed.type();
                 if (requestType == type) return typed;
-                if (requestType != null) return FACTORY_BY_TYPE.get(requestType).createUnion().complete();
+                if (requestType != null)
+                    return Objects.requireNonNull(FACTORY_BY_TYPE.get(requestType)).createUnion().complete();
 
                 var map = new HashMap<GameContentType<?>, TypedGameContent>();
                 for (var factory : FACTORIES) {
@@ -138,7 +120,7 @@ public class CommonGameContentFlattener implements GameContentFlattener {
         }
     }
 
-    private Object completeFlattening(List<Flattener0<?>> flatteners, GameContentType<?> requestType) {
+    private Object completeFlattening(@NonNull List<@NonNull Flattener0<?>> flatteners, GameContentType<?> requestType) {
         if (requestType != null) {
             return flatteners.getFirst().flattener().complete();
         }
@@ -149,26 +131,48 @@ public class CommonGameContentFlattener implements GameContentFlattener {
         return new FlattenedGameContent(map);
     }
 
-    private record Flattener0<T extends TypedGameContent>(GameContentType<T> type, Flattener<T> flattener) {
-        private static <T extends TypedGameContent> Flattener0<T> union(FlattenerFactory<T> factory) {
-            return new Flattener0<>(factory.type(), factory.createUnion());
-        }
+    public static void addFlattener(@NonNull FlattenerFactory<?> factory) {
+        FACTORIES.add(factory);
+        FACTORY_BY_TYPE.put((CommonGameContentType<?>) factory.type(), factory);
+    }
 
-        private static <T extends TypedGameContent> Flattener0<T> only(FlattenerFactory<T> factory) {
-            return new Flattener0<>(factory.type(), factory.createOnly());
+    private static void fill(@NonNull List<@NonNull Flattener0<?>> flatteners, @Nullable CommonGameContentType<?> requestType, @NonNull Function<@NonNull FlattenerFactory<?>, @NonNull Flattener0<?>> fun) {
+        if (requestType != null) {
+            flatteners.add(fun.apply(Objects.requireNonNull(FACTORY_BY_TYPE.get(requestType))));
+            return;
         }
-
-        private static <T extends TypedGameContent> Flattener0<T> except(FlattenerFactory<T> factory) {
-            return new Flattener0<>(factory.type(), factory.createExcept());
+        for (var factory : FACTORIES) {
+            flatteners.add(fun.apply(factory));
         }
+    }
 
+    private static void accept(@NonNull List<@NonNull Flattener0<?>> flatteners, @Nullable CommonGameContentType<?> requestType, @NonNull Object content) {
+        for (var flattener : flatteners) {
+            flattener.accept(requestType, content);
+        }
+    }
+
+    private record Flattener0<T extends TypedGameContent>(@NonNull GameContentType<T> type,
+                                                          @NonNull Flattener<T> flattener) {
         @SuppressWarnings("unchecked")
-        private void accept(@Nullable GameContentType<?> requestType, Object content) {
+        private void accept(@Nullable GameContentType<?> requestType, @NonNull Object content) {
             if (requestType == null) {
                 flattener.accept(((FlattenedGameContent) content).get(type));
             } else {
                 flattener.accept((T) content);
             }
+        }
+
+        private static <T extends TypedGameContent> Flattener0<T> union(@NonNull FlattenerFactory<T> factory) {
+            return new Flattener0<>(factory.type(), factory.createUnion());
+        }
+
+        private static <T extends TypedGameContent> Flattener0<T> only(@NonNull FlattenerFactory<T> factory) {
+            return new Flattener0<>(factory.type(), factory.createOnly());
+        }
+
+        private static <T extends TypedGameContent> Flattener0<T> except(@NonNull FlattenerFactory<T> factory) {
+            return new Flattener0<>(factory.type(), factory.createExcept());
         }
     }
 }

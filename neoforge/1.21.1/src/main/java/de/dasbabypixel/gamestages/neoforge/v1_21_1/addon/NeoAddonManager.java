@@ -3,6 +3,7 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.addon;
 import de.dasbabypixel.gamestages.common.BuildConstants;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddonManager;
 import net.neoforged.fml.InterModComms;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -14,8 +15,13 @@ public class NeoAddonManager extends VAddonManager<NeoAddon> {
         INSTANCE = this;
     }
 
-    public static NeoAddonManager instance() {
-        return INSTANCE;
+    @Override
+    public void addAddon(@NonNull String id, @NonNull NeoAddon addon) {
+        super.addAddon(id, addon);
+    }
+
+    public static @NonNull NeoAddonManager instance() {
+        return Objects.requireNonNull(INSTANCE);
     }
 
     public static void init() {
@@ -32,11 +38,6 @@ public class NeoAddonManager extends VAddonManager<NeoAddon> {
 
     public static void registerAddon(Supplier<? extends Registration> addonSupplier) {
         InterModComms.sendTo(BuildConstants.MOD_ID, "register_addon", addonSupplier);
-    }
-
-    @Override
-    public void addAddon(String id, NeoAddon addon) {
-        super.addAddon(id, addon);
     }
 
     public record Registration(String id, NeoAddon addon) {

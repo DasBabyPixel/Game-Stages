@@ -9,7 +9,7 @@ import java.util.UUID;
 public interface PlatformPlayerProvider {
     @Nullable ClientPlayer clientSelfPlayer();
 
-    @NonNull Collection<? extends ServerPlayer> allPlayers();
+    @NonNull Collection<? extends @NonNull ServerPlayer> allPlayers();
 
-    @Nullable ServerPlayer getPlayer(UUID uuid);
+    @Nullable ServerPlayer getPlayer(@NonNull UUID uuid);
 }

@@ -14,7 +14,7 @@ public class QueuingGameStageManager extends MutatableGameStageManager {
     private final List<Consumer<MutatableGameStageManager>> recorded = new ArrayList<>();
 
     @Override
-    public void add(GameStage gameStage) {
+    public void add(@NonNull GameStage gameStage) {
         super.add(gameStage);
         recorded.add(c -> c.add(gameStage));
     }
@@ -26,14 +26,14 @@ public class QueuingGameStageManager extends MutatableGameStageManager {
     }
 
     @Override
-    public <T extends RestrictionEntry<T, ?>> T addRestriction(@NonNull T restriction) {
+    public <T extends RestrictionEntry<T, ?>> @NonNull T addRestriction(@NonNull T restriction) {
         super.addRestriction(restriction);
         recorded.add(c -> c.addRestriction(restriction));
         return restriction;
     }
 
     @Override
-    public void set(List<GameStage> gameStages) {
+    public void set(@NonNull List<GameStage> gameStages) {
         super.set(gameStages);
         recorded.add(c -> c.set(gameStages));
     }

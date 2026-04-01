@@ -8,6 +8,4 @@ public interface CompiledRestrictionEntry {
     @NonNull RestrictionEntryOrigin origin();
 
     @NonNull GameContent gameContent();
-
-    @NonNull CompiledRestrictionPredicate predicate();
 }

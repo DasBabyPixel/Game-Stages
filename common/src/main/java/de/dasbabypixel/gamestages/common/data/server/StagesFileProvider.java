@@ -1,6 +1,7 @@
 package de.dasbabypixel.gamestages.common.data.server;
 
 import de.dasbabypixel.gamestages.common.data.GameStage;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.io.BufferedReader;
@@ -22,28 +23,20 @@ import java.util.zip.CRC32C;
 import java.util.zip.Checksum;
 
 public class StagesFileProvider {
-    private static final Logger LOGGER = Logger.getLogger(StagesFileProvider.class.getName());
-    private final ExecutorService writeExecutor = Executors.newSingleThreadExecutor();
-    private final ReentrantLock lock = new ReentrantLock();
+    private static final @NonNull Logger LOGGER = Logger.getLogger(StagesFileProvider.class.getName());
+    private final @NonNull ExecutorService writeExecutor = Executors.newSingleThreadExecutor();
+    private final @NonNull ReentrantLock lock = new ReentrantLock();
     /**
      * Cache for stages that are currently being written. Fetching from the file would give incorrect results.
      */
-    private final Map<Key, StagesFile> stagesBeingWritten = new HashMap<>();
-    private final Path directory;
+    private final @NonNull Map<Key, StagesFile> stagesBeingWritten = new HashMap<>();
+    private final @NonNull Path directory;
 
-    public StagesFileProvider(Path directory) {
+    public StagesFileProvider(@NonNull Path directory) {
         this.directory = directory;
     }
 
-    public static Key player(UUID uuid) {
-        return new Key("player", uuid);
-    }
-
-    public static Key team(UUID uuid) {
-        return new Key("team", uuid);
-    }
-
-    public StagesFile readStages(Key key) throws IOException {
+    public StagesFile readStages(@NonNull Key key) throws IOException {
         lock.lock();
         try {
             if (stagesBeingWritten.containsKey(key)) {
@@ -60,7 +53,7 @@ public class StagesFileProvider {
         }
     }
 
-    private Provider providerFor(Key key) {
+    private Provider providerFor(@NonNull Key key) {
         return switch (key.type()) {
             case "player" -> new Provider.Player();
             case "team" -> new Provider.Team();
@@ -68,9 +61,9 @@ public class StagesFileProvider {
         };
     }
 
-    private @Nullable StagesFile tryReadStages(Provider provider, Path stageFile) throws IOException {
+    private @Nullable StagesFile tryReadStages(@NonNull Provider provider, @NonNull Path stageFile) throws IOException {
         if (!Files.exists(stageFile)) return provider.defaultInstance();
-        try (var reader = Files.newBufferedReader(stageFile, StandardCharsets.UTF_8)) {
+        try (var reader = Files.newBufferedReader(stageFile, Objects.requireNonNull(StandardCharsets.UTF_8))) {
             var checksum = new CRC32C();
 
             var file = provider.emptyInstance();
@@ -94,7 +87,7 @@ public class StagesFileProvider {
         }
     }
 
-    public void writeStages(Key key, StagesFile stages) {
+    public void writeStages(@NonNull Key key, @NonNull StagesFile stages) {
         lock.lock();
         try {
             stagesBeingWritten.put(key, stages);
@@ -109,7 +102,7 @@ public class StagesFileProvider {
                 var stageFileTmp = stageFile(key, "txt.tmp");
                 try {
                     Files.createDirectories(stageFileTmp.getParent());
-                    try (var writer = Files.newBufferedWriter(stageFileTmp, StandardCharsets.UTF_8, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
+                    try (var writer = Files.newBufferedWriter(stageFileTmp, Objects.requireNonNull(StandardCharsets.UTF_8), StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
                         var checksum = new CRC32C();
                         stages.write(writer, checksum);
 
@@ -129,8 +122,10 @@ public class StagesFileProvider {
         });
     }
 
-    private Path stageFile(Key key, String suffix) {
-        return directory.resolve(key.type()).resolve(key.uuid().toString() + "." + suffix);
+    private @NonNull Path stageFile(@NonNull Key key, @NonNull String suffix) {
+        return Objects.requireNonNull(Objects
+                .requireNonNull(directory.resolve(key.type()))
+                .resolve(key.uuid() + "." + suffix));
     }
 
     public void shutdown() throws IOException {
@@ -146,77 +141,86 @@ public class StagesFileProvider {
         }
     }
 
-    public interface Provider {
-        StagesFile defaultInstance();
+    public static Key player(@NonNull UUID uuid) {
+        return new Key("player", uuid);
+    }
 
-        StagesFile emptyInstance();
+    public static Key team(@NonNull UUID uuid) {
+        return new Key("team", uuid);
+    }
+
+    public interface Provider {
+        @NonNull StagesFile defaultInstance();
+
+        @NonNull StagesFile emptyInstance();
 
         class Player implements Provider {
             @Override
-            public StagesFile defaultInstance() {
+            public @NonNull StagesFile defaultInstance() {
                 return new PlayerStagesFile(Set.of(), null);
             }
 
             @Override
-            public StagesFile emptyInstance() {
+            public @NonNull StagesFile emptyInstance() {
                 return new PlayerStagesFile();
             }
         }
 
         class Team implements Provider {
             @Override
-            public StagesFile defaultInstance() {
+            public @NonNull StagesFile defaultInstance() {
                 return new TeamStagesFile(Set.of(), Set.of());
             }
 
             @Override
-            public StagesFile emptyInstance() {
+            public @NonNull StagesFile emptyInstance() {
                 return new TeamStagesFile();
             }
         }
     }
 
-    public record Key(String type, UUID uuid) {
+    public record Key(@NonNull String type, @NonNull UUID uuid) {
     }
 
     public static class StagesFile {
         private static final int LOCAL_VERSION = 1;
-        private Set<GameStage> stages;
+        private @NonNull Set<@NonNull GameStage> stages;
 
-        public StagesFile(Set<GameStage> stages) {
-            this.stages = Set.copyOf(stages);
+        public StagesFile(@NonNull Set<@NonNull GameStage> stages) {
+            this.stages = Objects.requireNonNull(Set.copyOf(stages));
         }
 
         private StagesFile() {
+            stages = Set.of();
         }
 
-        public void write(BufferedWriter writer, Checksum checksum) throws IOException {
+        public void write(@NonNull BufferedWriter writer, @NonNull Checksum checksum) throws IOException {
             writeLocalVersion(writer, checksum, LOCAL_VERSION);
             for (var stage : stages) {
                 writer.write(stage.name());
                 writer.newLine();
-                checksum.update(stage.name().getBytes(StandardCharsets.UTF_8));
+                checksum.update(stage.name().getBytes(Objects.requireNonNull(StandardCharsets.UTF_8)));
                 checksum.update(0);
             }
             writer.newLine();
             checksum.update(1);
         }
 
-        public void read(BufferedReader reader, Checksum checksum) throws IOException, CorruptedException {
+        public void read(@NonNull BufferedReader reader, @NonNull Checksum checksum) throws IOException, CorruptedException {
             readLocalVersion(reader, checksum, LOCAL_VERSION);
             var stages = new HashSet<GameStage>();
             for (var line = reader.readLine(); ; line = reader.readLine()) {
                 if (line == null) throw corrupted();
                 if (line.isEmpty()) break;
                 stages.add(new GameStage(line));
-                checksum.update(line.getBytes(StandardCharsets.UTF_8));
+                checksum.update(line.getBytes(Objects.requireNonNull(StandardCharsets.UTF_8)));
                 checksum.update(0);
             }
             checksum.update(1);
-            this.stages = Set.copyOf(stages);
+            this.stages = Objects.requireNonNull(Set.copyOf(stages));
         }
 
-        protected CorruptedException corrupted() {
+        protected @NonNull CorruptedException corrupted() {
             return new CorruptedException();
         }
 
@@ -224,21 +228,21 @@ public class StagesFileProvider {
             return stages;
         }
 
-        protected void writeLocalVersion(BufferedWriter writer, Checksum checksum, int version) throws IOException {
+        protected void writeLocalVersion(@NonNull BufferedWriter writer, @NonNull Checksum checksum, int version) throws IOException {
             var str = Integer.toString(version);
             writer.write(str);
             writer.newLine();
-            checksum.update(str.getBytes(StandardCharsets.UTF_8));
+            checksum.update(str.getBytes(Objects.requireNonNull(StandardCharsets.UTF_8)));
             checksum.update(0);
         }
 
-        protected void readLocalVersion(BufferedReader reader, Checksum checksum, int expect) throws IOException, CorruptedException {
+        protected void readLocalVersion(@NonNull BufferedReader reader, @NonNull Checksum checksum, int expect) throws IOException, CorruptedException {
             var line = reader.readLine();
             if (line == null) throw corrupted();
             try {
                 var version = Integer.parseInt(line);
                 if (version != expect) throw corrupted();
-                checksum.update(line.getBytes(StandardCharsets.UTF_8));
+                checksum.update(line.getBytes(Objects.requireNonNull(StandardCharsets.UTF_8)));
                 checksum.update(0);
             } catch (NumberFormatException e) {
                 throw corrupted();
@@ -250,7 +254,7 @@ public class StagesFileProvider {
         private static final int LOCAL_VERSION = 1;
         private @Nullable UUID teamId;
 
-        public PlayerStagesFile(Set<GameStage> stages, @Nullable UUID teamId) {
+        public PlayerStagesFile(@NonNull Set<@NonNull GameStage> stages, @Nullable UUID teamId) {
             super(stages);
             this.teamId = teamId;
         }
@@ -259,22 +263,22 @@ public class StagesFileProvider {
         }
 
         @Override
-        public void write(BufferedWriter writer, Checksum checksum) throws IOException {
+        public void write(@NonNull BufferedWriter writer, @NonNull Checksum checksum) throws IOException {
             super.write(writer, checksum);
             writeLocalVersion(writer, checksum, LOCAL_VERSION);
-            var line = teamId == null ? "" : teamId.toString();
-            checksum.update(line.getBytes(StandardCharsets.UTF_8));
+            var line = teamId == null ? "" : Objects.requireNonNull(teamId.toString());
+            checksum.update(line.getBytes(Objects.requireNonNull(StandardCharsets.UTF_8)));
             writer.write(line);
             writer.newLine();
         }
 
         @Override
-        public void read(BufferedReader reader, Checksum checksum) throws IOException, CorruptedException {
+        public void read(@NonNull BufferedReader reader, @NonNull Checksum checksum) throws IOException, CorruptedException {
             super.read(reader, checksum);
             readLocalVersion(reader, checksum, LOCAL_VERSION);
             var line = reader.readLine();
             if (line == null) throw corrupted();
-            checksum.update(line.getBytes(StandardCharsets.UTF_8));
+            checksum.update(line.getBytes(Objects.requireNonNull(StandardCharsets.UTF_8)));
             teamId = line.isEmpty() ? null : UUID.fromString(line);
         }
 
@@ -285,24 +289,27 @@ public class StagesFileProvider {
 
     public static class TeamStagesFile extends StagesFile {
         private static final int LOCAL_VERSION = 1;
-        private Set<UUID> players;
+        private @NonNull Set<@NonNull UUID> players;
 
-        public TeamStagesFile(Set<GameStage> stages, Set<UUID> players) {
+        public TeamStagesFile(@NonNull Set<GameStage> stages, @NonNull Set<UUID> players) {
             super(stages);
-            this.players = Set.copyOf(players);
+            this.players = Objects.requireNonNull(Set.copyOf(players));
         }
 
         public TeamStagesFile() {
+            players = Set.of();
         }
 
         @Override
-        public void write(BufferedWriter writer, Checksum checksum) throws IOException {
+        public void write(@NonNull BufferedWriter writer, @NonNull Checksum checksum) throws IOException {
             super.write(writer, checksum);
             writeLocalVersion(writer, checksum, LOCAL_VERSION);
             for (var player : players) {
                 writer.write(player.toString());
                 writer.newLine();
-                checksum.update(player.toString().getBytes(StandardCharsets.UTF_8));
+                checksum.update(Objects
+                        .requireNonNull(player.toString())
+                        .getBytes(Objects.requireNonNull(StandardCharsets.UTF_8)));
                 checksum.update(0);
             }
             writer.newLine();
@@ -310,7 +317,7 @@ public class StagesFileProvider {
         }
 
         @Override
-        public void read(BufferedReader reader, Checksum checksum) throws IOException, CorruptedException {
+        public void read(@NonNull BufferedReader reader, @NonNull Checksum checksum) throws IOException, CorruptedException {
             super.read(reader, checksum);
             readLocalVersion(reader, checksum, LOCAL_VERSION);
             var players = new HashSet<UUID>();
@@ -318,11 +325,11 @@ public class StagesFileProvider {
                 if (line == null) throw corrupted();
                 if (line.isEmpty()) break;
                 players.add(UUID.fromString(line));
-                checksum.update(line.getBytes(StandardCharsets.UTF_8));
+                checksum.update(line.getBytes(Objects.requireNonNull(StandardCharsets.UTF_8)));
                 checksum.update(0);
             }
             checksum.update(1);
-            this.players = Set.copyOf(players);
+            this.players = Objects.requireNonNull(Set.copyOf(players));
         }
 
         public Set<UUID> players() {

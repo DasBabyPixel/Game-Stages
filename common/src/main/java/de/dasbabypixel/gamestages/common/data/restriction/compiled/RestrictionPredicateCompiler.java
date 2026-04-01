@@ -8,10 +8,11 @@ import org.jspecify.annotations.NonNull;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class RestrictionPredicateCompiler {
     private final @NonNull BaseStages stages;
-    private final Map<PreparedRestrictionPredicate, CachedCompiledRestrictionPredicate> cache = new HashMap<>();
+    private final @NonNull Map<PreparedRestrictionPredicate, CachedCompiledRestrictionPredicate> cache = new HashMap<>();
 
     public RestrictionPredicateCompiler(@NonNull BaseStages stages) {
         this.stages = stages;
@@ -22,12 +23,12 @@ public class RestrictionPredicateCompiler {
     }
 
     private @NonNull CachedCompiledRestrictionPredicate compile0(@NonNull PreparedRestrictionPredicate predicate) {
-        if (cache.containsKey(predicate)) return cache.get(predicate);
+        if (cache.containsKey(predicate)) return Objects.requireNonNull(cache.get(predicate));
         var dependencies = predicate instanceof CompositePreparedRestrictionPredicate composite ? composite
-                .dependencies()
-                .stream()
-                .map(this::compile0)
-                .toList() : List.<CachedCompiledRestrictionPredicate>of();
+                                                                                                  .dependencies()
+                                                                                                  .stream()
+                                                                                                  .map(this::compile0)
+                                                                                                  .toList() : List.<CachedCompiledRestrictionPredicate>of();
         var compiled = new CachedCompiledRestrictionPredicate(stages, predicate, predicate.predicate(), dependencies);
         dependencies.forEach(dep -> dep.addNotifier(ignored -> compiled.invalidate()));
         cache.put(predicate, compiled);

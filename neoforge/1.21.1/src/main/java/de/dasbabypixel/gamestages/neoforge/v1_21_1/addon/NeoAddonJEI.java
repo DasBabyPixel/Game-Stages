@@ -11,7 +11,7 @@ import org.jspecify.annotations.NonNull;
 import java.util.function.Consumer;
 
 public interface NeoAddonJEI {
-    default <T> void updateVisibility(boolean newVisibility, T content, Consumer<? super T> show, Consumer<? super T> hide) {
+    default <T> void updateVisibility(boolean newVisibility, T content, @NonNull Consumer<? super T> show, @NonNull Consumer<? super T> hide) {
         if (newVisibility) {
             show.accept(content);
         } else {
@@ -19,7 +19,7 @@ public interface NeoAddonJEI {
         }
     }
 
-    default <T extends TypedGameContent> void iterate(BaseStages stages, CommonGameContentType<T> type, Consumer<CompiledRestrictionEntry> consumer) {
+    default <T extends TypedGameContent> void iterate(@NonNull BaseStages stages, @NonNull CommonGameContentType<T> type, @NonNull Consumer<CompiledRestrictionEntry> consumer) {
         var typeIndex = stages.typeIndexMap().get(type);
         if (typeIndex == null) return;
         for (var entry : typeIndex.contentListByEntry().keySet()) {

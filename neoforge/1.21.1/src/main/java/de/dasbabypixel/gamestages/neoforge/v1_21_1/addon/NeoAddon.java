@@ -4,29 +4,30 @@ import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.server.ReloadableServerResources;
+import org.jspecify.annotations.NonNull;
 
 public interface NeoAddon extends VAddon {
-    default NeoAddonKJS createKubeJSSupport() {
+    default @NonNull NeoAddonKJS createKubeJSSupport() {
         return new NeoAddonKJS() {
         };
     }
 
-    default NeoAddonJEI createJEISupport() {
+    default @NonNull NeoAddonJEI createJEISupport() {
         return new NeoAddonJEI() {
         };
     }
 
-    default NeoAddonProbeJS createProbeJSSupport() {
+    default @NonNull NeoAddonProbeJS createProbeJSSupport() {
         return new NeoAddonProbeJS() {
         };
     }
 
-    default void initResources(ReloadableServerResources serverResources, RegistryAccess registryAccess) {
+    default void initResources(@NonNull ReloadableServerResources serverResources, @NonNull RegistryAccess registryAccess) {
     }
 
-    default void beforeRegisterEvent(AbstractGameStageManager gameStageManager, ReloadableServerResources serverResources, RegistryAccess registryAccess) {
+    default void beforeRegisterEvent(@NonNull AbstractGameStageManager gameStageManager, @NonNull ReloadableServerResources serverResources, @NonNull RegistryAccess registryAccess) {
     }
 
-    default void afterRegisterEvent(AbstractGameStageManager gameStageManager, ReloadableServerResources serverResources, RegistryAccess registryAccess) {
+    default void afterRegisterEvent(@NonNull AbstractGameStageManager gameStageManager, @NonNull ReloadableServerResources serverResources, @NonNull RegistryAccess registryAccess) {
     }
 }

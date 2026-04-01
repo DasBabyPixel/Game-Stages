@@ -9,6 +9,7 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.*;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.RegisterEventJS;
 import dev.latvian.mods.kubejs.script.SourceLine;
 import dev.latvian.mods.kubejs.script.TypeWrapperRegistry;
+import org.jspecify.annotations.NonNull;
 
 public class NeoFluidAddon extends VFluidAddon implements NeoAddon {
     @Override
@@ -19,17 +20,17 @@ public class NeoFluidAddon extends VFluidAddon implements NeoAddon {
     }
 
     @Override
-    public NeoAddonKJS createKubeJSSupport() {
+    public @NonNull NeoAddonKJS createKubeJSSupport() {
         return new KJS();
     }
 
     @Override
-    public NeoAddonJEI createJEISupport() {
+    public @NonNull NeoAddonJEI createJEISupport() {
         return new FluidJEI();
     }
 
     @Override
-    public NeoAddonProbeJS createProbeJSSupport() {
+    public @NonNull NeoAddonProbeJS createProbeJSSupport() {
         return new FluidProbeJS();
     }
 
@@ -37,7 +38,7 @@ public class NeoFluidAddon extends VFluidAddon implements NeoAddon {
         private final FluidJSParser fluidParser = new FluidJSParser();
 
         @Override
-        public void registerEventExtensions(EventRegistry registry) {
+        public void registerEventExtensions(@NonNull EventRegistry registry) {
             var type = registry.get(RegisterEventJS.class);
             type.addFunctionVarArgs("fluids", (event, cx, args) -> args[0], FluidCollectionWrapper.class, FluidCollectionWrapper.class, FluidCollectionWrapper[].class);
             type.addFunctionVarArgs("restrictFluids", (event, cx, args) -> {
@@ -51,7 +52,7 @@ public class NeoFluidAddon extends VFluidAddon implements NeoAddon {
         }
 
         @Override
-        public void registerTypeWrappers(TypeWrapperRegistry registry) {
+        public void registerTypeWrappers(@NonNull TypeWrapperRegistry registry) {
             registry.register(FluidCollectionWrapper.class, (TypeWrapperRegistry.ContextFromFunction<FluidCollectionWrapper>) (context, o) -> new FluidCollectionWrapper(fluidParser.parse(context, o)));
         }
     }

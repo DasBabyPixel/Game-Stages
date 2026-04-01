@@ -24,7 +24,7 @@ public class PlatformPlayerProviderImpl implements PlatformPlayerProvider {
     }
 
     @Override
-    public @Nullable ServerPlayer getPlayer(UUID uuid) {
+    public @Nullable ServerPlayer getPlayer(@NonNull UUID uuid) {
         return Objects.requireNonNull(ServerLifecycleHooks.getCurrentServer()).getPlayerList().getPlayer(uuid);
     }
 }

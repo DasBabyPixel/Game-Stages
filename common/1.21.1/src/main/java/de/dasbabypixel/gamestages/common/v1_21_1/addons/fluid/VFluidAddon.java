@@ -7,6 +7,7 @@ import de.dasbabypixel.gamestages.common.v1_21_1.addon.VContentRegistry;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonFluidCollection;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.flattener.FluidFlattenerFactory;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.CommonFluidRestrictionPacket;
+import org.jspecify.annotations.NonNull;
 
 public abstract class VFluidAddon implements VAddon {
     private static VFluidAddon instance;
@@ -15,12 +16,8 @@ public abstract class VFluidAddon implements VAddon {
         instance = this;
     }
 
-    public static VFluidAddon instance() {
-        return instance;
-    }
-
     @Override
-    public void registerCustomContent(ContentRegistry registry) {
+    public void registerCustomContent(@NonNull ContentRegistry registry) {
         registry
                 .prepare(CommonFluidCollection.TYPE)
                 .set(ContentRegistry.NAME, "fluid")
@@ -30,9 +27,13 @@ public abstract class VFluidAddon implements VAddon {
     }
 
     @Override
-    public void registerPackets(PacketRegistry registry) {
+    public void registerPackets(@NonNull PacketRegistry registry) {
         registry.playClientBound(CommonFluidRestrictionPacket.TYPE, CommonFluidRestrictionPacket.STREAM_CODEC);
     }
 
     public abstract void handle(CommonFluidRestrictionPacket packet);
+
+    public static VFluidAddon instance() {
+        return instance;
+    }
 }

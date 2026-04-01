@@ -27,7 +27,8 @@ public interface GameContentFlattener {
         @NonNull T complete();
     }
 
+    @SuppressWarnings("NotNullFieldNotInitialized")
     class Attribute {
-        public static AbstractGameStageManager.Attribute<GameContentFlattener> INSTANCE;
+        public static AbstractGameStageManager.@NonNull Attribute<GameContentFlattener> INSTANCE;
     }
 }

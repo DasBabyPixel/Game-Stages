@@ -7,22 +7,23 @@ import de.dasbabypixel.gamestages.common.network.Status;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.StatusPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.SyncRegisteredGameStagesPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.SyncUnlockedGameStagesPacket;
+import org.jspecify.annotations.NonNull;
 
 import java.util.List;
 
 public class PlatformPacketCreatorImpl implements PlatformPacketCreator {
     @Override
-    public CustomPacket createSyncRegisteredGameStages(List<GameStage> gameStages) {
+    public @NonNull CustomPacket createSyncRegisteredGameStages(List<GameStage> gameStages) {
         return new SyncRegisteredGameStagesPacket(gameStages);
     }
 
     @Override
-    public CustomPacket createSyncUnlockedGameStages(List<GameStage> gameStages) {
+    public @NonNull CustomPacket createSyncUnlockedGameStages(List<GameStage> gameStages) {
         return new SyncUnlockedGameStagesPacket(gameStages);
     }
 
     @Override
-    public CustomPacket createStatusPacket(Status status) {
+    public @NonNull CustomPacket createStatusPacket(Status status) {
         return new StatusPacket(status);
     }
 }

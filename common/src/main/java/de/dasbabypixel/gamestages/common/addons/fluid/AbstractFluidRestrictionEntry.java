@@ -8,11 +8,17 @@ import org.jspecify.annotations.NonNull;
 
 public abstract class AbstractFluidRestrictionEntry<T extends AbstractFluidRestrictionEntry<T, P>, P> extends AbstractRestrictionEntry<T, P> implements FluidRestrictionEntry<T, P> {
     private final @NonNull GameContent targetFluids;
+    private final @NonNull PreparedRestrictionPredicate predicate;
     private boolean hideInJEI = true;
 
     public AbstractFluidRestrictionEntry(@NonNull PreparedRestrictionPredicate predicate, @NonNull RestrictionEntryOrigin origin, @NonNull GameContent targetFluids) {
-        super(predicate, origin);
+        super(origin);
+        this.predicate = predicate;
         this.targetFluids = targetFluids;
+    }
+
+    public @NonNull PreparedRestrictionPredicate predicate() {
+        return predicate;
     }
 
     @Override

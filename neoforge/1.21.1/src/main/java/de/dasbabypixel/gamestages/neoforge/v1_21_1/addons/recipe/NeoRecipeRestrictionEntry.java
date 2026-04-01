@@ -2,11 +2,13 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe;
 
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.GameContent;
+import de.dasbabypixel.gamestages.common.data.RecompilationTask;
 import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
+import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryPreCompiler;
 import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
 import de.dasbabypixel.gamestages.common.network.CustomPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeCollection;
@@ -28,7 +30,7 @@ public class NeoRecipeRestrictionEntry extends CommonRecipeRestrictionEntry<NeoR
     }
 
     @Override
-    public @NonNull PreCompiled precompile(@NonNull AbstractGameStageManager instance) {
+    public @NonNull PreCompiled precompile(@NonNull AbstractGameStageManager instance, @NonNull RestrictionEntryPreCompiler preCompiler) {
         var recipes = instance
                 .get(GameContentFlattener.Attribute.INSTANCE)
                 .flatten(targetRecipes(), CommonRecipeCollection.TYPE);
@@ -36,8 +38,8 @@ public class NeoRecipeRestrictionEntry extends CommonRecipeRestrictionEntry<NeoR
     }
 
     @Override
-    public @NonNull CompiledRestrictionEntry compile(@NonNull AbstractGameStageManager instance, @NonNull PreCompiled preCompiled, @NonNull CompiledRestrictionPredicate predicate) {
-        return new Compiled(this, preCompiled.recipes, predicate);
+    public @NonNull CompiledRestrictionEntry compile(@NonNull RecompilationTask task, NeoRecipeRestrictionEntry.@NonNull PreCompiled preCompiled) {
+        return new Compiled(this, preCompiled.recipes, task.predicateCompiler().compile(predicate()));
     }
 
     public record Compiled(@NonNull NeoRecipeRestrictionEntry entry, @NonNull CommonRecipeCollection gameContent,

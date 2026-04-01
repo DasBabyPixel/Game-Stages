@@ -8,11 +8,17 @@ import org.jspecify.annotations.NonNull;
 
 public abstract class AbstractRecipeRestrictionEntry<T extends AbstractRecipeRestrictionEntry<T, P>, P> extends AbstractRestrictionEntry<T, P> implements RecipeRestrictionEntry<T, P> {
     private final @NonNull GameContent targetRecipes;
+    private final @NonNull PreparedRestrictionPredicate predicate;
     private boolean hideInJEI = true;
 
     public AbstractRecipeRestrictionEntry(@NonNull PreparedRestrictionPredicate predicate, @NonNull RestrictionEntryOrigin origin, @NonNull GameContent targetRecipes) {
-        super(predicate, origin);
+        super(origin);
+        this.predicate = predicate;
         this.targetRecipes = targetRecipes;
+    }
+
+    public @NonNull PreparedRestrictionPredicate predicate() {
+        return predicate;
     }
 
     @Override

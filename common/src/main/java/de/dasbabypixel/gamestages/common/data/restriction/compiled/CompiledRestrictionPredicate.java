@@ -13,7 +13,7 @@ public sealed interface CompiledRestrictionPredicate permits CachedCompiledRestr
 
     void addNotifier(@NonNull UpdateNotifier updateNotifier);
 
-    PreparedRestrictionPredicate predicate();
+    @NonNull PreparedRestrictionPredicate predicate();
 
     interface UpdateNotifier {
         void update(boolean newTest);

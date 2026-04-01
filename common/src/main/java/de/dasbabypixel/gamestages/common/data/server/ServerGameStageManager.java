@@ -15,12 +15,30 @@ import static de.dasbabypixel.gamestages.common.CommonInstances.platformPacketCr
 public class ServerGameStageManager extends MutatableGameStageManager {
     public static @Nullable ServerGameStageManager INSTANCE;
     private static boolean queuing = false;
-    private final StagesFileProvider stagesFileProvider;
-    private final StagesCache stagesCache;
+    private final @NonNull StagesFileProvider stagesFileProvider;
+    private final @NonNull StagesCache stagesCache;
 
-    private ServerGameStageManager(Path dataDirectory) {
-        this.stagesFileProvider = new StagesFileProvider(dataDirectory.resolve("unlocked"));
+    private ServerGameStageManager(@NonNull Path dataDirectory) {
+        this.stagesFileProvider = new StagesFileProvider(Objects.requireNonNull(dataDirectory.resolve("unlocked")));
         this.stagesCache = new StagesCache(this);
+    }
+
+    public @NonNull StagesCache playerStagesCache() {
+        return stagesCache;
+    }
+
+    public @NonNull StagesFileProvider stagesFileProvider() {
+        return stagesFileProvider;
+    }
+
+    public void sync(@NonNull PacketConsumer packetConsumer) {
+        packetConsumer.send(platformPacketCreator.createStatusPacket(Status.BEGIN_SYNC));
+        var gameStages = List.copyOf(this.gameStages());
+        packetConsumer.send(platformPacketCreator.createSyncRegisteredGameStages(gameStages));
+        for (var restriction : restrictions()) {
+            packetConsumer.send(restriction.createPacket(this));
+        }
+        packetConsumer.send(platformPacketCreator.createStatusPacket(Status.END_SYNC));
     }
 
     public static void stop() {
@@ -34,7 +52,7 @@ public class ServerGameStageManager extends MutatableGameStageManager {
         INSTANCE = null;
     }
 
-    public static void init(Path dataDirectory) {
+    public static void init(@NonNull Path dataDirectory) {
         if (INSTANCE != null) throw new IllegalStateException("Instance not null");
         INSTANCE = new ServerGameStageManager(dataDirectory);
         INSTANCE.disallowMutation();
@@ -57,23 +75,5 @@ public class ServerGameStageManager extends MutatableGameStageManager {
             QueuingGameStageManager.INSTANCE.begin();
         }
         return QueuingGameStageManager.INSTANCE;
-    }
-
-    public StagesCache playerStagesCache() {
-        return stagesCache;
-    }
-
-    public StagesFileProvider stagesFileProvider() {
-        return stagesFileProvider;
-    }
-
-    public void sync(@NonNull PacketConsumer packetConsumer) {
-        packetConsumer.send(platformPacketCreator.createStatusPacket(Status.BEGIN_SYNC));
-        var gameStages = List.copyOf(this.gameStages());
-        packetConsumer.send(platformPacketCreator.createSyncRegisteredGameStages(gameStages));
-        for (var restriction : restrictions()) {
-            packetConsumer.send(restriction.createPacket(this));
-        }
-        packetConsumer.send(platformPacketCreator.createStatusPacket(Status.END_SYNC));
     }
 }

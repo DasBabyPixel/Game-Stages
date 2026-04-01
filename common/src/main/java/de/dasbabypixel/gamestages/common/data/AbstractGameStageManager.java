@@ -13,7 +13,7 @@ public abstract class AbstractGameStageManager {
     protected final List<RestrictionEntry<?, ?>> restrictions = new ArrayList<>();
     private final Map<Attribute<?>, Object> attributeMap = new HashMap<>();
 
-    public void add(GameStage gameStage) {
+    public void add(@NonNull GameStage gameStage) {
         if (!mayMutate()) throw new IllegalStateException("Cannot mutate");
         if (containsKey(gameStage)) {
             throw new IllegalArgumentException("Multiple GameStages have the same name");
@@ -21,23 +21,23 @@ public abstract class AbstractGameStageManager {
         add0(gameStage);
     }
 
-    public @Nullable GameStage get(String name) {
+    public @Nullable GameStage get(@NonNull String name) {
         var stage = new GameStage(name);
         if (!containsKey(stage)) return null;
         return stage;
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T get(Attribute<? extends T> attribute) {
-        return (T) attributeMap.computeIfAbsent(attribute, a -> a.defaultValue().apply(this));
+    public <T> @NonNull T get(@NonNull Attribute<? extends T> attribute) {
+        return (T) Objects.requireNonNull(attributeMap.computeIfAbsent(attribute, a -> a.defaultValue().apply(this)));
     }
 
-    public <T extends RestrictionEntry<T, ?>> T addRestriction(@NonNull T restriction) {
+    public <T extends RestrictionEntry<T, ?>> @NonNull T addRestriction(@NonNull T restriction) {
         this.restrictions.add(restriction);
         return restriction;
     }
 
-    public void set(List<GameStage> gameStages) {
+    public void set(@NonNull List<@NonNull GameStage> gameStages) {
         reset();
         gameStages.forEach(this::add);
     }
@@ -46,11 +46,11 @@ public abstract class AbstractGameStageManager {
         clear0();
     }
 
-    public Set<GameStage> gameStages() {
+    public @NonNull Set<@NonNull GameStage> gameStages() {
         return gameStages;
     }
 
-    public List<RestrictionEntry<?, ?>> restrictions() {
+    public @NonNull List<@NonNull RestrictionEntry<?, ?>> restrictions() {
         return restrictions;
     }
 
@@ -60,11 +60,11 @@ public abstract class AbstractGameStageManager {
         attributeMap.clear();
     }
 
-    protected boolean containsKey(GameStage gameStage) {
+    protected boolean containsKey(@NonNull GameStage gameStage) {
         return gameStages.contains(gameStage);
     }
 
-    protected void add0(GameStage stage) {
+    protected void add0(@NonNull GameStage stage) {
         gameStages.add(stage);
     }
 
@@ -72,8 +72,9 @@ public abstract class AbstractGameStageManager {
         return true;
     }
 
-    public record Attribute<T>(Function<@NonNull AbstractGameStageManager, ? extends @NonNull T> defaultValue) {
-        public Attribute(Supplier<? extends @NonNull T> defaultValue) {
+    public record Attribute<T>(
+            @NonNull Function<@NonNull AbstractGameStageManager, ? extends @NonNull T> defaultValue) {
+        public Attribute(@NonNull Supplier<? extends @NonNull T> defaultValue) {
             this(ignore -> defaultValue.get());
         }
     }

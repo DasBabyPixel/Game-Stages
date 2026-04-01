@@ -1,27 +1,47 @@
 package de.dasbabypixel.gamestages.common.data;
 
+import de.dasbabypixel.gamestages.common.addon.Addon;
 import de.dasbabypixel.gamestages.common.addon.AddonManager;
 import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.data.restriction.DuplicateReport;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryCompiler;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionPredicateCompiler;
+import org.jspecify.annotations.NonNull;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class RecompilationTask {
-    private final BaseStages stages;
-    private final RestrictionEntryCompiler restrictionEntryCompiler;
-    private final AbstractGameStageManager instance;
-    private final RestrictionPredicateCompiler predicateCompiler;
+    private final @NonNull BaseStages stages;
+    private final @NonNull RestrictionEntryCompiler restrictionEntryCompiler;
+    private final @NonNull AbstractGameStageManager instance;
+    private final @NonNull RestrictionPredicateCompiler predicateCompiler;
+    private final @NonNull Map<Addon, Object> addonContext = new HashMap<>();
 
-    public RecompilationTask(BaseStages stages, RestrictionEntryCompiler restrictionEntryCompiler, AbstractGameStageManager instance) {
+    public RecompilationTask(@NonNull BaseStages stages, @NonNull AbstractGameStageManager instance) {
         this.stages = stages;
-        this.restrictionEntryCompiler = restrictionEntryCompiler;
         this.instance = instance;
+        this.restrictionEntryCompiler = new RestrictionEntryCompiler(this);
         this.predicateCompiler = new RestrictionPredicateCompiler(stages);
+    }
+
+    public void setContext(@NonNull Addon addon, @NonNull Object context) {
+        addonContext.put(addon, context);
+    }
+
+    public @NonNull Object getContext(Addon addon) {
+        return Objects.requireNonNull(addonContext.get(addon));
+    }
+
+    public @NonNull AbstractGameStageManager instance() {
+        return instance;
+    }
+
+    public BaseStages stages() {
+        return stages;
+    }
+
+    public @NonNull RestrictionPredicateCompiler predicateCompiler() {
+        return predicateCompiler;
     }
 
     public void findDuplicates() {
@@ -39,10 +59,13 @@ public class RecompilationTask {
                 var typeIndex = typeIndexMap.computeIfAbsent(type, ignored -> new BaseStages.TypeIndex());
 
                 var contents = typed.content();
-                typeIndex.contentListByEntry().putIfAbsent(compiledEntry, List.copyOf(contents));
+                typeIndex
+                        .contentListByEntry()
+                        .putIfAbsent(compiledEntry, Objects.requireNonNull(List.copyOf(contents)));
                 var entryByContent = typeIndex.entryByContent();
 
                 for (var content : contents) {
+                    assert content != null;
                     if (entryByContent.containsKey(content)) {
                         // Duplicate
                         typeIndex.duplicates().computeIfAbsent(content, ignored -> new HashSet<>()).add(compiledEntry);
@@ -53,13 +76,16 @@ public class RecompilationTask {
             }
         }
 
-        var reports = new ArrayList<DuplicateReport>();
+        var reports = new ArrayList<@NonNull DuplicateReport>();
 
         for (var entry : typeIndexMap.entrySet()) {
+            assert entry != null;
             var typeIndex = entry.getValue();
+            assert typeIndex != null;
             var duplicates = typeIndex.duplicates();
             if (!duplicates.isEmpty()) {
                 for (var duplicateEntry : duplicates.entrySet()) {
+                    assert duplicateEntry != null;
                     var object = duplicateEntry.getKey();
                     var mainEntry = Objects.requireNonNull(typeIndex.entryByContent().get(object));
                     var d = duplicateEntry.getValue();
@@ -76,23 +102,24 @@ public class RecompilationTask {
     }
 
     public void recompile() {
+        for (var addon : AddonManager.instance().addons()) {
+            addon.preCompileAll(this);
+        }
         recompileGameStages();
         recompileEntries();
     }
 
     public void firePostCompile() {
         for (var addon : AddonManager.instance().addons()) {
-            addon.postCompileAll(instance, stages);
+            addon.postCompileAll(this);
         }
     }
 
     private void recompileEntries() {
         stages.compiledRestrictionEntryMap().clear();
         for (var restriction : instance.restrictions()) {
-            var predicate = restriction.predicate();
             // Compiling also links dependencies
-            var compiledPredicate = predicateCompiler.compile(predicate);
-            var compiledEntry = restrictionEntryCompiler.compile(restriction, compiledPredicate);
+            var compiledEntry = restrictionEntryCompiler.compile(restriction);
 
             for (var addon : AddonManager.instance().addons()) {
                 addon.postCompile(compiledEntry);

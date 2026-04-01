@@ -7,5 +7,11 @@
   ],
   "net/minecraft/client/player/AbstractClientPlayer": [
     "de/dasbabypixel/gamestages/common/entity/ClientPlayer"
+  ],
+  "net/minecraft/world/item/ItemStack": [
+    "de/dasbabypixel/gamestages/common/data/ItemStack"
+  ],
+  "net/minecraft/world/level/block/entity/BlockEntity": [
+    "de/dasbabypixel/gamestages/neoforge/v1_21_1/entity/IBlockEntity"
   ]
 }

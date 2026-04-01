@@ -13,6 +13,7 @@ import dev.latvian.mods.kubejs.script.SourceLine;
 import dev.latvian.mods.kubejs.script.TypeWrapperRegistry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.server.ReloadableServerResources;
+import org.jspecify.annotations.NonNull;
 
 public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
     @Override
@@ -22,28 +23,28 @@ public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
     }
 
     @Override
-    public void initResources(ReloadableServerResources serverResources, RegistryAccess registryAccess) {
+    public void initResources(@NonNull ReloadableServerResources serverResources, @NonNull RegistryAccess registryAccess) {
         CommonRecipeCollection.recipeManager = serverResources.getRecipeManager();
     }
 
     @Override
-    public void beforeRegisterEvent(AbstractGameStageManager gameStageManager, ReloadableServerResources serverResources, RegistryAccess registryAccess) {
+    public void beforeRegisterEvent(@NonNull AbstractGameStageManager gameStageManager, @NonNull ReloadableServerResources serverResources, @NonNull RegistryAccess registryAccess) {
         var recipeTree = new NeoRecipeIndex(serverResources.getRecipeManager(), this, gameStageManager, registryAccess);
 //        System.out.println(recipeTree.findRelated(Items.OAK_PLANKS).size());
     }
 
     @Override
-    public NeoAddonKJS createKubeJSSupport() {
+    public @NonNull NeoAddonKJS createKubeJSSupport() {
         return new KJS();
     }
 
     @Override
-    public NeoAddonJEI createJEISupport() {
+    public @NonNull NeoAddonJEI createJEISupport() {
         return new RecipeJEI();
     }
 
     @Override
-    public NeoAddonProbeJS createProbeJSSupport() {
+    public @NonNull NeoAddonProbeJS createProbeJSSupport() {
         return new RecipeProbeJS();
     }
 
@@ -51,7 +52,7 @@ public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
         private final RecipeJSParser recipeParser = new RecipeJSParser();
 
         @Override
-        public void registerEventExtensions(EventRegistry registry) {
+        public void registerEventExtensions(@NonNull EventRegistry registry) {
             var type = registry.get(RegisterEventJS.class);
             type.addFunctionVarArgs("recipes", (event, cx, args) -> args[0], RecipeCollectionWrapper.class, RecipeCollectionWrapper.class, RecipeCollectionWrapper[].class);
             type.addFunctionVarArgs("restrictRecipes", (event, cx, args) -> {
@@ -65,7 +66,7 @@ public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
         }
 
         @Override
-        public void registerTypeWrappers(TypeWrapperRegistry registry) {
+        public void registerTypeWrappers(@NonNull TypeWrapperRegistry registry) {
             registry.register(RecipeCollectionWrapper.class, (TypeWrapperRegistry.ContextFromFunction<RecipeCollectionWrapper>) (context, o) -> new RecipeCollectionWrapper(recipeParser.parse(context, o)));
         }
     }

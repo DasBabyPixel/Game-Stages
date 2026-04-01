@@ -7,7 +7,7 @@ import org.jspecify.annotations.NonNull;
 
 import java.util.List;
 
-public record GameStage(String name) implements RestrictionPredicate, PreparedRestrictionPredicate {
+public record GameStage(@NonNull String name) implements RestrictionPredicate, PreparedRestrictionPredicate {
     @Override
     public boolean accepts(@NonNull List<? extends @NonNull PreparedRestrictionPredicate> dependencies) {
         return dependencies.isEmpty();

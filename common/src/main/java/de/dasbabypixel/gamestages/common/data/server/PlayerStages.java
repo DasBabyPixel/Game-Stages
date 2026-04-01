@@ -9,12 +9,12 @@ import org.jspecify.annotations.Nullable;
 import java.util.*;
 
 public class PlayerStages extends ServerStages {
-    private final List<ServerPlayer> playerList = new ArrayList<>(1);
+    private final @NonNull List<ServerPlayer> playerList = new ArrayList<>(1);
     private boolean valid = true;
     private @Nullable UUID teamId;
     private @Nullable TeamStages team;
 
-    public PlayerStages(@NonNull ServerGameStageManager manager, StagesFileProvider.@NonNull Key key, StagesFileProvider.PlayerStagesFile stagesFile) {
+    public PlayerStages(@NonNull ServerGameStageManager manager, StagesFileProvider.@NonNull Key key, StagesFileProvider.@NonNull PlayerStagesFile stagesFile) {
         super(manager, key, stagesFile);
         this.teamId = stagesFile.teamId();
     }
@@ -49,7 +49,7 @@ public class PlayerStages extends ServerStages {
     }
 
     @Override
-    protected Set<GameStage> getUnlockedStages() {
+    protected @NonNull Set<@NonNull GameStage> getUnlockedStages() {
         if (!valid) throw new IllegalStateException();
         return super.getUnlockedStages();
     }

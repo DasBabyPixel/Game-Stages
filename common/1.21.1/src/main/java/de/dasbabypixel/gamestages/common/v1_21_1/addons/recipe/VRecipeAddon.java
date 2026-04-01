@@ -4,6 +4,7 @@ import de.dasbabypixel.gamestages.common.addon.ContentRegistry;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.PacketRegistry;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VContentRegistry;
+import org.jspecify.annotations.NonNull;
 
 public abstract class VRecipeAddon implements VAddon {
     private static VRecipeAddon instance;
@@ -12,12 +13,8 @@ public abstract class VRecipeAddon implements VAddon {
         instance = this;
     }
 
-    public static VRecipeAddon instance() {
-        return instance;
-    }
-
     @Override
-    public void registerCustomContent(ContentRegistry registry) {
+    public void registerCustomContent(@NonNull ContentRegistry registry) {
         registry
                 .prepare(CommonRecipeCollection.TYPE)
                 .set(ContentRegistry.NAME, "recipe")
@@ -27,9 +24,13 @@ public abstract class VRecipeAddon implements VAddon {
     }
 
     @Override
-    public void registerPackets(PacketRegistry registry) {
+    public void registerPackets(@NonNull PacketRegistry registry) {
         registry.playClientBound(CommonRecipeRestrictionPacket.TYPE, CommonRecipeRestrictionPacket.STREAM_CODEC);
     }
 
     public abstract void handle(CommonRecipeRestrictionPacket packet);
+
+    public static VRecipeAddon instance() {
+        return instance;
+    }
 }

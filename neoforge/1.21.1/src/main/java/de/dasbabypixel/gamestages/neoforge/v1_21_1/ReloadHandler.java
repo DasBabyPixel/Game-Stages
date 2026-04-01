@@ -2,8 +2,9 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1;
 
 import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.data.DuplicatesException;
-import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryCompiler;
+import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryPreCompiler;
 import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
+import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
 import de.dasbabypixel.gamestages.neoforge.integration.Mods;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.listener.KJSListeners;
@@ -25,6 +26,7 @@ public class ReloadHandler {
     }
 
     private static void handleAddReloadListener(AddReloadListenerEvent event) {
+        Objects.requireNonNull(event);
         var serverResources = event.getServerResources();
         var registryAccess = event.getRegistryAccess();
         for (var addon : NeoAddonManager.instance().addons()) {
@@ -33,7 +35,7 @@ public class ReloadHandler {
         event.addListener((ResourceManagerReloadListener) resourceManager -> fullReload(serverResources, registryAccess));
     }
 
-    public static void fullReload(ReloadableServerResources serverResources, RegistryAccess registryAccess) {
+    public static void fullReload(@NonNull ReloadableServerResources serverResources, @NonNull RegistryAccess registryAccess) {
         var instance = ServerGameStageManager.instance();
 
         for (var addon : NeoAddonManager.instance().addons()) {
@@ -61,29 +63,35 @@ public class ReloadHandler {
         }
 
         if (ServerGameStageManager.INSTANCE != null) {
-            pushUpdate(ServerGameStageManager.INSTANCE);
+            pushFullUpdate(ServerGameStageManager.INSTANCE);
         }
     }
 
     private static void handlePlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
-        pushUpdate(Objects.requireNonNull(ServerGameStageManager.INSTANCE));
+        Objects.requireNonNull(event);
+        var player = (ServerPlayer) event.getEntity();
+        var instance = Objects.requireNonNull(ServerGameStageManager.INSTANCE);
+        instance.sync(packet -> CommonInstances.platformPacketDistributor.sendToPlayer(player, packet));
+        playerUpdate(instance, player);
     }
 
-    private static void pushUpdate(@NonNull ServerGameStageManager instance) {
-        var restrictionEntryCompiler = instance.get(RestrictionEntryCompiler.ATTRIBUTE);
-        for (var restriction : instance.restrictions()) {
-            restrictionEntryCompiler.precompile(restriction);
-        }
-
+    private static void playerUpdate(@NonNull ServerGameStageManager instance, @NonNull ServerPlayer player) {
         try {
-            CommonInstances.platformPlayerProvider
-                    .allPlayers()
-                    .forEach(p -> p.getGameStages().recompileAll(restrictionEntryCompiler));
+            player.getGameStages().recompileAll(instance);
         } catch (DuplicatesException d) {
-            d.print(System.err::println);
-            System.err.println("Failed GameStages reload because of duplicates");
+            NeoForgeEntrypoint.LOGGER.error("Failed GameStages reload because of duplicates", d);
+        }
+        player.getGameStages().fullSync();
+    }
+
+    public static void pushFullUpdate(@NonNull ServerGameStageManager instance) {
+        var preCompiler = instance.get(RestrictionEntryPreCompiler.ATTRIBUTE);
+        for (var restriction : instance.restrictions()) {
+            preCompiler.precompile(restriction);
         }
         instance.sync(CommonInstances.platformPacketDistributor::sendToAllPlayers);
-        CommonInstances.platformPlayerProvider.allPlayers().forEach(p -> p.getGameStages().fullSync());
+        for (var player : CommonInstances.platformPlayerProvider.allPlayers()) {
+            playerUpdate(instance, player);
+        }
     }
 }

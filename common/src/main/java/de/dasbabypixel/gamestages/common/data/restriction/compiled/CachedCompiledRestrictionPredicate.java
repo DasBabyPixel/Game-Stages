@@ -31,7 +31,7 @@ final class CachedCompiledRestrictionPredicate implements CompiledRestrictionPre
     }
 
     @Override
-    public PreparedRestrictionPredicate predicate() {
+    public @NonNull PreparedRestrictionPredicate predicate() {
         return original;
     }
 

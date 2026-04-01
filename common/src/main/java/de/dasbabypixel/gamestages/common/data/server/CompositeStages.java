@@ -2,25 +2,26 @@ package de.dasbabypixel.gamestages.common.data.server;
 
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.GameStage;
+import org.jspecify.annotations.NonNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class CompositeStages extends BaseStages {
-    private final Set<PlayerStages> dependencies;
+    private final @NonNull Set<@NonNull PlayerStages> dependencies;
     private boolean valid = false;
 
-    public CompositeStages(Set<PlayerStages> dependencies) {
+    public CompositeStages(@NonNull Set<@NonNull PlayerStages> dependencies) {
         super(Set.of());
         this.dependencies = dependencies;
     }
 
-    public Set<PlayerStages> dependencies() {
+    public @NonNull Set<@NonNull PlayerStages> dependencies() {
         return dependencies;
     }
 
     @Override
-    protected Set<GameStage> getUnlockedStages() {
+    protected @NonNull Set<@NonNull GameStage> getUnlockedStages() {
         var set = super.getUnlockedStages();
         if (valid) return set;
 

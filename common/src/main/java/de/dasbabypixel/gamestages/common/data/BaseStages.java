@@ -3,7 +3,6 @@ package de.dasbabypixel.gamestages.common.data;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
-import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryCompiler;
 import org.jspecify.annotations.NonNull;
 
 import java.util.*;
@@ -12,9 +11,9 @@ public abstract class BaseStages {
     protected final @NonNull Map<@NonNull RestrictionEntry<?, ?>, @NonNull CompiledRestrictionEntry> compiledRestrictionEntryMap = new HashMap<>();
     protected final @NonNull Map<@NonNull GameStage, @NonNull CompiledRestrictionPredicate> compiledGameStages = new HashMap<>();
     protected final @NonNull Map<@NonNull GameContentType<?>, TypeIndex> typeIndexMap = new HashMap<>();
-    private final Set<@NonNull GameStage> unlockedStages;
+    private final @NonNull Set<@NonNull GameStage> unlockedStages;
 
-    public BaseStages(Set<GameStage> stages) {
+    public BaseStages(@NonNull Set<GameStage> stages) {
         unlockedStages = new HashSet<>(stages);
     }
 
@@ -64,8 +63,8 @@ public abstract class BaseStages {
         return true;
     }
 
-    public void recompileAll(@NonNull RestrictionEntryCompiler restrictionEntryCompiler) {
-        var recompilationTask = new RecompilationTask(this, restrictionEntryCompiler, restrictionEntryCompiler.instance());
+    public void recompileAll(@NonNull AbstractGameStageManager instance) {
+        var recompilationTask = new RecompilationTask(this, instance);
         recompilationTask.recompile();
         recompilationTask.findDuplicates();
         recompilationTask.firePostCompile();
@@ -79,7 +78,7 @@ public abstract class BaseStages {
         update(gameStage);
     }
 
-    protected Set<GameStage> getUnlockedStages() {
+    protected @NonNull Set<@NonNull GameStage> getUnlockedStages() {
         return unlockedStages;
     }
 
@@ -88,7 +87,7 @@ public abstract class BaseStages {
     }
 
     public @NonNull Set<@NonNull GameStage> getAll() {
-        return Set.copyOf(getUnlockedStages());
+        return Objects.requireNonNull(Set.copyOf(getUnlockedStages()));
     }
 
     public @NonNull Map<@NonNull GameStage, @NonNull CompiledRestrictionPredicate> compiledGameStages() {
@@ -106,9 +105,9 @@ public abstract class BaseStages {
     public static final class TypeIndex {
         private final @NonNull Map<@NonNull Object, @NonNull CompiledRestrictionEntry> entryByContent = new HashMap<>();
         private final @NonNull Map<@NonNull CompiledRestrictionEntry, @NonNull List<@NonNull Object>> contentListByEntry = new HashMap<>();
-        private final @NonNull Map<Object, Set<CompiledRestrictionEntry>> duplicates = new HashMap<>(0);
+        private final @NonNull Map<@NonNull Object, @NonNull Set<@NonNull CompiledRestrictionEntry>> duplicates = new HashMap<>(0);
 
-        public @NonNull Map<Object, Set<CompiledRestrictionEntry>> duplicates() {
+        public @NonNull Map<@NonNull Object, @NonNull Set<@NonNull CompiledRestrictionEntry>> duplicates() {
             return duplicates;
         }
 

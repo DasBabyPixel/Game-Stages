@@ -3,12 +3,13 @@ package de.dasbabypixel.gamestages.common.data.restriction;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
+import java.util.Objects;
 
 public record CompositePreparedRestrictionPredicate(@NonNull RestrictionPredicate predicate,
-                                                    @NonNull List<PreparedRestrictionPredicate> dependencies) implements PreparedRestrictionPredicate {
+                                                    @NonNull List<@NonNull PreparedRestrictionPredicate> dependencies) implements PreparedRestrictionPredicate {
     public CompositePreparedRestrictionPredicate {
         if (!predicate.accepts(dependencies)) throw new IllegalStateException();
-        dependencies = List.copyOf(dependencies);
+        dependencies = Objects.requireNonNull(List.copyOf(dependencies));
     }
 
     @Override

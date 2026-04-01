@@ -4,14 +4,16 @@ import dev.latvian.mods.kubejs.event.KubeEvent;
 import dev.latvian.mods.kubejs.script.KubeJSContext;
 import dev.latvian.mods.rhino.BaseFunction;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Set;
 
 public abstract class EventJSBase<Self extends EventJSBase<Self>> extends HashMap<String, BaseFunction> implements KubeEvent {
-    private final EventType<Self> type;
+    private final @NonNull EventType<Self> type;
 
-    public EventJSBase(EventType<Self> type) {
+    public EventJSBase(@NonNull EventType<Self> type) {
         this.type = type;
     }
 
@@ -21,17 +23,17 @@ public abstract class EventJSBase<Self extends EventJSBase<Self>> extends HashMa
     }
 
     @Override
-    public boolean containsKey(Object key) {
+    public boolean containsKey(@NonNull Object key) {
         return keySet().contains(String.valueOf(key));
     }
 
     @Override
-    public BaseFunction get(Object key) {
+    public BaseFunction get(@NonNull Object key) {
         var keyString = String.valueOf(key);
-        return type.functions().get(keyString).invoker();
+        return Objects.requireNonNull(type.functions().get(keyString), "Unknown event function " + keyString).invoker();
     }
 
     public interface Function<E extends EventJSBase<E>> {
-        Object invoke(E event, KubeJSContext cx, Object[] args);
+        @Nullable Object invoke(@NonNull E event, @NonNull KubeJSContext cx, Object @NonNull [] args);
     }
 }

@@ -9,13 +9,13 @@ import java.util.Objects;
 import java.util.Set;
 
 public class FlattenedGameContent {
-    private final Map<GameContentType<?>, TypedGameContent> map;
+    private final @NonNull Map<@NonNull GameContentType<?>, TypedGameContent> map;
 
-    public FlattenedGameContent(Map<GameContentType<?>, TypedGameContent> map) {
+    public FlattenedGameContent(@NonNull Map<@NonNull GameContentType<?>, TypedGameContent> map) {
         this.map = map;
     }
 
-    public Set<GameContentType<?>> types() {
+    public @NonNull Set<@NonNull GameContentType<?>> types() {
         return map.keySet();
     }
 

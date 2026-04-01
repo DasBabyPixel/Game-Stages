@@ -57,7 +57,7 @@ public interface CommonGameContent extends GameContent {
     }
 
     interface Composite extends CommonGameContent {
-        @NonNull Collection<? extends GameContent> content();
+        @NonNull Collection<? extends @NonNull GameContent> content();
     }
 
     record Mod(@NonNull String modId) implements CommonGameContent {
@@ -71,7 +71,7 @@ public interface CommonGameContent extends GameContent {
 
     record FilterType(@NonNull CommonGameContent base,
                       @NonNull CommonGameContentType<?> type) implements CommonGameContent {
-        public static final StreamCodec<RegistryFriendlyByteBuf, FilterType> STREAM_CODEC = StreamCodec.composite(CommonGameContent.STREAM_CODEC, FilterType::base, CommonGameContentType.STREAM_CODEC, FilterType::type, FilterType::new);
+        public static final StreamCodec<@NonNull RegistryFriendlyByteBuf, @NonNull FilterType> STREAM_CODEC = StreamCodec.composite(CommonGameContent.STREAM_CODEC, FilterType::base, CommonGameContentType.STREAM_CODEC, FilterType::type, FilterType::new);
 
         @Override
         public @NonNull CommonGameContentSerializer<FilterType> serializer() {

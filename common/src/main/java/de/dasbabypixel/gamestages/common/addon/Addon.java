@@ -2,18 +2,21 @@ package de.dasbabypixel.gamestages.common.addon;
 
 import de.dasbabypixel.gamestages.common.client.ClientPlayerStages;
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
-import de.dasbabypixel.gamestages.common.data.BaseStages;
+import de.dasbabypixel.gamestages.common.data.RecompilationTask;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import org.jspecify.annotations.NonNull;
 
 public interface Addon {
-    default void registerCustomContent(ContentRegistry registry) {
+    default void registerCustomContent(@NonNull ContentRegistry registry) {
     }
 
     default void postCompile(@NonNull CompiledRestrictionEntry restrictionEntry) {
     }
 
-    default void postCompileAll(@NonNull AbstractGameStageManager instance, @NonNull BaseStages stages) {
+    default void preCompileAll(@NonNull RecompilationTask recompilationTask) {
+    }
+
+    default void postCompileAll(@NonNull RecompilationTask recompilationTask) {
     }
 
     default void preReload(@NonNull AbstractGameStageManager instance) {
