@@ -1,5 +1,6 @@
 package de.dasbabypixel.gamestages.common.data;
 
+import de.dasbabypixel.gamestages.common.addon.Addon;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
@@ -11,6 +12,7 @@ public abstract class BaseStages {
     protected final @NonNull Map<@NonNull RestrictionEntry<?, ?>, @NonNull CompiledRestrictionEntry> compiledRestrictionEntryMap = new HashMap<>();
     protected final @NonNull Map<@NonNull GameStage, @NonNull CompiledRestrictionPredicate> compiledGameStages = new HashMap<>();
     protected final @NonNull Map<@NonNull GameContentType<?>, TypeIndex> typeIndexMap = new HashMap<>();
+    protected final @NonNull Map<@NonNull Addon, @NonNull Object> addonData = new HashMap<>();
     private final @NonNull Set<@NonNull GameStage> unlockedStages;
 
     public BaseStages(@NonNull Set<GameStage> stages) {
@@ -96,6 +98,10 @@ public abstract class BaseStages {
 
     public @NonNull Map<@NonNull RestrictionEntry<?, ?>, @NonNull CompiledRestrictionEntry> compiledRestrictionEntryMap() {
         return compiledRestrictionEntryMap;
+    }
+
+    public @NonNull Map<@NonNull Addon, @NonNull Object> addonData() {
+        return addonData;
     }
 
     public @NonNull Map<@NonNull GameContentType<?>, TypeIndex> typeIndexMap() {

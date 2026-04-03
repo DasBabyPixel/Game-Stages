@@ -17,6 +17,7 @@ import de.dasbabypixel.gamestages.common.network.CustomPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemCollection;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemRestrictionEntry;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemRestrictionPacket;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.VItemAddon;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenNetwork;
 import org.jspecify.annotations.NonNull;
 
@@ -34,7 +35,7 @@ public class NeoItemRestrictionEntry extends CommonItemRestrictionEntry<NeoItemR
     }
 
     @Override
-    public NeoItemRestrictionEntry.@NonNull PreCompiled precompile(@NonNull AbstractGameStageManager instance, @NonNull RestrictionEntryPreCompiler preCompiler) {
+    public @NonNull PreCompiled precompile(@NonNull AbstractGameStageManager instance, @NonNull RestrictionEntryPreCompiler preCompiler) {
         var items = instance
                 .get(GameContentFlattener.Attribute.INSTANCE)
                 .flatten(targetItems(), CommonItemCollection.TYPE);
@@ -42,7 +43,7 @@ public class NeoItemRestrictionEntry extends CommonItemRestrictionEntry<NeoItemR
     }
 
     @Override
-    public @NonNull CompiledRestrictionEntry compile(@NonNull RecompilationTask task, NeoItemRestrictionEntry.@NonNull PreCompiled preCompiled) {
+    public @NonNull CompiledRestrictionEntry compile(@NonNull RecompilationTask task, @NonNull PreCompiled preCompiled) {
         var networkData = dataDrivenNetworkData();
         var factoryId = networkData.factoryId();
         var factory = ItemStackRestrictionResolverFactories.instance().getFactory(factoryId);
@@ -53,13 +54,15 @@ public class NeoItemRestrictionEntry extends CommonItemRestrictionEntry<NeoItemR
         return new Compiled(this, preCompiled.items, resolver);
     }
 
+    @SuppressWarnings("unchecked")
     private <T> ItemStackRestrictionResolver compile(@NonNull ItemStackRestrictionResolverFactory<T> factory, @NonNull RecompilationTask task, @NonNull DataDrivenTypedData<?> data) {
-        var ctx = factory.createContext(task);
+        var map = ((VItemAddon.ItemCompileContext) task.getContext(NeoItemAddon.instance())).factoryContextMap();
+        var ctx = (T) map.get(factory);
         return factory.compile(data, ctx);
     }
 
     public record Compiled(@NonNull NeoItemRestrictionEntry entry, @NonNull CommonItemCollection gameContent,
-                           @NonNull ItemStackRestrictionResolver resolver) implements CompiledRestrictionEntry {
+                           @NonNull ItemStackRestrictionResolver resolver) implements CompiledRestrictionEntry, CommonItemRestrictionEntry.Compiled {
         @Override
         public @NonNull RestrictionEntryOrigin origin() {
             return entry.origin();

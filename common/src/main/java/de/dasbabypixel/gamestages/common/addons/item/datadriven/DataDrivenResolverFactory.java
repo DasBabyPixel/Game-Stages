@@ -16,13 +16,13 @@ public class DataDrivenResolverFactory extends ItemStackRestrictionResolverFacto
 
     @Override
     public @NonNull Context createContext(@NonNull RecompilationTask task) {
-        return new Context();
+        return new Context(task);
     }
 
     @Override
-    protected @NonNull ItemStackRestrictionResolver compileInternal(@NonNull DataDrivenTypedData<?> data, Context context) {
+    protected @NonNull ItemStackRestrictionResolver compileInternal(@NonNull DataDrivenTypedData<?> data, @NonNull Context context) {
         return new ItemStackRestrictionResolver() {
-            private final CompiledResolverAlgorithm algorithm = DataDrivenCompiler.instance().compile(data);
+            private final CompiledResolverAlgorithm algorithm = DataDrivenCompiler.instance().compile(data, context);
 
             @Override
             public @Nullable CompiledItemStackRestrictionEntry resolveRestrictionEntry(@NonNull ItemStack itemStack) {
@@ -36,6 +36,6 @@ public class DataDrivenResolverFactory extends ItemStackRestrictionResolverFacto
         };
     }
 
-    public static class Context {
+    public record Context(@NonNull RecompilationTask task) {
     }
 }

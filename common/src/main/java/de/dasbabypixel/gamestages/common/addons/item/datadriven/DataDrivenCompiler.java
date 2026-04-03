@@ -2,6 +2,8 @@ package de.dasbabypixel.gamestages.common.addons.item.datadriven;
 
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.sequential.SequentialCompiler;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.sequential.SequentialData;
+import de.dasbabypixel.gamestages.common.addons.item.datadriven.value.ValueCompiler;
+import de.dasbabypixel.gamestages.common.addons.item.datadriven.value.ValueData;
 import org.jspecify.annotations.NonNull;
 
 import java.util.HashMap;
@@ -14,6 +16,7 @@ public class DataDrivenCompiler {
 
     {
         register("sequential", SequentialData.class, new SequentialCompiler());
+        register("value", ValueData.class, new ValueCompiler());
     }
 
     private DataDrivenCompiler() {
@@ -23,13 +26,13 @@ public class DataDrivenCompiler {
         entries.put(type, new Entry<>(type, dataCls, compiler));
     }
 
-    public @NonNull CompiledResolverAlgorithm compile(@NonNull DataDrivenTypedData<?> data) {
+    public @NonNull CompiledResolverAlgorithm compile(@NonNull DataDrivenTypedData<?> data, DataDrivenResolverFactory.@NonNull Context context) {
         var entry = Objects.requireNonNull(entries.get(data.type()));
-        return compile(entry, data.data());
+        return compile(entry, data.data(), context);
     }
 
-    private <Data extends DataDrivenData> @NonNull CompiledResolverAlgorithm compile(@NonNull Entry<Data> entry, DataDrivenData data) {
-        return Objects.requireNonNull(entry.compiler.compile(this, entry.dataCls.cast(data)));
+    private <Data extends DataDrivenData> @NonNull CompiledResolverAlgorithm compile(@NonNull Entry<Data> entry, DataDrivenData data, DataDrivenResolverFactory.@NonNull Context context) {
+        return Objects.requireNonNull(entry.compiler.compile(this, entry.dataCls.cast(data), context));
     }
 
     public static @NonNull DataDrivenCompiler instance() {

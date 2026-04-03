@@ -6,9 +6,10 @@ import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolve
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.CompiledItemStackRestrictionEntry;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenTypedData;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestrictionEntry;
+import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestrictionEntryCompiler;
 import de.dasbabypixel.gamestages.common.data.ItemStack;
 import de.dasbabypixel.gamestages.common.data.RecompilationTask;
-import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.datadriven.VDataDrivenTypes;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.datadriven.VItemStackRestrictionEntrySettings;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenSerializer;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenType;
@@ -23,6 +24,7 @@ import static de.dasbabypixel.gamestages.common.v1_21_1.data.CommonCodecs.PREPAR
 
 public class NeoDataDrivenTypes {
     public static void register(@NonNull DataDrivenTypes types, @NonNull ItemStackRestrictionResolverFactories factories) {
+        VDataDrivenTypes.register(types, factories);
         types.register(new DataDrivenType<>(VItemStackRestrictionEntrySettings.class, "itemstack_restriction_entry_settings", DataDrivenSerializer.serializer(VItemStackRestrictionEntrySettings::encode, NeoItemStackRestrictionEntrySettings::new)));
         types.register(new DataDrivenType<>(ItemStackRestrictionEntry.class, "itemstack_restriction_entry", new DataDrivenSerializer<>() {
             @Override
@@ -52,15 +54,7 @@ public class NeoDataDrivenTypes {
         @Override
         protected @NonNull ItemStackRestrictionResolver compileInternal(@NonNull DataDrivenTypedData<?> data, @NonNull Context context) {
             var entry = (ItemStackRestrictionEntry) Objects.requireNonNull(data.data());
-            var compiledPredicate = context.task.predicateCompiler().compile(entry.predicate());
-            CompiledItemStackRestrictionEntry compiled = new CompiledItemStackRestrictionEntry() {
-                private final @NonNull CompiledRestrictionPredicate predicate = compiledPredicate;
-
-                @Override
-                public @NonNull CompiledRestrictionPredicate predicate() {
-                    return predicate;
-                }
-            };
+            var compiled = ItemStackRestrictionEntryCompiler.compile(context.task.predicateCompiler(), entry);
             return new ItemStackRestrictionResolver() {
                 @Override
                 public @NonNull CompiledItemStackRestrictionEntry resolveRestrictionEntry(@NonNull ItemStack itemStack) {

@@ -1,9 +1,6 @@
 package de.dasbabypixel.gamestages.common.addons.item.datadriven.sequential;
 
-import de.dasbabypixel.gamestages.common.addons.item.datadriven.CompiledItemStackRestrictionEntry;
-import de.dasbabypixel.gamestages.common.addons.item.datadriven.CompiledResolverAlgorithm;
-import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenCompiler;
-import de.dasbabypixel.gamestages.common.addons.item.datadriven.DirectCompiler;
+import de.dasbabypixel.gamestages.common.addons.item.datadriven.*;
 import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
@@ -13,11 +10,11 @@ import java.util.Objects;
 
 public class SequentialCompiler implements DirectCompiler<SequentialData> {
     @Override
-    public @NonNull CompiledResolverAlgorithm compile(@NonNull DataDrivenCompiler compiler, @NonNull SequentialData data) {
+    public @NonNull CompiledResolverAlgorithm compile(@NonNull DataDrivenCompiler compiler, @NonNull SequentialData data, DataDrivenResolverFactory.@NonNull Context context) {
         var entries = new HashSet<CompiledItemStackRestrictionEntry>();
         var list = new ArrayList<CompiledResolverAlgorithm>();
         for (var value : data.values()) {
-            var compiled = compiler.compile(value);
+            var compiled = compiler.compile(value, context);
             list.add(compiled);
             entries.addAll(compiled.entries());
         }

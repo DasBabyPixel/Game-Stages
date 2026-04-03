@@ -21,6 +21,7 @@ import net.minecraft.network.chat.Component;
 import net.neoforged.fml.loading.FMLEnvironment;
 import org.jspecify.annotations.NonNull;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public class StageArgumentType implements ArgumentType<StageArgumentType.Provider> {
@@ -31,12 +32,8 @@ public class StageArgumentType implements ArgumentType<StageArgumentType.Provide
         this.enforceExistence = enforceExistence;
     }
 
-    public static GameStage getStage(CommandContext<?> ctx, String name) throws CommandSyntaxException {
-        return ctx.getArgument(name, Provider.class).getStage(ctx);
-    }
-
     @Override
-    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
+    public <S> CompletableFuture<Suggestions> listSuggestions(@NonNull CommandContext<S> context, @NonNull SuggestionsBuilder builder) {
         AbstractGameStageManager manager;
         if (FMLEnvironment.dist.isClient()) {
             if (context.getSource() instanceof ClientSuggestionProvider) {
@@ -56,7 +53,7 @@ public class StageArgumentType implements ArgumentType<StageArgumentType.Provide
     }
 
     @Override
-    public Provider parse(StringReader reader) throws CommandSyntaxException {
+    public Provider parse(@NonNull StringReader reader) throws CommandSyntaxException {
         var stageName = reader.readString();
 
         return context -> {
@@ -82,8 +79,12 @@ public class StageArgumentType implements ArgumentType<StageArgumentType.Provide
         };
     }
 
+    public static @NonNull GameStage getStage(@NonNull CommandContext<?> ctx, @NonNull String name) throws CommandSyntaxException {
+        return Objects.requireNonNull(Objects.requireNonNull(ctx.getArgument(name, Provider.class)).getStage(ctx));
+    }
+
     public interface Provider {
-        GameStage getStage(CommandContext<?> context) throws CommandSyntaxException;
+        @NonNull GameStage getStage(@NonNull CommandContext<?> context) throws CommandSyntaxException;
     }
 
     public static class Info implements ArgumentTypeInfo<StageArgumentType, Info.ITemplate> {

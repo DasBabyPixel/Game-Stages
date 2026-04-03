@@ -10,6 +10,7 @@ import org.jspecify.annotations.NonNull;
 
 public final class RegisterEventJS extends EventJSBase<RegisterEventJS> {
     public static final EventType<RegisterEventJS> TYPE = new EventType<>(RegisterEventJS.class);
+    private final @NonNull AbstractGameStageManager stageManager;
 
     static {
         TYPE.addFunction("registerStage", (event, cx, args) -> {
@@ -19,8 +20,6 @@ public final class RegisterEventJS extends EventJSBase<RegisterEventJS> {
         }, GameStage.class, String.class);
         TYPE.addFunctionVarArgs("mods", (event, cx, args) -> args[0], CollectionWrapper.class, CollectionWrapper.class, ModContentWrapper[].class);
     }
-
-    private final @NonNull AbstractGameStageManager stageManager;
 
     public RegisterEventJS(@NonNull AbstractGameStageManager stageManager) {
         super(TYPE);

@@ -36,7 +36,7 @@ public class RecompilationTask {
         return instance;
     }
 
-    public BaseStages stages() {
+    public @NonNull BaseStages stages() {
         return stages;
     }
 
@@ -81,7 +81,6 @@ public class RecompilationTask {
         for (var entry : typeIndexMap.entrySet()) {
             assert entry != null;
             var typeIndex = entry.getValue();
-            assert typeIndex != null;
             var duplicates = typeIndex.duplicates();
             if (!duplicates.isEmpty()) {
                 for (var duplicateEntry : duplicates.entrySet()) {
@@ -122,7 +121,7 @@ public class RecompilationTask {
             var compiledEntry = restrictionEntryCompiler.compile(restriction);
 
             for (var addon : AddonManager.instance().addons()) {
-                addon.postCompile(compiledEntry);
+                addon.postCompile(this, compiledEntry);
             }
 
             stages.compiledRestrictionEntryMap().put(restriction, compiledEntry);

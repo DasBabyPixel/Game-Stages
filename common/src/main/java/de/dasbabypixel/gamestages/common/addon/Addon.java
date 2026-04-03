@@ -10,7 +10,7 @@ public interface Addon {
     default void registerCustomContent(@NonNull ContentRegistry registry) {
     }
 
-    default void postCompile(@NonNull CompiledRestrictionEntry restrictionEntry) {
+    default void postCompile(@NonNull RecompilationTask recompilationTask, @NonNull CompiledRestrictionEntry restrictionEntry) {
     }
 
     default void preCompileAll(@NonNull RecompilationTask recompilationTask) {

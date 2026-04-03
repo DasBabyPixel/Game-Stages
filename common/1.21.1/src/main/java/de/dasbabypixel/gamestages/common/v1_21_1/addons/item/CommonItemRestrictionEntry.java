@@ -1,6 +1,7 @@
 package de.dasbabypixel.gamestages.common.v1_21_1.addons.item;
 
 import de.dasbabypixel.gamestages.common.addons.item.AbstractItemRestrictionEntry;
+import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolver;
 import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenNetwork;
@@ -16,5 +17,9 @@ public abstract class CommonItemRestrictionEntry<T extends CommonItemRestriction
 
     public DataDrivenNetwork.@NonNull NetworkData<?> dataDrivenNetworkData() {
         return dataDrivenNetworkData;
+    }
+
+    public interface Compiled {
+        @NonNull ItemStackRestrictionResolver resolver();
     }
 }

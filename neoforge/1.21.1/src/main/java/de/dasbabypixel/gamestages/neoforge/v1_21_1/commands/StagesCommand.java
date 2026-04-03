@@ -6,17 +6,22 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.GameStage;
 import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.VItemAddon;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
+import org.jspecify.annotations.NonNull;
 
+import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 
 public class StagesCommand {
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+    public static void register(@NonNull CommandDispatcher<CommandSourceStack> dispatcher) {
         var cmd = Commands.literal("stages");
 
         // @formatter:off
@@ -31,8 +36,16 @@ public class StagesCommand {
                 .then(Commands.argument("target", EntityArgument.players())
                         .then(Commands.argument("stage", new StageArgumentType(false))
                                 .suggests((context, builder) -> {
-                                    var targets  = EntityArgument.getPlayers(context, "target");
-                                    return SharedSuggestionProvider.suggest(targets.stream().map(ServerPlayer::getGameStages).map(BaseStages::getAll).flatMap(Set::stream).map(GameStage::name).distinct(), builder);
+                                    // @formatter:on
+                                    Collection<net.minecraft.server.level.@NonNull ServerPlayer> targets = EntityArgument.getPlayers(context, "target");
+                                    return SharedSuggestionProvider.suggest(targets
+                                            .stream()
+                                            .map(ServerPlayer::getGameStages)
+                                            .map(BaseStages::getAll)
+                                            .flatMap(Set::stream)
+                                            .map(GameStage::name)
+                                            .distinct(), builder);
+                                    // @formatter:off
                                 })
                                 .executes(StagesCommand::removeTargetStage)
                         )
@@ -43,12 +56,29 @@ public class StagesCommand {
                         .executes(StagesCommand::listTarget)
                 )
         );
+        // TODO move to item addon
+        cmd.then(Commands.literal("hand")
+                .executes(StagesCommand::hand)
+        );
         // @formatter:on
 
         dispatcher.register(cmd);
     }
 
-    private static int listTarget(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    // TODO move to item addon
+    private static int hand(@NonNull CommandContext<@NonNull CommandSourceStack> context) throws CommandSyntaxException {
+        var player = Objects.requireNonNull(context.getSource().getPlayer());
+        var stack = player.getItemInHand(InteractionHand.MAIN_HAND);
+        var entry = VItemAddon.getEntry(player.getGameStages(), stack, stack);
+        player.sendSystemMessage(Component.literal(entry == null ? "No restriction" : (entry
+                                                                                       .predicate()
+                                                                                       .predicate() + " -> " + entry
+                                                                                                               .predicate()
+                                                                                                               .test())));
+        return 0;
+    }
+
+    private static int listTarget(@NonNull CommandContext<@NonNull CommandSourceStack> context) throws CommandSyntaxException {
         Player player = EntityArgument.getPlayer(context, "target");
         var stages = Set.copyOf(player.getGameStages().getAll());
         context.getSource().sendSuccess(() -> {
@@ -61,11 +91,11 @@ public class StagesCommand {
         return 0;
     }
 
-    private static int addTargetStage(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    private static int addTargetStage(@NonNull CommandContext<@NonNull CommandSourceStack> context) throws CommandSyntaxException {
         var players = EntityArgument.getPlayers(context, "target");
         var stage = StageArgumentType.getStage(context, "stage");
         var cnt = 0;
-        for (Player player : players) {
+        for (@NonNull Player player : players) {
             if (player.getGameStages().add(stage)) cnt++;
         }
         var fcnt = cnt;
