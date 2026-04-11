@@ -21,10 +21,14 @@ import dev.latvian.mods.rhino.BaseFunction;
 import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.Function;
 import dev.latvian.mods.rhino.Scriptable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
+@NullMarked
 public class StagesKubeJSPlugin implements KubeJSPlugin {
     private final Map<NeoAddon, NeoAddonKJS> addonMap = new HashMap<>();
     private boolean populated = false;
@@ -57,7 +61,7 @@ public class StagesKubeJSPlugin implements KubeJSPlugin {
 
         bindings.add("GameStage", GameStage.class);
         bindings.add("Restrictions", Restrictions.class);
-        bindings.add("destructurable", new BaseFunction(bindings.scope(), null) {
+        bindings.add("destructurable", new BaseFunction(Objects.requireNonNull(bindings.scope()), null) {
             @Override
             public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
                 return destructurableImpl(cx, scope, args);
@@ -71,15 +75,18 @@ public class StagesKubeJSPlugin implements KubeJSPlugin {
         if (registry.scriptType() == ScriptType.SERVER) {
 
             var anyContentParser = new JSParserBase();
-            registry.register(CollectionWrapper.class, (ContextFromFunction<CollectionWrapper>) (context, o) -> new CollectionWrapper(anyContentParser.parse(context, o)));
+            registry.register(CollectionWrapper.class, (ContextFromFunction<CollectionWrapper>) (context, o) -> new CollectionWrapper(anyContentParser.parse(Objects.requireNonNull(context), Objects.requireNonNull(o))));
             registry.register(ModContentWrapper.class, (ContextFromFunction<ModContentWrapper>) (context, o) -> {
-                var mod = o.toString();
+                var mod = Objects.requireNonNull(Objects.requireNonNull(o).toString());
                 return new ModContentWrapper(new CommonGameContent.Mod(mod));
             });
             registry.register(GameContent.class, (ContextFromFunction<GameContent>) (context, o) -> {
                 if (o instanceof GameContent g) return g;
                 if (o instanceof ContentWrapper w) return w.content();
-                throw new ClassCastException("Cannot convert " + o.getClass().getName() + " to GameContent");
+                throw new ClassCastException("Cannot convert " + Objects
+                        .requireNonNull(o)
+                        .getClass()
+                        .getName() + " to GameContent");
             });
 
             for (var value : addonMap().values()) {
@@ -106,23 +113,23 @@ public class StagesKubeJSPlugin implements KubeJSPlugin {
 
     private Scriptable destructurableImpl(Context cx, Scriptable scope, Object[] args) {
         if (args.length == 0) {
-            throw Context.reportRuntimeError("destructurable(event): missing event parameter", cx);
+            throw Objects.requireNonNull(Context.reportRuntimeError("destructurable(event): missing event parameter", cx));
         }
 
         Object event = args[0];
 
-        Scriptable in = cx.toObject(event, scope);
-        Scriptable out = cx.newObject(scope);
+        Scriptable in = Objects.requireNonNull(cx.toObject(event, scope));
+        Scriptable out = Objects.requireNonNull(cx.newObject(scope));
 
-        for (Object idObj : in.getIds(cx)) {
-            String id = idObj.toString();
+        for (Object idObj : Objects.requireNonNull(in.getIds(cx))) {
+            String id = Objects.requireNonNull(idObj).toString();
             Object val = in.get(cx, id, in);
 
             if (val instanceof Function f) {
                 // bind method to original 'in'
                 Function bound = new BaseFunction(scope, null) {
                     @Override
-                    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                    public @Nullable Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
                         return f.call(cx, scope, in, args);
                     }
                 };

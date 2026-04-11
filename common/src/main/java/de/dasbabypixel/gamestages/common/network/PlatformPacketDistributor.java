@@ -1,12 +1,13 @@
 package de.dasbabypixel.gamestages.common.network;
 
 import de.dasbabypixel.gamestages.common.entity.Player;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public interface PlatformPacketDistributor {
-    void sendToServer(@NonNull CustomPacket packet);
+    void sendToServer(CustomPacket packet);
 
-    void sendToPlayer(@NonNull Player player, @NonNull CustomPacket packet);
+    void sendToPlayer(Player player, CustomPacket packet);
 
-    void sendToAllPlayers(@NonNull CustomPacket packet);
+    void sendToAllPlayers(CustomPacket packet);
 }

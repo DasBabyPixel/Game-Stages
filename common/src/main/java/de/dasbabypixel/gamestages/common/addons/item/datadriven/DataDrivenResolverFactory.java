@@ -4,38 +4,39 @@ import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolve
 import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolverFactory;
 import de.dasbabypixel.gamestages.common.data.ItemStack;
 import de.dasbabypixel.gamestages.common.data.RecompilationTask;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
+@NullMarked
 public class DataDrivenResolverFactory extends ItemStackRestrictionResolverFactory<DataDrivenResolverFactory.Context> {
     public DataDrivenResolverFactory() {
         super("data_driven");
     }
 
     @Override
-    public @NonNull Context createContext(@NonNull RecompilationTask task) {
+    public Context createContext(RecompilationTask task) {
         return new Context(task);
     }
 
     @Override
-    protected @NonNull ItemStackRestrictionResolver compileInternal(@NonNull DataDrivenTypedData<?> data, @NonNull Context context) {
+    protected ItemStackRestrictionResolver compileInternal(DataDrivenTypedData<?> data, Context context) {
         return new ItemStackRestrictionResolver() {
             private final CompiledResolverAlgorithm algorithm = DataDrivenCompiler.instance().compile(data, context);
 
             @Override
-            public @Nullable CompiledItemStackRestrictionEntry resolveRestrictionEntry(@NonNull ItemStack itemStack) {
+            public @Nullable CompiledItemStackRestrictionEntry resolveRestrictionEntry(ItemStack itemStack) {
                 return algorithm.resolve(itemStack);
             }
 
             @Override
-            public @NonNull List<@NonNull CompiledItemStackRestrictionEntry> restrictionEntries() {
+            public List<CompiledItemStackRestrictionEntry> restrictionEntries() {
                 return algorithm.entries();
             }
         };
     }
 
-    public record Context(@NonNull RecompilationTask task) {
+    public record Context(RecompilationTask task) {
     }
 }

@@ -1,15 +1,16 @@
 package de.dasbabypixel.gamestages.common.entity;
 
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.UUID;
 
+@NullMarked
 public interface PlatformPlayerProvider {
     @Nullable ClientPlayer clientSelfPlayer();
 
-    @NonNull Collection<? extends @NonNull ServerPlayer> allPlayers();
+    Collection<? extends ServerPlayer> allPlayers();
 
-    @Nullable ServerPlayer getPlayer(@NonNull UUID uuid);
+    @Nullable ServerPlayer getPlayer(UUID uuid);
 }

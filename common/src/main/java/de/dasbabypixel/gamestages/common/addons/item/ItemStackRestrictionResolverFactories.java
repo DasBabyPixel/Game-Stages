@@ -1,15 +1,16 @@
 package de.dasbabypixel.gamestages.common.addons.item;
 
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+@NullMarked
 public class ItemStackRestrictionResolverFactories {
     private static final ItemStackRestrictionResolverFactories INSTANCE = new ItemStackRestrictionResolverFactories();
-    private final Map<@NonNull String, @NonNull ItemStackRestrictionResolverFactory<?>> factoryMap = new HashMap<>();
+    private final Map<String, ItemStackRestrictionResolverFactory<?>> factoryMap = new HashMap<>();
 
     private ItemStackRestrictionResolverFactories() {
     }
@@ -18,11 +19,11 @@ public class ItemStackRestrictionResolverFactories {
         return factoryMap.get(factoryId);
     }
 
-    public @NonNull Collection<@NonNull ItemStackRestrictionResolverFactory<?>> getAll() {
+    public Collection<ItemStackRestrictionResolverFactory<?>> getAll() {
         return factoryMap.values();
     }
 
-    public void register(@NonNull ItemStackRestrictionResolverFactory<?> factory) {
+    public void register(ItemStackRestrictionResolverFactory<?> factory) {
         this.factoryMap.put(factory.factoryId(), factory);
     }
 

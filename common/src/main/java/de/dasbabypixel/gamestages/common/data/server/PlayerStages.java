@@ -3,18 +3,22 @@ package de.dasbabypixel.gamestages.common.data.server;
 import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.data.GameStage;
 import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+@NullMarked
 public class PlayerStages extends ServerStages {
-    private final @NonNull List<ServerPlayer> playerList = new ArrayList<>(1);
+    private static final Logger LOGGER = Logger.getLogger(PlayerStages.class.getName());
+    private final List<ServerPlayer> playerList = new ArrayList<>(1);
     private boolean valid = true;
     private @Nullable UUID teamId;
     private @Nullable TeamStages team;
 
-    public PlayerStages(@NonNull ServerGameStageManager manager, StagesFileProvider.@NonNull Key key, StagesFileProvider.@NonNull PlayerStagesFile stagesFile) {
+    public PlayerStages(ServerGameStageManager manager, StagesFileProvider.Key key, StagesFileProvider.PlayerStagesFile stagesFile) {
         super(manager, key, stagesFile);
         this.teamId = stagesFile.teamId();
     }
@@ -34,7 +38,7 @@ public class PlayerStages extends ServerStages {
     public void updateTeamByExternalAPI(@Nullable UUID newTeam) {
         if (team == null && newTeam == null) return;
         if (team != null && team.key().uuid().equals(newTeam)) return;
-        System.out.println("Updating wrongly saved team by external API");
+        LOGGER.log(Level.WARNING, "Updating wrongly saved team by external API");
         setTeam(newTeam);
     }
 
@@ -49,7 +53,7 @@ public class PlayerStages extends ServerStages {
     }
 
     @Override
-    protected @NonNull Set<@NonNull GameStage> getUnlockedStages() {
+    protected Set<GameStage> getUnlockedStages() {
         if (!valid) throw new IllegalStateException();
         return super.getUnlockedStages();
     }

@@ -5,32 +5,33 @@ import de.dasbabypixel.gamestages.common.data.restriction.CompositePreparedRestr
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
+@NullMarked
 public record False() implements RestrictionPredicate {
     public static final False INSTANCE = new False();
     public static final PreparedRestrictionPredicate PREPARED = new CompositePreparedRestrictionPredicate(INSTANCE, List.of());
 
     @Override
-    public boolean accepts(@NonNull List<? extends @NonNull PreparedRestrictionPredicate> dependencies) {
+    public boolean accepts(List<? extends PreparedRestrictionPredicate> dependencies) {
         return dependencies.isEmpty();
     }
 
     @Override
-    public boolean test(@NonNull List<? extends @NonNull CompiledRestrictionPredicate> dependencies, @NonNull BaseStages stages) {
+    public boolean test(List<? extends CompiledRestrictionPredicate> dependencies, BaseStages stages) {
         return false;
     }
 
     @Override
-    public @NonNull PreparedRestrictionPredicate prepare(@NonNull List<PreparedRestrictionPredicate> dependencies) {
+    public PreparedRestrictionPredicate prepare(List<PreparedRestrictionPredicate> dependencies) {
         if (!INSTANCE.accepts(dependencies)) throw new IllegalStateException();
         return PREPARED;
     }
 
     @Override
-    public @NonNull String toString() {
+    public String toString() {
         return "false";
     }
 }

@@ -6,41 +6,42 @@ import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.data.restriction.DuplicateReport;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryCompiler;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionPredicateCompiler;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.*;
 
+@NullMarked
 public class RecompilationTask {
-    private final @NonNull BaseStages stages;
-    private final @NonNull RestrictionEntryCompiler restrictionEntryCompiler;
-    private final @NonNull AbstractGameStageManager instance;
-    private final @NonNull RestrictionPredicateCompiler predicateCompiler;
-    private final @NonNull Map<Addon, Object> addonContext = new HashMap<>();
+    private final BaseStages stages;
+    private final RestrictionEntryCompiler restrictionEntryCompiler;
+    private final AbstractGameStageManager<?> instance;
+    private final RestrictionPredicateCompiler predicateCompiler;
+    private final Map<Addon, Object> addonContext = new HashMap<>();
 
-    public RecompilationTask(@NonNull BaseStages stages, @NonNull AbstractGameStageManager instance) {
+    public RecompilationTask(BaseStages stages, AbstractGameStageManager<?> instance) {
         this.stages = stages;
         this.instance = instance;
         this.restrictionEntryCompiler = new RestrictionEntryCompiler(this);
         this.predicateCompiler = new RestrictionPredicateCompiler(stages);
     }
 
-    public void setContext(@NonNull Addon addon, @NonNull Object context) {
+    public void setContext(Addon addon, Object context) {
         addonContext.put(addon, context);
     }
 
-    public @NonNull Object getContext(Addon addon) {
+    public Object getContext(Addon addon) {
         return Objects.requireNonNull(addonContext.get(addon));
     }
 
-    public @NonNull AbstractGameStageManager instance() {
+    public AbstractGameStageManager<?> instance() {
         return instance;
     }
 
-    public @NonNull BaseStages stages() {
+    public BaseStages stages() {
         return stages;
     }
 
-    public @NonNull RestrictionPredicateCompiler predicateCompiler() {
+    public RestrictionPredicateCompiler predicateCompiler() {
         return predicateCompiler;
     }
 
@@ -76,7 +77,7 @@ public class RecompilationTask {
             }
         }
 
-        var reports = new ArrayList<@NonNull DuplicateReport>();
+        var reports = new ArrayList<DuplicateReport>();
 
         for (var entry : typeIndexMap.entrySet()) {
             assert entry != null;

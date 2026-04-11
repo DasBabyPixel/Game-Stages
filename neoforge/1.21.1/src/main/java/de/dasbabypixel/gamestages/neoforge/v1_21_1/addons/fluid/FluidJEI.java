@@ -10,14 +10,16 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.fluids.FluidStack;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
+@NullMarked
 public class FluidJEI implements NeoAddonJEI {
     private final Map<Fluid, List<FluidStack>> fluidCache = new HashMap<>();
     private boolean cachePopulated = false;
-    private IJeiRuntime runtime;
+    private @Nullable IJeiRuntime runtime;
 
     @Override
     public void onRuntimeAvailable(IJeiRuntime runtime) {
@@ -31,7 +33,7 @@ public class FluidJEI implements NeoAddonJEI {
     }
 
     @Override
-    public void postCompileAll(@NonNull AbstractGameStageManager instance, @NonNull BaseStages stages) {
+    public void postCompileAll(AbstractGameStageManager instance, BaseStages stages) {
         iterate(stages, CommonFluidCollection.TYPE, entry -> {
             if (entry instanceof NeoFluidRestrictionEntry.Compiled(var e, var gameContent, var predicate)) {
                 if (!e.hideInJEI()) return;
@@ -41,7 +43,7 @@ public class FluidJEI implements NeoAddonJEI {
     }
 
     @Override
-    public void singleRefreshAll(@NonNull AbstractGameStageManager instance, @NonNull BaseStages stages) {
+    public void singleRefreshAll(AbstractGameStageManager instance, BaseStages stages) {
         iterate(stages, CommonFluidCollection.TYPE, entry -> {
             if (entry instanceof NeoFluidRestrictionEntry.Compiled(var e, var gameContent, var predicate)) {
                 if (!e.hideInJEI()) return;
@@ -52,7 +54,8 @@ public class FluidJEI implements NeoAddonJEI {
 
     public void showFluids(HolderSet<Fluid> fluids) {
         var fluidCache = getFluidCache();
-        runtime
+        Objects
+                .requireNonNull(runtime)
                 .getIngredientManager()
                 .addIngredientsAtRuntime(NeoForgeTypes.FLUID_STACK, fluids
                         .stream()
@@ -65,7 +68,8 @@ public class FluidJEI implements NeoAddonJEI {
 
     public void hideFluids(HolderSet<Fluid> fluids) {
         var fluidCache = getFluidCache();
-        runtime
+        Objects
+                .requireNonNull(runtime)
                 .getIngredientManager()
                 .removeIngredientsAtRuntime(NeoForgeTypes.FLUID_STACK, fluids
                         .stream()
@@ -87,7 +91,7 @@ public class FluidJEI implements NeoAddonJEI {
     }
 
     private void populateCache() {
-        var ingredientManager = runtime.getIngredientManager();
+        var ingredientManager = Objects.requireNonNull(runtime).getIngredientManager();
         for (var ingredient : ingredientManager.getAllIngredients(NeoForgeTypes.FLUID_STACK)) {
             fluidCache.computeIfAbsent(ingredient.getFluid(), unused -> new ArrayList<>(1)).add(ingredient);
         }

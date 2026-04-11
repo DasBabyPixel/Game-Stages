@@ -3,22 +3,23 @@ package de.dasbabypixel.gamestages.common.data.restriction.compiled;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionPredicate;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@NullMarked
 final class CachedCompiledRestrictionPredicate implements CompiledRestrictionPredicate {
-    private final @NonNull BaseStages stages;
-    private final @NonNull PreparedRestrictionPredicate original;
-    private final @NonNull RestrictionPredicate predicate;
-    private final @NonNull List<@NonNull CachedCompiledRestrictionPredicate> dependencies;
-    private final @NonNull List<@NonNull UpdateNotifier> updateNotifiers = new ArrayList<>(0);
+    private final BaseStages stages;
+    private final PreparedRestrictionPredicate original;
+    private final RestrictionPredicate predicate;
+    private final List<CachedCompiledRestrictionPredicate> dependencies;
+    private final List<UpdateNotifier> updateNotifiers = new ArrayList<>(0);
     private boolean cached = false;
     private boolean cachedOldValue = false;
     private boolean cachedValue;
 
-    CachedCompiledRestrictionPredicate(@NonNull BaseStages stages, @NonNull PreparedRestrictionPredicate original, @NonNull RestrictionPredicate predicate, @NonNull List<@NonNull CachedCompiledRestrictionPredicate> dependencies) {
+    CachedCompiledRestrictionPredicate(BaseStages stages, PreparedRestrictionPredicate original, RestrictionPredicate predicate, List<CachedCompiledRestrictionPredicate> dependencies) {
         this.stages = stages;
         this.original = original;
         this.predicate = predicate;
@@ -26,17 +27,17 @@ final class CachedCompiledRestrictionPredicate implements CompiledRestrictionPre
     }
 
     @Override
-    public void addNotifier(@NonNull UpdateNotifier updateNotifier) {
+    public void addNotifier(UpdateNotifier updateNotifier) {
         updateNotifiers.add(updateNotifier);
     }
 
     @Override
-    public @NonNull PreparedRestrictionPredicate predicate() {
+    public PreparedRestrictionPredicate predicate() {
         return original;
     }
 
     @Override
-    public @NonNull BaseStages stages() {
+    public BaseStages stages() {
         return stages;
     }
 

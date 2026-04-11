@@ -3,9 +3,11 @@ package de.dasbabypixel.gamestages.common.client.network;
 import de.dasbabypixel.gamestages.common.client.ClientGameStageManager;
 import de.dasbabypixel.gamestages.common.data.GameStage;
 import de.dasbabypixel.gamestages.common.network.Status;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
+@NullMarked
 public class ClientNetworkHandlers {
     /**
      * Updates the list of registered GameStages on the client-side.

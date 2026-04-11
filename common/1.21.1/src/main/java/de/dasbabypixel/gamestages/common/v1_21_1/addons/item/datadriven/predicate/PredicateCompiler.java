@@ -5,15 +5,18 @@ import de.dasbabypixel.gamestages.common.addons.item.datadriven.CompiledResolver
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenCompiler;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenResolverFactory;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.DirectCompiler;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 
+@NullMarked
 public class PredicateCompiler implements DirectCompiler<PredicateData> {
     @Override
-    public @NonNull CompiledResolverAlgorithm compile(@NonNull DataDrivenCompiler compiler, @NonNull PredicateData data, DataDrivenResolverFactory.@NonNull Context context) {
+    public CompiledResolverAlgorithm compile(DataDrivenCompiler compiler, PredicateData data, DataDrivenResolverFactory.Context context) {
         var ctx = ((ItemAddon.RecompileContext) context.task().getContext(ItemAddon.instance())).compilationContext();
-        var entry = Objects.requireNonNull(ctx.compiledMap.get(data.resultReference()));
+        var entry = Objects.requireNonNull(ctx.compiledMap.get(data.resultReference()), "Missing compiled predicate for key " + data
+                .resultReference()
+                .referenceId());
         return new PredicateCompiled(entry, data.predicate());
     }
 }

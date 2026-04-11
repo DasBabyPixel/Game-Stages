@@ -10,37 +10,38 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceKey;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+@NullMarked
 public interface CommonGameContent extends GameContent {
-    @NonNull ResourceKey<Registry<CommonGameContentSerializer<?>>> REGISTRY_KEY = ResourceKey.createRegistryKey(CommonVGameStageMod.location("game_content_serializer"));
-    @NonNull StreamCodec<RegistryFriendlyByteBuf, CommonGameContent> STREAM_CODEC = ByteBufCodecs
+    ResourceKey<Registry<CommonGameContentSerializer<?>>> REGISTRY_KEY = ResourceKey.createRegistryKey(CommonVGameStageMod.location("game_content_serializer"));
+    StreamCodec<RegistryFriendlyByteBuf, CommonGameContent> STREAM_CODEC = ByteBufCodecs
             .registry(REGISTRY_KEY)
             .dispatch(CommonGameContent::serializer, CommonGameContentSerializer::streamCodec);
 
     @HideFromJS
-    @NonNull CommonGameContentSerializer<?> serializer();
+    CommonGameContentSerializer<?> serializer();
 
     @SuppressWarnings("unchecked")
     @Override
-    default @NonNull CommonGameContent except(@NonNull GameContent @NonNull ... other) {
+    default CommonGameContent except(GameContent... other) {
         return new CommonGameContent.Except(this, (List<CommonGameContent>) (Object) List.of(other));
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    default @NonNull CommonGameContent only(@NonNull GameContent @NonNull ... other) {
+    default CommonGameContent only(GameContent... other) {
         return new CommonGameContent.Only(this, (List<CommonGameContent>) (Object) List.of(other));
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    default @NonNull CommonGameContent union(@NonNull GameContent @NonNull ... other) {
+    default CommonGameContent union(GameContent... other) {
         var len = other.length + 1;
         var empty = this instanceof TypedGameContent typed && typed.isEmpty();
         if (empty) len--;
@@ -52,35 +53,35 @@ public interface CommonGameContent extends GameContent {
     }
 
     @Override
-    default @NonNull CommonGameContent filterType(@NonNull GameContentType<?> type) {
+    default CommonGameContent filterType(GameContentType<?> type) {
         return new FilterType(this, (CommonGameContentType<?>) type);
     }
 
     interface Composite extends CommonGameContent {
-        @NonNull Collection<? extends @NonNull GameContent> content();
+        Collection<? extends GameContent> content();
     }
 
-    record Mod(@NonNull String modId) implements CommonGameContent {
+    record Mod(String modId) implements CommonGameContent {
+        @SuppressWarnings("DataFlowIssue")
         public static final StreamCodec<RegistryFriendlyByteBuf, Mod> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.STRING_UTF8, Mod::modId, Mod::new);
 
         @Override
-        public @NonNull CommonGameContentSerializer<?> serializer() {
+        public CommonGameContentSerializer<?> serializer() {
             return CommonGameContentSerializer.MOD;
         }
     }
 
-    record FilterType(@NonNull CommonGameContent base,
-                      @NonNull CommonGameContentType<?> type) implements CommonGameContent {
-        public static final StreamCodec<@NonNull RegistryFriendlyByteBuf, @NonNull FilterType> STREAM_CODEC = StreamCodec.composite(CommonGameContent.STREAM_CODEC, FilterType::base, CommonGameContentType.STREAM_CODEC, FilterType::type, FilterType::new);
+    record FilterType(CommonGameContent base, CommonGameContentType<?> type) implements CommonGameContent {
+        @SuppressWarnings("DataFlowIssue")
+        public static final StreamCodec<RegistryFriendlyByteBuf, FilterType> STREAM_CODEC = StreamCodec.composite(CommonGameContent.STREAM_CODEC, FilterType::base, CommonGameContentType.STREAM_CODEC, FilterType::type, FilterType::new);
 
         @Override
-        public @NonNull CommonGameContentSerializer<FilterType> serializer() {
+        public CommonGameContentSerializer<FilterType> serializer() {
             return CommonGameContentSerializer.FILTER_TYPE;
         }
     }
 
-    record Except(@NonNull CommonGameContent base,
-                  @NonNull List<@NonNull CommonGameContent> exclusion) implements CommonGameContent {
+    record Except(CommonGameContent base, List<CommonGameContent> exclusion) implements CommonGameContent {
         public static final StreamCodec<RegistryFriendlyByteBuf, Except> STREAM_CODEC = StreamCodec.composite(CommonGameContent.STREAM_CODEC, Except::base, CommonGameContent.STREAM_CODEC.apply(ByteBufCodecs.list()), Except::exclusion, Except::new);
 
         public Except {
@@ -88,13 +89,12 @@ public interface CommonGameContent extends GameContent {
         }
 
         @Override
-        public @NonNull CommonGameContentSerializer<Except> serializer() {
+        public CommonGameContentSerializer<Except> serializer() {
             return CommonGameContentSerializer.EXCEPT;
         }
     }
 
-    record Only(@NonNull CommonGameContent base,
-                @NonNull List<@NonNull CommonGameContent> inclusion) implements CommonGameContent {
+    record Only(CommonGameContent base, List<CommonGameContent> inclusion) implements CommonGameContent {
         public static final StreamCodec<RegistryFriendlyByteBuf, Only> STREAM_CODEC = StreamCodec.composite(CommonGameContent.STREAM_CODEC, Only::base, CommonGameContent.STREAM_CODEC.apply(ByteBufCodecs.list()), Only::inclusion, Only::new);
 
         public Only {
@@ -102,12 +102,12 @@ public interface CommonGameContent extends GameContent {
         }
 
         @Override
-        public @NonNull CommonGameContentSerializer<Only> serializer() {
+        public CommonGameContentSerializer<Only> serializer() {
             return CommonGameContentSerializer.ONLY;
         }
     }
 
-    record Union(@NonNull List<@NonNull CommonGameContent> content) implements Composite {
+    record Union(List<CommonGameContent> content) implements Composite {
         public static final StreamCodec<RegistryFriendlyByteBuf, Union> STREAM_CODEC = StreamCodec.composite(CommonGameContent.STREAM_CODEC.apply(ByteBufCodecs.list()), Union::content, Union::new);
 
         public Union {
@@ -115,7 +115,7 @@ public interface CommonGameContent extends GameContent {
         }
 
         @Override
-        public @NonNull CommonGameContentSerializer<Union> serializer() {
+        public CommonGameContentSerializer<Union> serializer() {
             return CommonGameContentSerializer.UNION;
         }
     }

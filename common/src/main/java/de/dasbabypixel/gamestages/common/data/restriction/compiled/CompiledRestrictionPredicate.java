@@ -2,18 +2,19 @@ package de.dasbabypixel.gamestages.common.data.restriction.compiled;
 
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public sealed interface CompiledRestrictionPredicate permits CachedCompiledRestrictionPredicate {
-    @NonNull BaseStages stages();
+    BaseStages stages();
 
     boolean test();
 
     void invalidate();
 
-    void addNotifier(@NonNull UpdateNotifier updateNotifier);
+    void addNotifier(UpdateNotifier updateNotifier);
 
-    @NonNull PreparedRestrictionPredicate predicate();
+    PreparedRestrictionPredicate predicate();
 
     interface UpdateNotifier {
         void update(boolean newTest);

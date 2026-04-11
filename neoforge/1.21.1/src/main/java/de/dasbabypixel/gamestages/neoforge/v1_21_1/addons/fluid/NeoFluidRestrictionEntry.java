@@ -11,18 +11,19 @@ import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestr
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryPreCompiler;
 import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
 import de.dasbabypixel.gamestages.common.network.CustomPacket;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.fluid.CommonFluidRestrictionPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonFluidCollection;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.restriction.types.CommonFluidRestrictionEntry;
-import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.CommonFluidRestrictionPacket;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public class NeoFluidRestrictionEntry extends CommonFluidRestrictionEntry<NeoFluidRestrictionEntry, NeoFluidRestrictionEntry.PreCompiled> {
-    public NeoFluidRestrictionEntry(@NonNull PreparedRestrictionPredicate predicate, @NonNull RestrictionEntryOrigin origin, @NonNull GameContent targetFluids) {
+    public NeoFluidRestrictionEntry(PreparedRestrictionPredicate predicate, RestrictionEntryOrigin origin, GameContent targetFluids) {
         super(predicate, origin, targetFluids);
     }
 
     @Override
-    public @NonNull CustomPacket createPacket(@NonNull ServerGameStageManager instance) {
+    public CustomPacket createPacket(ServerGameStageManager instance) {
         var fluids = instance
                 .get(GameContentFlattener.Attribute.INSTANCE)
                 .flatten(targetFluids(), CommonFluidCollection.TYPE);
@@ -30,7 +31,7 @@ public class NeoFluidRestrictionEntry extends CommonFluidRestrictionEntry<NeoFlu
     }
 
     @Override
-    public @NonNull PreCompiled precompile(@NonNull AbstractGameStageManager instance, @NonNull RestrictionEntryPreCompiler preCompiler) {
+    public PreCompiled precompile(AbstractGameStageManager instance, RestrictionEntryPreCompiler preCompiler) {
         var fluids = instance
                 .get(GameContentFlattener.Attribute.INSTANCE)
                 .flatten(targetFluids(), CommonFluidCollection.TYPE);
@@ -38,18 +39,18 @@ public class NeoFluidRestrictionEntry extends CommonFluidRestrictionEntry<NeoFlu
     }
 
     @Override
-    public @NonNull CompiledRestrictionEntry compile(@NonNull RecompilationTask task, @NonNull PreCompiled preCompiled) {
+    public CompiledRestrictionEntry compile(RecompilationTask task, PreCompiled preCompiled) {
         return new Compiled(this, preCompiled.fluids, task.predicateCompiler().compile(predicate()));
     }
 
-    public record Compiled(@NonNull NeoFluidRestrictionEntry entry, @NonNull CommonFluidCollection gameContent,
-                           @NonNull CompiledRestrictionPredicate predicate) implements CompiledRestrictionEntry {
+    public record Compiled(NeoFluidRestrictionEntry entry, CommonFluidCollection gameContent,
+                           CompiledRestrictionPredicate predicate) implements CompiledRestrictionEntry {
         @Override
-        public @NonNull RestrictionEntryOrigin origin() {
+        public RestrictionEntryOrigin origin() {
             return entry.origin();
         }
     }
 
-    public record PreCompiled(@NonNull CommonFluidCollection fluids) {
+    public record PreCompiled(CommonFluidCollection fluids) {
     }
 }

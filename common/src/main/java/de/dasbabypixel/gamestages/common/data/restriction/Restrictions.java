@@ -1,26 +1,27 @@
 package de.dasbabypixel.gamestages.common.data.restriction;
 
 import de.dasbabypixel.gamestages.common.data.restriction.predicates.*;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public class Restrictions {
-    public static @NonNull PreparedRestrictionPredicate and(@NonNull PreparedRestrictionPredicate @NonNull ... dependencies) {
+    public static PreparedRestrictionPredicate and(PreparedRestrictionPredicate... dependencies) {
         return And.INSTANCE.prepare(dependencies);
     }
 
-    public static @NonNull PreparedRestrictionPredicate or(@NonNull PreparedRestrictionPredicate @NonNull ... dependencies) {
+    public static PreparedRestrictionPredicate or(PreparedRestrictionPredicate... dependencies) {
         return Or.INSTANCE.prepare(dependencies);
     }
 
-    public static @NonNull PreparedRestrictionPredicate not(@NonNull PreparedRestrictionPredicate other) {
+    public static PreparedRestrictionPredicate not(PreparedRestrictionPredicate other) {
         return Not.INSTANCE.prepare(other);
     }
 
-    public static @NonNull PreparedRestrictionPredicate alwaysTrue() {
+    public static PreparedRestrictionPredicate alwaysTrue() {
         return True.INSTANCE.prepare();
     }
 
-    public static @NonNull PreparedRestrictionPredicate alwaysFalse() {
+    public static PreparedRestrictionPredicate alwaysFalse() {
         return False.INSTANCE.prepare();
     }
 }

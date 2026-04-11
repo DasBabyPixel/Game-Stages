@@ -12,6 +12,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Array;
@@ -19,9 +20,10 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+@NullMarked
 public class JSParserBase {
-    private final Map<@NonNull Class<?>, @NonNull Handler<?>> handlerMap = new HashMap<>();
-    private final Map<@NonNull Class<?>, @NonNull Handler<?>> handlerCache = new HashMap<>();
+    private final Map<Class<?>, Handler<?>> handlerMap = new HashMap<>();
+    private final Map<Class<?>, Handler<?>> handlerCache = new HashMap<>();
 
     public JSParserBase() {
         registerHandler(Wrapper.class, WrapperHandler.INSTANCE);
@@ -31,7 +33,7 @@ public class JSParserBase {
     }
 
     @SafeVarargs
-    public final <T> @NonNull CommonGameContent parse(@NonNull Context cx, @NonNull T @NonNull ... inputs) {
+    public final <T> CommonGameContent parse(Context cx, T @Nullable ... inputs) {
         try {
             var list = parse(inputs);
             return parse(list);
@@ -41,10 +43,10 @@ public class JSParserBase {
     }
 
     @SafeVarargs
-    protected final <T> @NonNull List<@NonNull CommonGameContent> parse(@NonNull T @NonNull ... inputs) throws ParseException {
-        var parseQueue = new ArrayDeque<@NonNull Object>(Arrays.asList(inputs));
-        var usedHandlers = new ArrayList<@NonNull Handler<?>>();
-        var content = new ArrayList<@NonNull CommonGameContent>();
+    protected final <T> List<CommonGameContent> parse(T @Nullable ... inputs) throws ParseException {
+        var parseQueue = new ArrayDeque<@Nullable Object>(inputs == null ? List.of() : Arrays.asList(inputs));
+        var usedHandlers = new ArrayList<Handler<?>>();
+        var content = new ArrayList<CommonGameContent>();
 
         for (var input = parseQueue.poll(); input != null; input = parseQueue.poll()) {
             while (true) {
@@ -73,11 +75,11 @@ public class JSParserBase {
         return content;
     }
 
-    protected <T, V> void registerRegistryHandlers(@NonNull Class<T> cls, @NonNull Registry<V> registry, @NonNull Function<T, V> transform, @NonNull Function<HolderSet<V>, CommonGameContent> contentCreator, @NonNull GameContentType<?> type) {
+    protected <T, V> void registerRegistryHandlers(Class<T> cls, Registry<V> registry, Function<T, V> transform, Function<HolderSet<V>, CommonGameContent> contentCreator, GameContentType<?> type) {
         registerHandler(cls, new RegistryParser<>(registry, transform));
         registerHandler(Holder.class, new RegistryParserCollector<>(contentCreator));
         registerHandler(TagKey.class, new TagParser<>(registry, contentCreator));
-        this.<@NonNull CharSequence>registerHandler(CharSequence.class, (value, parseAppender) -> {
+        this.registerHandler(CharSequence.class, (value, parseAppender) -> {
             var string = value.toString();
             if (string.startsWith("@")) {
                 return new CommonGameContent.Mod(string.substring(1)).filterType(type);
@@ -93,37 +95,37 @@ public class JSParserBase {
         });
     }
 
-    protected <T> void registerHandler(@NonNull Class<? extends T> cls, @NonNull Handler<? super T> handler) {
+    protected <T> void registerHandler(Class<? extends T> cls, Handler<? super T> handler) {
         handlerMap.put(cls, handler);
     }
 
     @SuppressWarnings("unchecked")
-    private @NonNull Handler<Object> getHandler(@NonNull Class<?> cls) throws ParseException {
+    private Handler<Object> getHandler(Class<?> cls) throws ParseException {
         if (cls.isArray()) return ArrayHandler.INSTANCE;
         if (handlerCache.containsKey(cls)) {
-            return (Handler<Object>) handlerCache.get(cls);
+            return (Handler<@NonNull Object>) handlerCache.get(cls);
         }
         if (handlerMap.containsKey(cls)) {
             handlerCache.put(cls, Objects.requireNonNull(handlerMap.get(cls)));
-            return (Handler<Object>) handlerCache.get(cls);
+            return (Handler<@NonNull Object>) handlerCache.get(cls);
         }
         for (var e : handlerMap.entrySet()) {
             if (Objects.requireNonNull(e).getKey().isAssignableFrom(cls)) {
                 handlerCache.put(cls, e.getValue());
-                return (Handler<Object>) e.getValue();
+                return (Handler<@NonNull Object>) e.getValue();
             }
         }
         throw new ParseException("Cannot parse " + cls.getName());
     }
 
     @SuppressWarnings("unchecked")
-    public static @NonNull CommonGameContent parse(@NonNull List<? extends @NonNull CommonGameContent> list) {
+    public static CommonGameContent parse(List<? extends CommonGameContent> list) {
         if (list.size() == 1) return list.getFirst();
         return new CommonGameContent.Union((List<CommonGameContent>) list);
     }
 
     public interface Handler<T> {
-        @Nullable Object read(T value, @NonNull Consumer<@NonNull Object> parseAppender);
+        @Nullable Object read(T value, Consumer<Object> parseAppender);
 
         default @Nullable CommonGameContent finish() {
             return null;
@@ -136,11 +138,11 @@ public class JSParserBase {
         }
     }
 
-    public record ArrayHandler() implements Handler<@NonNull Object> {
+    public record ArrayHandler() implements Handler<Object> {
         public static final ArrayHandler INSTANCE = new ArrayHandler();
 
         @Override
-        public @Nullable Object read(@NonNull Object value, @NonNull Consumer<@NonNull Object> parseAppender) {
+        public @Nullable Object read(Object value, Consumer<Object> parseAppender) {
             var len = Array.getLength(value);
             if (len == 1) return Array.get(value, 0);
             for (var i = 0; i < len; i++) {
@@ -150,30 +152,30 @@ public class JSParserBase {
         }
     }
 
-    public record ContentWrapperHandler() implements Handler<@NonNull ContentWrapper> {
+    public record ContentWrapperHandler() implements Handler<ContentWrapper> {
         public static final ContentWrapperHandler INSTANCE = new ContentWrapperHandler();
 
         @Override
-        public @Nullable Object read(@NonNull ContentWrapper value, @NonNull Consumer<@NonNull Object> parseAppender) {
+        public Object read(ContentWrapper value, Consumer<Object> parseAppender) {
             return value.content();
         }
     }
 
-    public record WrapperHandler() implements Handler<@NonNull Wrapper> {
+    public record WrapperHandler() implements Handler<Wrapper> {
         public static final WrapperHandler INSTANCE = new WrapperHandler();
 
         @Override
-        public @Nullable Object read(@NonNull Wrapper value, @NonNull Consumer<@NonNull Object> parseAppender) {
+        public @Nullable Object read(Wrapper value, Consumer<Object> parseAppender) {
             return value.unwrap();
         }
     }
 
     @SuppressWarnings("rawtypes")
-    public record IterableParser() implements Handler<@NonNull Iterable> {
+    public record IterableParser() implements Handler<Iterable> {
         public static final IterableParser INSTANCE = new IterableParser();
 
         @Override
-        public @Nullable Object read(@NonNull Iterable value, @NonNull Consumer<@NonNull Object> parseAppender) {
+        public @Nullable Object read(Iterable value, Consumer<Object> parseAppender) {
             var it = value.iterator();
             if (!it.hasNext()) return null;
             var first = Objects.requireNonNull(it.next());
@@ -190,7 +192,7 @@ public class JSParserBase {
         public static final ContentIdentityHandler INSTANCE = new ContentIdentityHandler();
 
         @Override
-        public @Nullable Object read(CommonGameContent value, @NonNull Consumer<@NonNull Object> parseAppender) {
+        public Object read(CommonGameContent value, Consumer<Object> parseAppender) {
             return value;
         }
     }
@@ -199,7 +201,7 @@ public class JSParserBase {
         private final Set<V> set = new HashSet<>();
 
         @Override
-        public @Nullable Object read(T value, @NonNull Consumer<@NonNull Object> parseAppender) {
+        public @Nullable Object read(T value, Consumer<Object> parseAppender) {
             set.add(transform(value));
             return null;
         }
@@ -212,27 +214,27 @@ public class JSParserBase {
 
         public abstract V transform(T value);
 
-        public abstract @NonNull CommonGameContent finish(Set<V> set);
+        public abstract CommonGameContent finish(Set<V> set);
     }
 
     @SuppressWarnings("rawtypes")
     public static class TagParser<V> extends CollectingHandler<TagKey, TagKey<V>> {
-        private final @NonNull Registry<V> registry;
-        private final @NonNull Function<@NonNull HolderSet<V>, @NonNull CommonGameContent> contentCreator;
+        private final Registry<V> registry;
+        private final Function<HolderSet<V>, CommonGameContent> contentCreator;
 
-        public TagParser(@NonNull Registry<V> registry, @NonNull Function<@NonNull HolderSet<V>, @NonNull CommonGameContent> contentCreator) {
+        public TagParser(Registry<V> registry, Function<HolderSet<V>, CommonGameContent> contentCreator) {
             this.registry = registry;
             this.contentCreator = contentCreator;
         }
 
         @SuppressWarnings("unchecked")
         @Override
-        public TagKey<V> transform(@NonNull TagKey value) {
+        public TagKey<V> transform(TagKey value) {
             return (TagKey<V>) value;
         }
 
         @Override
-        public @NonNull CommonGameContent finish(@NonNull Set<@NonNull TagKey<V>> set) {
+        public CommonGameContent finish(Set<TagKey<V>> set) {
             if (set.size() == 1) {
                 return contentCreator.apply(registry.getTag(set.iterator().next()).orElseThrow());
             }
@@ -248,36 +250,36 @@ public class JSParserBase {
     }
 
     public static class RegistryParser<T, V> implements Handler<T> {
-        private final @NonNull Registry<V> registry;
-        private final @NonNull Function<T, V> transform;
+        private final Registry<V> registry;
+        private final Function<T, V> transform;
 
-        public RegistryParser(@NonNull Registry<V> registry, @NonNull Function<T, V> transform) {
+        public RegistryParser(Registry<V> registry, Function<T, V> transform) {
             this.registry = registry;
             this.transform = transform;
         }
 
         @Override
-        public @Nullable Object read(T value, @NonNull Consumer<@NonNull Object> parseAppender) {
+        public @Nullable Object read(T value, Consumer<Object> parseAppender) {
             return registry.wrapAsHolder(transform.apply(value));
         }
     }
 
     @SuppressWarnings("rawtypes")
     public static class RegistryParserCollector<T> extends CollectingHandler<Holder, Holder<T>> {
-        private final @NonNull Function<@NonNull HolderSet<T>, @NonNull CommonGameContent> contentCreator;
+        private final Function<HolderSet<T>, CommonGameContent> contentCreator;
 
-        public RegistryParserCollector(@NonNull Function<@NonNull HolderSet<T>, @NonNull CommonGameContent> contentCreator) {
+        public RegistryParserCollector(Function<HolderSet<T>, CommonGameContent> contentCreator) {
             this.contentCreator = contentCreator;
         }
 
         @SuppressWarnings("unchecked")
         @Override
-        public @NonNull Holder<T> transform(@NonNull Holder value) {
+        public Holder<T> transform(Holder value) {
             return (Holder<T>) value;
         }
 
         @Override
-        public @NonNull CommonGameContent finish(@NonNull Set<@NonNull Holder<T>> set) {
+        public CommonGameContent finish(Set<Holder<T>> set) {
             return contentCreator.apply(HolderSet.direct(List.copyOf(set)));
         }
     }

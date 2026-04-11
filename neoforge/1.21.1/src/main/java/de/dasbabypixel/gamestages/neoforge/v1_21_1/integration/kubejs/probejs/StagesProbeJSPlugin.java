@@ -5,7 +5,6 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonProbeJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.ModContentWrapper;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.EventJSBase;
 import dev.latvian.mods.kubejs.event.KubeEvent;
 import moe.wolfgirl.probejs.lang.java.clazz.ClassPath;
 import moe.wolfgirl.probejs.lang.typescript.ScriptDump;
@@ -14,19 +13,20 @@ import moe.wolfgirl.probejs.lang.typescript.code.Code;
 import moe.wolfgirl.probejs.lang.typescript.code.member.ClassDecl;
 import moe.wolfgirl.probejs.lang.typescript.code.member.MethodDecl;
 import moe.wolfgirl.probejs.lang.typescript.code.member.ParamDecl;
-import moe.wolfgirl.probejs.lang.typescript.code.type.BaseType;
 import moe.wolfgirl.probejs.lang.typescript.code.type.TSVariableType;
 import moe.wolfgirl.probejs.lang.typescript.code.type.Types;
 import moe.wolfgirl.probejs.plugin.ProbeJSPlugin;
 import net.minecraft.commands.synchronization.SingletonArgumentInfo;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
 import static moe.wolfgirl.probejs.lang.typescript.code.type.Types.primitive;
 
+@NullMarked
 public class StagesProbeJSPlugin extends ProbeJSPlugin {
-    private static final BaseType TYPE_EVENT_JS_BASE = Types.type(EventJSBase.class);
-    public static EventRegistryImpl eventRegistry;
+    public static @Nullable EventRegistryImpl eventRegistry;
     private final Map<NeoAddon, NeoAddonProbeJS> addonMap = new HashMap<>();
     private boolean populated;
 
@@ -44,20 +44,20 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
     public void modifyClasses(ScriptDump scriptDump, Map<ClassPath, TypeScriptFile> globalClasses) {
         globalClasses.remove(new ClassPath(SingletonArgumentInfo.Template.class));
 
-        var typeConverter = scriptDump.transpiler.typeConverter;
-        for (var entry : eventRegistry.types().entrySet()) {
-            var cls = entry.getKey();
+        var typeConverter = Objects.requireNonNull(Objects.requireNonNull(scriptDump.transpiler).typeConverter);
+        for (var entry : Objects.requireNonNull(eventRegistry).types().entrySet()) {
+            var cls = Objects.requireNonNull(entry).getKey();
             var eventType = entry.getValue();
 
-            var classFile = findClassFile(globalClasses, cls);
+            var classFile = Objects.requireNonNull(findClassFile(globalClasses, cls));
             var newCode = new ArrayList<Code>();
-            for (var code : classFile.codeList) {
+            for (var code : Objects.requireNonNull(classFile.codeList)) {
                 if (code instanceof ClassDecl decl) {
                     decl = new ClassDecl(decl.name, null, List.of(Types.type(KubeEvent.class)), List.of());
                     newCode.add(decl);
 
                     for (var entry2 : eventType.functions().entrySet()) {
-                        var name = entry2.getKey();
+                        var name = Objects.requireNonNull(entry2).getKey();
                         var function = entry2.getValue();
                         var descriptor = function.descriptor();
                         var returnType = typeConverter.convertType(descriptor.returnType().probeType());
@@ -71,13 +71,13 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
                             var varArg = last && descriptor.varArgs();
                             var paramName = "arg" + (nameId++);
                             var paramType = varArg ? typeConverter.convertType(param
-                                    .probeType()
-                                    .componentType()) : typeConverter.convertType(param.probeType());
+                                                                               .probeType()
+                                                                               .componentType()) : typeConverter.convertType(param.probeType());
                             params.add(new ParamDecl(paramName, paramType, varArg, false));
                         }
 
                         var m = new MethodDecl(name, variableTypes, params, returnType);
-                        decl.methods.add(m);
+                        Objects.requireNonNull(decl.methods).add(m);
                     }
                 }
             }
@@ -91,22 +91,21 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
     @Override
     public Set<Class<?>> provideJavaClass(ScriptDump scriptDump) {
         var eventClasses = new HashSet<Class<?>>();
-        for (var entry : eventRegistry.types().entrySet()) {
-            eventClasses.add(entry.getKey());
+        for (var entry : Objects.requireNonNull(eventRegistry).types().entrySet()) {
+            eventClasses.add(Objects.requireNonNull(entry).getKey());
             for (var function : entry.getValue().functions().values()) {
-                eventClasses.add(function.descriptor().returnType().probeType().asClass());
+                eventClasses.add(Objects.requireNonNull(function.descriptor().returnType().probeType().asClass()));
                 for (var i = 0; i < function.descriptor().parameters().length; i++) {
                     var parameter = function.descriptor().parameters()[i];
                     var last = i == function.descriptor().parameters().length - 1;
                     if (last && function.descriptor().varArgs()) {
-                        eventClasses.add(parameter.probeType().asClass().componentType());
+                        eventClasses.add(Objects.requireNonNull(parameter.probeType().asClass()).componentType());
                     } else {
-                        eventClasses.add(parameter.probeType().asClass());
+                        eventClasses.add(Objects.requireNonNull(parameter.probeType().asClass()));
                     }
                 }
             }
         }
-        System.out.println(eventClasses);
         return eventClasses;
     }
 

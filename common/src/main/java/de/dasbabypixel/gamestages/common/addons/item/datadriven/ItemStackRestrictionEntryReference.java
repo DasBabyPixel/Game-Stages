@@ -1,6 +1,8 @@
 package de.dasbabypixel.gamestages.common.addons.item.datadriven;
 
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
-public record ItemStackRestrictionEntryReference(@NonNull String referenceId) implements DataDrivenData {
+@NullMarked
+public record ItemStackRestrictionEntryReference(String referenceId) implements DataDrivenData {
+    public static final String TYPE = "itemstack_restriction_entry_reference";
 }

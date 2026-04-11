@@ -2,17 +2,18 @@ package de.dasbabypixel.gamestages.common.data.server;
 
 import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+@NullMarked
 public class TeamStages extends ServerStages {
     private final Set<UUID> players = new HashSet<>();
 
-    public TeamStages(@NonNull ServerGameStageManager manager, StagesFileProvider.@NonNull Key key, StagesFileProvider.TeamStagesFile stagesFile) {
+    public TeamStages(ServerGameStageManager manager, StagesFileProvider.Key key, StagesFileProvider.TeamStagesFile stagesFile) {
         super(manager, key, stagesFile);
         this.players.addAll(stagesFile.players());
     }

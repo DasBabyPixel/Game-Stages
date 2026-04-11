@@ -7,15 +7,16 @@ import de.dasbabypixel.gamestages.common.data.flattening.FlattenedGameContent;
 import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContent;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContentType;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
 
+@NullMarked
 public class CommonGameContentFlattener implements GameContentFlattener {
-    private static final List<@NonNull FlattenerFactory<?>> FACTORIES = new ArrayList<>();
-    private static final Map<@NonNull CommonGameContentType<?>, FlattenerFactory<?>> FACTORY_BY_TYPE = new HashMap<>();
+    private static final List<FlattenerFactory<?>> FACTORIES = new ArrayList<>();
+    private static final Map<CommonGameContentType<?>, FlattenerFactory<?>> FACTORY_BY_TYPE = new HashMap<>();
 
     private final Map<GameContent, FlattenedGameContent> cache = new HashMap<>();
     private final Map<GameContentType<?>, Map<GameContent, Object>> typeCache = new HashMap<>();
@@ -31,14 +32,14 @@ public class CommonGameContentFlattener implements GameContentFlattener {
     }
 
     @Override
-    public @NonNull FlattenedGameContent flatten(@NonNull GameContent gameContent) {
+    public FlattenedGameContent flatten(GameContent gameContent) {
         if (cache.containsKey(gameContent)) return Objects.requireNonNull(cache.get(gameContent));
         return cache(gameContent, (FlattenedGameContent) flattenInternal(gameContent, null));
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends TypedGameContent> @NonNull T flatten(@NonNull GameContent gameContent, @NonNull GameContentType<T> requestType) {
+    public <T extends TypedGameContent> T flatten(GameContent gameContent, GameContentType<T> requestType) {
         if (typeCache.containsKey(requestType) && Objects
                 .requireNonNull(typeCache.get(requestType))
                 .containsKey(gameContent)) {
@@ -48,12 +49,12 @@ public class CommonGameContentFlattener implements GameContentFlattener {
         return cache(gameContent, type, (T) flattenInternal(gameContent, type));
     }
 
-    private Object flatten0(@NonNull GameContent gameContent, @Nullable CommonGameContentType<?> requestType) {
+    private Object flatten0(GameContent gameContent, @Nullable CommonGameContentType<?> requestType) {
         if (requestType == null) return flatten(gameContent);
         else return flatten(gameContent, requestType);
     }
 
-    private @NonNull Object flattenInternal(@NonNull GameContent gameContent, @Nullable CommonGameContentType<?> requestType) {
+    private Object flattenInternal(GameContent gameContent, @Nullable CommonGameContentType<?> requestType) {
         switch (gameContent) {
             case CommonGameContent.Composite composite -> {
                 var flatteners = new ArrayList<Flattener0<?>>(1);
@@ -120,7 +121,7 @@ public class CommonGameContentFlattener implements GameContentFlattener {
         }
     }
 
-    private Object completeFlattening(@NonNull List<@NonNull Flattener0<?>> flatteners, GameContentType<?> requestType) {
+    private Object completeFlattening(List<Flattener0<?>> flatteners, @Nullable GameContentType<?> requestType) {
         if (requestType != null) {
             return flatteners.getFirst().flattener().complete();
         }
@@ -131,12 +132,12 @@ public class CommonGameContentFlattener implements GameContentFlattener {
         return new FlattenedGameContent(map);
     }
 
-    public static void addFlattener(@NonNull FlattenerFactory<?> factory) {
+    public static void addFlattener(FlattenerFactory<?> factory) {
         FACTORIES.add(factory);
         FACTORY_BY_TYPE.put((CommonGameContentType<?>) factory.type(), factory);
     }
 
-    private static void fill(@NonNull List<@NonNull Flattener0<?>> flatteners, @Nullable CommonGameContentType<?> requestType, @NonNull Function<@NonNull FlattenerFactory<?>, @NonNull Flattener0<?>> fun) {
+    private static void fill(List<Flattener0<?>> flatteners, @Nullable CommonGameContentType<?> requestType, Function<FlattenerFactory<?>, Flattener0<?>> fun) {
         if (requestType != null) {
             flatteners.add(fun.apply(Objects.requireNonNull(FACTORY_BY_TYPE.get(requestType))));
             return;
@@ -146,16 +147,15 @@ public class CommonGameContentFlattener implements GameContentFlattener {
         }
     }
 
-    private static void accept(@NonNull List<@NonNull Flattener0<?>> flatteners, @Nullable CommonGameContentType<?> requestType, @NonNull Object content) {
+    private static void accept(List<Flattener0<?>> flatteners, @Nullable CommonGameContentType<?> requestType, Object content) {
         for (var flattener : flatteners) {
             flattener.accept(requestType, content);
         }
     }
 
-    private record Flattener0<T extends TypedGameContent>(@NonNull GameContentType<T> type,
-                                                          @NonNull Flattener<T> flattener) {
+    private record Flattener0<T extends TypedGameContent>(GameContentType<T> type, Flattener<T> flattener) {
         @SuppressWarnings("unchecked")
-        private void accept(@Nullable GameContentType<?> requestType, @NonNull Object content) {
+        private void accept(@Nullable GameContentType<?> requestType, Object content) {
             if (requestType == null) {
                 flattener.accept(((FlattenedGameContent) content).get(type));
             } else {
@@ -163,15 +163,15 @@ public class CommonGameContentFlattener implements GameContentFlattener {
             }
         }
 
-        private static <T extends TypedGameContent> Flattener0<T> union(@NonNull FlattenerFactory<T> factory) {
+        private static <T extends TypedGameContent> Flattener0<T> union(FlattenerFactory<T> factory) {
             return new Flattener0<>(factory.type(), factory.createUnion());
         }
 
-        private static <T extends TypedGameContent> Flattener0<T> only(@NonNull FlattenerFactory<T> factory) {
+        private static <T extends TypedGameContent> Flattener0<T> only(FlattenerFactory<T> factory) {
             return new Flattener0<>(factory.type(), factory.createOnly());
         }
 
-        private static <T extends TypedGameContent> Flattener0<T> except(@NonNull FlattenerFactory<T> factory) {
+        private static <T extends TypedGameContent> Flattener0<T> except(FlattenerFactory<T> factory) {
             return new Flattener0<>(factory.type(), factory.createExcept());
         }
     }

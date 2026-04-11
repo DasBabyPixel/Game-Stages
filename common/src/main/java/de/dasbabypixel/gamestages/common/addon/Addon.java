@@ -1,33 +1,39 @@
 package de.dasbabypixel.gamestages.common.addon;
 
 import de.dasbabypixel.gamestages.common.client.ClientPlayerStages;
-import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.RecompilationTask;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
-import org.jspecify.annotations.NonNull;
+import de.dasbabypixel.gamestages.common.data.server.MutableGameStageManager;
+import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
+import de.dasbabypixel.gamestages.common.network.PacketConsumer;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public interface Addon {
-    default void registerCustomContent(@NonNull ContentRegistry registry) {
+    default void onSyncConfigToPlayer(ServerGameStageManager instance, PacketConsumer packetConsumer) {
     }
 
-    default void postCompile(@NonNull RecompilationTask recompilationTask, @NonNull CompiledRestrictionEntry restrictionEntry) {
+    default void registerCustomContent(ContentRegistry registry) {
     }
 
-    default void preCompileAll(@NonNull RecompilationTask recompilationTask) {
+    default void postCompile(RecompilationTask recompilationTask, CompiledRestrictionEntry restrictionEntry) {
     }
 
-    default void postCompileAll(@NonNull RecompilationTask recompilationTask) {
+    default void preCompileAll(RecompilationTask recompilationTask) {
     }
 
-    default void preReload(@NonNull AbstractGameStageManager instance) {
+    default void postCompileAll(RecompilationTask recompilationTask) {
     }
 
-    default void postReload(@NonNull AbstractGameStageManager instance) {
+    default void preReload(MutableGameStageManager instance) {
     }
 
-    default void clientPostSyncUnlockedStages(@NonNull ClientPlayerStages playerStages) {
+    default void postReload(MutableGameStageManager instance) {
     }
 
-    default void onRegister(@NonNull AddonManager<? extends Addon> addonManager) {
+    default void clientPostSyncUnlockedStages(ClientPlayerStages playerStages) {
+    }
+
+    default void onRegister(AddonManager<? extends Addon> addonManager) {
     }
 }

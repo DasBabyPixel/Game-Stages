@@ -12,11 +12,13 @@ import net.neoforged.neoforge.attachment.IAttachmentHolder;
 import net.neoforged.neoforge.common.util.INBTSerializable;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Supplier;
 
+@NullMarked
 public class Attachments {
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES = DeferredRegister.create(Objects.requireNonNull(NeoForgeRegistries.ATTACHMENT_TYPES), BuildConstants.MOD_ID);
     public static final Supplier<AttachmentType<Source>> SOURCE = ATTACHMENT_TYPES.register("source", () -> AttachmentType
@@ -24,37 +26,37 @@ public class Attachments {
             .build());
 
     public static class Source implements INBTSerializable<CompoundTag> {
-        private final @NonNull Set<@NonNull UUID> owners = new HashSet<>();
+        private final Set<UUID> owners = new HashSet<>();
 
-        public Source(IAttachmentHolder h) {
+        public Source(@Nullable IAttachmentHolder h) {
             if (h instanceof Player player) {
                 owners.add(player.getUUID());
             }
         }
 
-        public Source(@NonNull UUID owner) {
+        public Source(UUID owner) {
             this.owners.add(owner);
         }
 
-        public @NonNull Set<@NonNull UUID> owners() {
+        public Set<UUID> owners() {
             return owners;
         }
 
-        public void addOwner(@NonNull UUID owner) {
+        public void addOwner(UUID owner) {
             this.owners.add(owner);
         }
 
-        public void setOwners(@NonNull Collection<@NonNull UUID> owners) {
+        public void setOwners(Collection<UUID> owners) {
             this.owners.clear();
             this.owners.addAll(owners);
         }
 
-        public void addOwners(@NonNull Collection<@NonNull UUID> owners) {
+        public void addOwners(Collection<UUID> owners) {
             this.owners.addAll(owners);
         }
 
         @Override
-        public CompoundTag serializeNBT(HolderLookup.@NonNull Provider provider) {
+        public CompoundTag serializeNBT(HolderLookup.Provider provider) {
             var tag = new CompoundTag();
             if (!owners.isEmpty()) {
                 var ownerList = new ListTag(owners.size());
@@ -67,7 +69,7 @@ public class Attachments {
         }
 
         @Override
-        public void deserializeNBT(HolderLookup.@NonNull Provider provider, @NonNull CompoundTag compoundTag) {
+        public void deserializeNBT(HolderLookup.Provider provider, CompoundTag compoundTag) {
             if (compoundTag.contains("owner")) {
                 owners.add(compoundTag.getUUID("owner"));
             } else if (compoundTag.contains("owners")) {

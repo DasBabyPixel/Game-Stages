@@ -4,31 +4,32 @@ import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.GameContentType;
 import de.dasbabypixel.gamestages.common.data.TypedGameContent;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public interface GameContentFlattener {
-    @NonNull FlattenedGameContent flatten(@NonNull GameContent gameContent);
+    FlattenedGameContent flatten(GameContent gameContent);
 
-    <T extends TypedGameContent> @NonNull T flatten(@NonNull GameContent gameContent, @NonNull GameContentType<T> requestType);
+    <T extends TypedGameContent> T flatten(GameContent gameContent, GameContentType<T> requestType);
 
     interface FlattenerFactory<T extends TypedGameContent> {
-        @NonNull GameContentType<T> type();
+        GameContentType<T> type();
 
-        @NonNull Flattener<T> createUnion();
+        Flattener<T> createUnion();
 
-        @NonNull Flattener<T> createOnly();
+        Flattener<T> createOnly();
 
-        @NonNull Flattener<T> createExcept();
+        Flattener<T> createExcept();
     }
 
     interface Flattener<T extends TypedGameContent> {
-        void accept(@NonNull T list);
+        void accept(T list);
 
-        @NonNull T complete();
+        T complete();
     }
 
     @SuppressWarnings("NotNullFieldNotInitialized")
     class Attribute {
-        public static AbstractGameStageManager.@NonNull Attribute<GameContentFlattener> INSTANCE;
+        public static de.dasbabypixel.gamestages.common.data.attribute.Attribute<AbstractGameStageManager<?>, GameContentFlattener> INSTANCE;
     }
 }

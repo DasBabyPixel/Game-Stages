@@ -14,17 +14,19 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeManager;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
-public class RecipeIndex {
-    protected final AbstractGameStageManager manager;
-    protected final Map<ResourceLocation, Entry> recipeEntries = new HashMap<>();
+@NullMarked
+public final class RecipeIndex {
+    private final AbstractGameStageManager manager;
+    private final Map<ResourceLocation, Entry> recipeEntries = new HashMap<>();
     //    protected final Map<Item, Set<RecipeHolder>> recipesForInput = new HashMap<>();
 //    protected final Map<Item, Set<RecipeHolder>> recipesForOutput = new HashMap<>();
 //    protected final Map<Item, Set<RecipeHolder>> related = new HashMap<>();
-    protected final HolderLookup.Provider lookup;
+    private final HolderLookup.Provider lookup;
     private final VRecipeAddon recipeAddon;
 
     public RecipeIndex(RecipeManager recipeManager, VRecipeAddon recipeAddon, AbstractGameStageManager manager, HolderLookup.Provider lookup) {
@@ -32,6 +34,7 @@ public class RecipeIndex {
         this.manager = manager;
         this.lookup = lookup;
         for (var recipe : recipeManager.getRecipes()) {
+            Objects.requireNonNull(recipe);
             indexRecipe(recipe.id(), recipe.value());
         }
     }
@@ -40,7 +43,7 @@ public class RecipeIndex {
         return Objects.requireNonNull(recipeEntries.get(id)).implicitPredicate();
     }
 
-    protected void index(RecipeHolder holder, Entry entry) {
+    private void index(RecipeHolder holder, Entry entry) {
         recipeEntries.put(holder.id, entry);
     }
 
@@ -55,7 +58,7 @@ public class RecipeIndex {
 //        return Set.copyOf(s);
 //    }
 //
-    protected void indexRecipe(ResourceLocation id, Recipe<?> recipe) {
+    private void indexRecipe(ResourceLocation id, Recipe<?> recipe) {
         var recipeHolder = new RecipeHolder(id, recipe, Objects.hash(id, recipe));
         indexRecipe(recipeHolder);
 //        var ingredients = recipe.getIngredients();
@@ -65,11 +68,18 @@ public class RecipeIndex {
 //        indexResult(recipeHolder);
     }
 
-    protected void indexRecipe(RecipeHolder holder) {
+    private void indexRecipe(RecipeHolder holder) {
         var andList = new ArrayList<PreparedRestrictionPredicate>();
         for (var ingredient : holder.recipe().getIngredients()) {
+            Objects.requireNonNull(ingredient);
+            if (holder.id.equals(ResourceLocation.parse("minecraft:oak_planks"))) {
+                for (var item : ingredient.getItems()) {
+                    System.out.println(item + " -> " + resolveItemStackPredicate(item, ingredient));
+                }
+            }
             andList.add(resolveIngredientPredicate(ingredient));
         }
+        if (holder.id.equals(ResourceLocation.parse("minecraft:oak_planks"))) System.out.println(andList);
         var ingredientPredicate = And.INSTANCE.prepare(andList);
         var resultItem = holder.recipe().getResultItem(lookup);
         var resultPredicate = resolveItemStackPredicate(resultItem, null);
@@ -82,16 +92,18 @@ public class RecipeIndex {
 
     // Ingredient -> Predicate
 
-    protected PreparedRestrictionPredicate resolveItemStackPredicate(ItemStack itemStack, @Nullable Ingredient ingredient) {
+    @SuppressWarnings("DataFlowIssue")
+    private PreparedRestrictionPredicate resolveItemStackPredicate(ItemStack itemStack, @Nullable Ingredient ingredient) {
         var msg = AddonManager
                 .instance()
                 .sendMessage(recipeAddon, RecipeMessages.ORIGIN_ID, ResolveItemStackPredicate.ID, ResolveItemStackPredicate::new, itemStack, ingredient);
         return msg == null ? True.INSTANCE.prepare() : msg.predicate;
     }
 
-    protected PreparedRestrictionPredicate resolveIngredientPredicate(Ingredient ingredient) {
+    private PreparedRestrictionPredicate resolveIngredientPredicate(Ingredient ingredient) {
         var orList = new ArrayList<PreparedRestrictionPredicate>();
         for (var item : ingredient.getItems()) {
+            Objects.requireNonNull(item);
             orList.add(resolveItemStackPredicate(item, ingredient));
         }
         return Or.INSTANCE.prepare(orList);

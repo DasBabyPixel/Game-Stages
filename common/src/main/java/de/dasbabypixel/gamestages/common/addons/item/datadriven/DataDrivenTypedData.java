@@ -1,6 +1,7 @@
 package de.dasbabypixel.gamestages.common.addons.item.datadriven;
 
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
-public record DataDrivenTypedData<Data extends DataDrivenData>(@NonNull String type, Data data) {
+@NullMarked
+public record DataDrivenTypedData<Data extends DataDrivenData>(String type, Data data) {
 }

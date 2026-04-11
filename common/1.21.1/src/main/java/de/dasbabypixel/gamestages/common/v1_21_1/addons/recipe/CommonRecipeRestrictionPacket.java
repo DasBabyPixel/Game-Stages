@@ -6,14 +6,15 @@ import de.dasbabypixel.gamestages.common.v1_21_1.network.GameStagesPacket;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import static de.dasbabypixel.gamestages.common.v1_21_1.data.CommonCodecs.PREPARED_RESTRICTION_PREDICATE_STREAM_CODEC;
 import static net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8;
 
-public record CommonRecipeRestrictionPacket(@NonNull PreparedRestrictionPredicate predicate,
-                                            @NonNull CommonRecipeCollection targetCollection,
-                                            @NonNull String origin) implements GameStagesPacket {
+@NullMarked
+public record CommonRecipeRestrictionPacket(PreparedRestrictionPredicate predicate,
+                                            CommonRecipeCollection targetCollection,
+                                            String origin) implements GameStagesPacket {
     public static final Type<CommonRecipeRestrictionPacket> TYPE = new Type<>(CommonVGameStageMod.location("recipe_restriction"));
     public static final StreamCodec<RegistryFriendlyByteBuf, CommonRecipeRestrictionPacket> STREAM_CODEC = StreamCodec.ofMember(CommonRecipeRestrictionPacket::encode, CommonRecipeRestrictionPacket::new);
 
@@ -33,7 +34,7 @@ public record CommonRecipeRestrictionPacket(@NonNull PreparedRestrictionPredicat
     }
 
     @Override
-    public @NonNull Type<? extends CustomPacketPayload> type() {
+    public Type<? extends CustomPacketPayload> type() {
         return TYPE;
     }
 }

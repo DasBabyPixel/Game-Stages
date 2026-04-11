@@ -5,9 +5,11 @@ import de.dasbabypixel.gamestages.common.data.GameStage;
 import de.dasbabypixel.gamestages.common.data.server.ServerStages;
 import dev.latvian.mods.kubejs.stages.Stages;
 import net.minecraft.world.entity.player.Player;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Collection;
 
+@NullMarked
 public class KJSStagesWrapper implements Stages {
     private final Player player;
     private final BaseStages stages;

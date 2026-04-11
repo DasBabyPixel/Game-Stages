@@ -7,28 +7,29 @@ import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.type.ArrayTypeInfo;
 import dev.latvian.mods.rhino.type.TypeInfo;
 import dev.latvian.mods.rhino.util.HideFromJS;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.util.*;
 
+@NullMarked
 public final class EventType<Event extends EventJSBase<Event>> {
-    private final @NonNull Class<? extends Event> cls;
-    private final @NonNull TypeInfo type;
-    private final java.util.function.@NonNull Function<Event, Void> NUL = ignore -> null;
-    private @NonNull List<PreEventExecutor<Event>> preExecutors = new ArrayList<>();
-    private @NonNull List<PreEventExecutor<Event>> postExecutors = new ArrayList<>();
-    private @NonNull Map<@NonNull String, @NonNull Function<Event, ?>> functions = new HashMap<>();
+    private final Class<? extends Event> cls;
+    private final TypeInfo type;
+    private final java.util.function.Function<Event, Void> NUL = ignore -> null;
+    private List<PreEventExecutor<Event>> preExecutors = new ArrayList<>();
+    private List<PreEventExecutor<Event>> postExecutors = new ArrayList<>();
+    private Map<String, Function<Event, ?>> functions = new HashMap<>();
 
-    public EventType(@NonNull Class<? extends Event> cls) {
+    public EventType(Class<? extends Event> cls) {
         this.cls = cls;
         this.type = Objects.requireNonNull(TypeInfo.of(cls));
     }
 
     @HideFromJS
-    public <EventContext> void addFunction(@NonNull String name, java.util.function.@NonNull Function<@NonNull Event, EventContext> contextSupplier, EventJSBase.@NonNull ContextFunction<@NonNull Event, EventContext> function, @NonNull Object returnType, @NonNull Object @NonNull ... parameters) {
+    public <EventContext> void addFunction(String name, java.util.function.Function<Event, EventContext> contextSupplier, EventJSBase.ContextFunction<Event, EventContext> function, Object returnType, Object... parameters) {
         var retType = of(returnType);
         var params = new ExplicitType[parameters.length];
         for (var i = 0; i < parameters.length; i++) {
@@ -38,12 +39,12 @@ public final class EventType<Event extends EventJSBase<Event>> {
     }
 
     @HideFromJS
-    public void addFunction(@NonNull String name, EventJSBase.@NonNull Function<Event> function, @NonNull Object returnType, @NonNull Object @NonNull ... parameters) {
+    public void addFunction(String name, EventJSBase.Function<Event> function, Object returnType, Object... parameters) {
         addFunction(name, NUL, wrap(function), returnType, parameters);
     }
 
     @HideFromJS
-    public <EventContext> void addFunctionVarArgs(@NonNull String name, java.util.function.@NonNull Function<@NonNull Event, EventContext> contextSupplier, EventJSBase.@NonNull ContextFunction<@NonNull Event, EventContext> function, @Nullable Object wrapVarargsType, @NonNull Object returnType, @NonNull Object @NonNull ... parameters) {
+    public <EventContext> void addFunctionVarArgs(String name, java.util.function.Function<Event, EventContext> contextSupplier, EventJSBase.ContextFunction<Event, EventContext> function, @Nullable Object wrapVarargsType, Object returnType, Object... parameters) {
         var retType = of(returnType);
         var params = new ExplicitType[parameters.length];
         for (var i = 0; i < parameters.length; i++) {
@@ -53,11 +54,11 @@ public final class EventType<Event extends EventJSBase<Event>> {
     }
 
     @HideFromJS
-    public void addFunctionVarArgs(@NonNull String name, EventJSBase.@NonNull Function<Event> function, @Nullable Object wrapVarargsType, @NonNull Object returnType, @NonNull Object @NonNull ... parameters) {
+    public void addFunctionVarArgs(String name, EventJSBase.Function<Event> function, @Nullable Object wrapVarargsType, Object returnType, Object... parameters) {
         addFunctionVarArgs(name, NUL, wrap(function), wrapVarargsType, returnType, parameters);
     }
 
-    private @NonNull ExplicitType of(@NonNull Object o) {
+    private ExplicitType of(Object o) {
         if (o instanceof ExplicitType t) return t;
         var t = Objects.requireNonNull(type(o));
         return new ExplicitType(t, t);
@@ -73,23 +74,23 @@ public final class EventType<Event extends EventJSBase<Event>> {
     }
 
     @HideFromJS
-    public <EventContext> void addFunction(@NonNull String name, java.util.function.@NonNull Function<@NonNull Event, EventContext> contextSupplier, EventJSBase.@NonNull ContextFunction<Event, EventContext> function, boolean varArgs, @Nullable TypeInfo wrapVarargsType, @NonNull ExplicitType returnType, @NonNull ExplicitType @NonNull ... parameters) {
+    public <EventContext> void addFunction(String name, java.util.function.Function<Event, EventContext> contextSupplier, EventJSBase.ContextFunction<Event, EventContext> function, boolean varArgs, @Nullable TypeInfo wrapVarargsType, ExplicitType returnType, ExplicitType... parameters) {
         addFunction(name, contextSupplier, function, new FunctionDescriptor(varArgs, returnType, parameters), wrapVarargsType);
     }
 
     @HideFromJS
-    public void addFunction(@NonNull String name, EventJSBase.@NonNull Function<Event> function, boolean varArgs, @Nullable TypeInfo wrapVarargsType, @NonNull ExplicitType returnType, @NonNull ExplicitType @NonNull ... parameters) {
+    public void addFunction(String name, EventJSBase.Function<Event> function, boolean varArgs, @Nullable TypeInfo wrapVarargsType, ExplicitType returnType, ExplicitType... parameters) {
         addFunction(name, NUL, wrap(function), varArgs, wrapVarargsType, returnType, parameters);
     }
 
     @HideFromJS
-    public void addFunction(@NonNull String name, EventJSBase.@NonNull Function<Event> function, @NonNull FunctionDescriptor descriptor, @Nullable TypeInfo wrapVarargsType) {
+    public void addFunction(String name, EventJSBase.Function<Event> function, FunctionDescriptor descriptor, @Nullable TypeInfo wrapVarargsType) {
         addFunction(name, NUL, wrap(function), descriptor, wrapVarargsType);
     }
 
     @HideFromJS
-    public <EventContext> void addFunction(@NonNull String name, java.util.function.@NonNull Function<@NonNull Event, EventContext> contextSupplier, EventJSBase.@NonNull ContextFunction<Event, EventContext> function, @NonNull FunctionDescriptor descriptor, @Nullable TypeInfo wrapVarargsType) {
-        @NonNull ExplicitType[] parameters = descriptor.parameters();
+    public <EventContext> void addFunction(String name, java.util.function.Function<Event, EventContext> contextSupplier, EventJSBase.ContextFunction<Event, EventContext> function, FunctionDescriptor descriptor, @Nullable TypeInfo wrapVarargsType) {
+        var parameters = descriptor.parameters();
         var varArgs = descriptor.varArgs();
         ArrayTypeInfo varArgArrayType;
         if (varArgs) {
@@ -101,7 +102,7 @@ public final class EventType<Event extends EventJSBase<Event>> {
         var invoker = new BaseFunction() {
             @SuppressWarnings("unchecked")
             @Override
-            public Object call(@NonNull Context cx, @NonNull Scriptable scope, Scriptable thisObj, Object @NonNull [] args) {
+            public @Nullable Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
                 if (varArgs) {
                     var newArgs = new Object[parameters.length];
                     for (var i = 0; i < parameters.length - 1; i++) {
@@ -119,7 +120,7 @@ public final class EventType<Event extends EventJSBase<Event>> {
                     args = newArgs;
                 } else {
                     for (var i = 0; i < args.length; i++) {
-                        args[i] = cx.jsToJava(args[i], parameters[i].jsType());
+                        args[i] = Objects.requireNonNull(cx.jsToJava(args[i], parameters[i].jsType()));
                     }
                 }
                 var event = Objects.requireNonNull(cls.cast(cx.jsToJava(thisObj, type)));
@@ -139,20 +140,20 @@ public final class EventType<Event extends EventJSBase<Event>> {
     }
 
     @HideFromJS
-    public @NonNull Map<@NonNull String, @NonNull Function<Event, ?>> functions() {
+    public Map<String, Function<Event, ?>> functions() {
         return functions;
     }
 
     @HideFromJS
-    public @NonNull List<@NonNull PreEventExecutor<Event>> preExecutors() {
+    public List<PreEventExecutor<Event>> preExecutors() {
         return preExecutors;
     }
 
-    public @NonNull List<@NonNull PreEventExecutor<Event>> postExecutors() {
+    public List<PreEventExecutor<Event>> postExecutors() {
         return postExecutors;
     }
 
-    private static <E extends EventJSBase<E>> EventJSBase.@NonNull ContextFunction<E, Void> wrap(EventJSBase.@NonNull Function<E> function) {
+    private static <E extends EventJSBase<E>> EventJSBase.ContextFunction<E, Void> wrap(EventJSBase.Function<E> function) {
         return (event, cx, unused, args) -> function.invoke(event, cx, args);
     }
 
@@ -164,16 +165,15 @@ public final class EventType<Event extends EventJSBase<Event>> {
         void execute(Event event);
     }
 
-    public record ExplicitType(@NonNull TypeInfo jsType, @NonNull TypeInfo probeType) {
+    public record ExplicitType(TypeInfo jsType, TypeInfo probeType) {
     }
 
-    public record FunctionDescriptor(boolean varArgs, @NonNull ExplicitType returnType,
-                                     @NonNull ExplicitType @NonNull [] parameters) {
+    public record FunctionDescriptor(boolean varArgs, ExplicitType returnType, ExplicitType[] parameters) {
     }
 
-    public record Function<Event extends EventJSBase<Event>, EventContext>(@NonNull BaseFunction invoker,
-                                                                           java.util.function.@NonNull Function<? super @NonNull Event, EventContext> contextSupplier,
-                                                                           EventJSBase.@NonNull ContextFunction<? super Event, EventContext> function,
-                                                                           @NonNull FunctionDescriptor descriptor) {
+    public record Function<Event extends EventJSBase<Event>, EventContext>(BaseFunction invoker,
+                                                                           java.util.function.Function<? super Event, EventContext> contextSupplier,
+                                                                           EventJSBase.ContextFunction<? super Event, EventContext> function,
+                                                                           FunctionDescriptor descriptor) {
     }
 }

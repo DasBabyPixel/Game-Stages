@@ -8,25 +8,26 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.util.thread.EffectiveSide;
 import net.neoforged.neoforge.network.PacketDistributor;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 
+@NullMarked
 public class PlatformPacketDistributorImpl implements PlatformPacketDistributor {
     @Override
-    public void sendToServer(@NonNull CustomPacket packet) {
+    public void sendToServer(CustomPacket packet) {
         Objects.requireNonNull(Minecraft.getInstance().getConnection()).send((CustomPacketPayload) packet);
     }
 
     @Override
-    public void sendToPlayer(@NonNull Player player, @NonNull CustomPacket packet) {
-        if (!EffectiveSide.get().isServer()) return;
+    public void sendToPlayer(Player player, CustomPacket packet) {
+        if (!Objects.requireNonNull(EffectiveSide.get()).isServer()) return;
         ((ServerPlayer) player).connection.send((CustomPacketPayload) packet);
     }
 
     @Override
-    public void sendToAllPlayers(@NonNull CustomPacket packet) {
-        if (!EffectiveSide.get().isServer()) return;
+    public void sendToAllPlayers(CustomPacket packet) {
+        if (!Objects.requireNonNull(EffectiveSide.get()).isServer()) return;
         PacketDistributor.sendToAllPlayers((CustomPacketPayload) packet);
     }
 }

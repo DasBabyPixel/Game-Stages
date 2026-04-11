@@ -4,15 +4,16 @@ import de.dasbabypixel.gamestages.common.addons.item.datadriven.CompiledItemStac
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.CompiledResolverAlgorithm;
 import de.dasbabypixel.gamestages.common.data.ItemStack;
 import net.minecraft.advancements.critereon.ItemPredicate;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
-public record PredicateCompiled(@NonNull CompiledItemStackRestrictionEntry entry,
-                                @NonNull List<@NonNull CompiledItemStackRestrictionEntry> entries,
-                                @NonNull ItemPredicate predicate) implements CompiledResolverAlgorithm {
-    public PredicateCompiled(@NonNull CompiledItemStackRestrictionEntry entry, @NonNull ItemPredicate predicate) {
+@NullMarked
+public record PredicateCompiled(CompiledItemStackRestrictionEntry entry,
+                                List<CompiledItemStackRestrictionEntry> entries,
+                                ItemPredicate predicate) implements CompiledResolverAlgorithm {
+    public PredicateCompiled(CompiledItemStackRestrictionEntry entry, ItemPredicate predicate) {
         this(entry, List.of(entry), predicate);
     }
 

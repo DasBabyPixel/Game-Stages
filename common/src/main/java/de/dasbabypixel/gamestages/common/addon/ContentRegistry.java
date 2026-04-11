@@ -3,18 +3,19 @@ package de.dasbabypixel.gamestages.common.addon;
 import de.dasbabypixel.gamestages.common.data.GameContentType;
 import de.dasbabypixel.gamestages.common.data.TypedGameContent;
 import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.lang.reflect.Type;
 
+@NullMarked
 public interface ContentRegistry {
-    @NonNull Attribute NAME = Attribute.create(String.class);
-    @NonNull Attribute FLATTENER_FACTORY = Attribute.create(GameContentFlattener.FlattenerFactory.class);
+    Attribute NAME = Attribute.create(String.class);
+    Attribute FLATTENER_FACTORY = Attribute.create(GameContentFlattener.FlattenerFactory.class);
 
-    <T extends TypedGameContent> @NonNull Builder<T> prepare(GameContentType<T> type);
+    <T extends TypedGameContent> Builder<T> prepare(GameContentType<T> type);
 
     interface Builder<T extends TypedGameContent> {
-        <V> @NonNull Builder<T> set(@NonNull Attribute attribute, @NonNull V value);
+        <V> Builder<T> set(Attribute attribute, V value);
 
         void register();
     }
@@ -22,14 +23,14 @@ public interface ContentRegistry {
     final class Attribute {
         private static int idCounter;
         private final int id;
-        private final @NonNull Type type;
+        private final Type type;
 
-        private Attribute(int id, @NonNull Type type) {
+        private Attribute(int id, Type type) {
             this.id = id;
             this.type = type;
         }
 
-        public @NonNull Type type() {
+        public Type type() {
             return type;
         }
 
@@ -43,7 +44,7 @@ public interface ContentRegistry {
             return id;
         }
 
-        public static <V> @NonNull Attribute create(@NonNull Type type) {
+        public static <V> Attribute create(Type type) {
             return new Attribute(idCounter++, type);
         }
     }

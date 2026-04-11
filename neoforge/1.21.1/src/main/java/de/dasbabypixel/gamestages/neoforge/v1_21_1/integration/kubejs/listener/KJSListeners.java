@@ -7,16 +7,17 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.serv
 import dev.latvian.mods.kubejs.script.ScriptType;
 import dev.latvian.mods.kubejs.stages.StageCreationEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 
+@NullMarked
 public class KJSListeners {
     public static void register() {
         NeoForge.EVENT_BUS.addListener(KJSListeners::handleStageCreation);
     }
 
-    public static void postRegisterEvent(@NonNull AbstractGameStageManager instance) {
+    public static void postRegisterEvent(AbstractGameStageManager instance) {
         StageEvents.REGISTER.post(ScriptType.SERVER, new RegisterEventJS(instance));
     }
 

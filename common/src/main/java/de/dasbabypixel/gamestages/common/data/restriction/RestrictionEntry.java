@@ -6,23 +6,24 @@ import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestr
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryPreCompiler;
 import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
 import de.dasbabypixel.gamestages.common.network.CustomPacket;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public interface RestrictionEntry<T extends RestrictionEntry<T, PreCompiled>, PreCompiled> {
-    @NonNull RestrictionEntryOrigin origin();
+    RestrictionEntryOrigin origin();
 
-    @NonNull T disallowDuplicates();
+    T disallowDuplicates();
 
-    @NonNull T allowDuplicates();
+    T allowDuplicates();
 
-    @NonNull CustomPacket createPacket(@NonNull ServerGameStageManager serverGameStageManager);
+    CustomPacket createPacket(ServerGameStageManager serverGameStageManager);
 
-    @NonNull PreCompiled precompile(@NonNull AbstractGameStageManager instance, @NonNull RestrictionEntryPreCompiler preCompiler);
+    PreCompiled precompile(AbstractGameStageManager<?> instance, RestrictionEntryPreCompiler preCompiler);
 
-    @NonNull CompiledRestrictionEntry compile(@NonNull RecompilationTask task, @NonNull PreCompiled preCompiled);
+    CompiledRestrictionEntry compile(RecompilationTask task, PreCompiled preCompiled);
 
     @SuppressWarnings("unchecked")
-    default @NonNull T self() {
+    default T self() {
         return (T) this;
     }
 }

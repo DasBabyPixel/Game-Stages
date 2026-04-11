@@ -5,6 +5,7 @@ import de.dasbabypixel.gamestages.common.addons.item.datadriven.CompiledItemStac
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemCollection;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemRestrictionEntry;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonJEI;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.runtime.IJeiRuntime;
@@ -12,23 +13,24 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+@NullMarked
 public class ItemJEI implements NeoAddonJEI {
-    private static final @NonNull Logger LOGGER = LoggerFactory.getLogger(ItemJEI.class);
-    private final @NonNull Map<Item, List<ItemStack>> itemCache = new HashMap<>();
+    private static final Logger LOGGER = LoggerFactory.getLogger(ItemJEI.class);
+    private final Map<Item, List<ItemStack>> itemCache = new HashMap<>();
     private boolean cachePopulated = false;
     private @Nullable IJeiRuntime runtime;
 
     public ItemJEI() {
     }
 
-    private @NonNull Map<Item, List<ItemStack>> getItemCache() {
+    private Map<Item, List<ItemStack>> getItemCache() {
         if (!cachePopulated) populateCache();
         return Objects.requireNonNull(itemCache);
     }
@@ -53,23 +55,23 @@ public class ItemJEI implements NeoAddonJEI {
     }
 
     @Override
-    public void singleRefreshAll(@NonNull AbstractGameStageManager instance, @NonNull BaseStages stages) {
+    public void singleRefreshAll(AbstractGameStageManager instance, BaseStages stages) {
         if (runtime == null) {
             LOGGER.warn("JEI runtime missing when refreshing game stages");
             return;
         }
         iterate(stages, CommonItemCollection.TYPE, entry -> {
-            if (entry instanceof NeoItemRestrictionEntry.Compiled(var e, var gameContent, var resolver)) {
+            if (entry instanceof CommonItemRestrictionEntry.Compiled(var ignored, var gameContent, var resolver)) {
                 updateItems(gameContent.items(), resolver);
             }
         });
     }
 
     @Override
-    public void postCompileAll(@NonNull AbstractGameStageManager instance, @NonNull BaseStages stages) {
-        var byEntry = new HashMap<@NonNull CompiledItemStackRestrictionEntry, @NonNull List<ItemStack>>();
+    public void postCompileAll(AbstractGameStageManager instance, BaseStages stages) {
+        var byEntry = new HashMap<CompiledItemStackRestrictionEntry, List<ItemStack>>();
         iterate(stages, CommonItemCollection.TYPE, entry -> {
-            if (entry instanceof NeoItemRestrictionEntry.Compiled(var e, var gameContent, var resolver)) {
+            if (entry instanceof CommonItemRestrictionEntry.Compiled(var ignoredE, var gameContent, var resolver)) {
                 var items = getItems(gameContent.items());
                 for (var item : items) {
                     var resolved = resolver.resolveRestrictionEntry(item);
@@ -94,7 +96,7 @@ public class ItemJEI implements NeoAddonJEI {
         }
     }
 
-    private @NonNull List<@NonNull ItemStack> getItems(@NonNull HolderSet<Item> itemSet) {
+    private List<ItemStack> getItems(HolderSet<Item> itemSet) {
         var itemCache = getItemCache();
         return itemSet
                 .stream()
@@ -106,9 +108,9 @@ public class ItemJEI implements NeoAddonJEI {
                 .toList();
     }
 
-    private void updateItems(@NonNull HolderSet<Item> itemSet, @NonNull ItemStackRestrictionResolver resolver) {
+    private void updateItems(HolderSet<Item> itemSet, ItemStackRestrictionResolver resolver) {
         Objects.requireNonNull(runtime);
-        List<@NonNull ItemStack> items = getItems(itemSet);
+        List<ItemStack> items = getItems(itemSet);
         if (items.isEmpty()) return;
         var showItems = new ArrayList<ItemStack>();
         var hideItems = new ArrayList<ItemStack>();

@@ -12,7 +12,10 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceKey;
+import org.jspecify.annotations.NullMarked;
 
+@SuppressWarnings("DataFlowIssue")
+@NullMarked
 public class CommonCodecs {
     public static final ResourceKey<Registry<RestrictionPredicateSerializer<?>>> RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY = ResourceKey.createRegistryKey(CommonVGameStageMod.location("restriction_predicate_serializer"));
     public static final ResourceKey<Registry<PreparedRestrictionPredicateSerializer<?>>> PREPARED_RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY = ResourceKey.createRegistryKey(CommonVGameStageMod.location("prepared_restriction_predicate_serializer"));

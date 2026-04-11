@@ -6,7 +6,8 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.entity.IBlockEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.attachment.AttachmentHolder;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -19,10 +20,10 @@ import java.util.UUID;
 @SuppressWarnings("DataFlowIssue")
 @Mixin(BlockEntity.class)
 @Implements(@Interface(iface = IBlockEntity.class, prefix = "stages$"))
+@NullMarked
 public abstract class MCBlockEntityMixin implements IBlockEntity {
-
     @Shadow
-    protected Level level;
+    protected @Nullable Level level;
     @Unique
     private boolean stages$registered = false;
     @Unique

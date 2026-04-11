@@ -1,11 +1,12 @@
 package de.dasbabypixel.gamestages.common.addons.item.datadriven;
 
 import de.dasbabypixel.gamestages.common.data.ItemStack;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
+@NullMarked
 public interface CompiledResolverAlgorithm {
     /**
      * @param itemStack the ItemStack to resolve
@@ -13,5 +14,5 @@ public interface CompiledResolverAlgorithm {
      */
     @Nullable CompiledItemStackRestrictionEntry resolve(ItemStack itemStack);
 
-    @NonNull List<@NonNull CompiledItemStackRestrictionEntry> entries();
+    List<CompiledItemStackRestrictionEntry> entries();
 }

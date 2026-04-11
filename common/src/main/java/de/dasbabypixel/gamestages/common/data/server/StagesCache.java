@@ -1,6 +1,6 @@
 package de.dasbabypixel.gamestages.common.data.server;
 
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.io.IOException;
 import java.util.*;
@@ -9,18 +9,19 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+@NullMarked
 public class StagesCache {
-    private static final @NonNull Logger LOGGER = Logger.getLogger(StagesCache.class.getName());
-    private final @NonNull ServerGameStageManager manager;
-    private final @NonNull ReentrantLock lock = new ReentrantLock();
-    private final @NonNull HashMap<StagesFileProvider.Key, Entry> entryMap = new HashMap<>();
-    private final @NonNull Map<Set<UUID>, CompositeEntry> compositeMap = new HashMap<>();
+    private static final Logger LOGGER = Logger.getLogger(StagesCache.class.getName());
+    private final ServerGameStageManager manager;
+    private final ReentrantLock lock = new ReentrantLock();
+    private final HashMap<StagesFileProvider.Key, Entry> entryMap = new HashMap<>();
+    private final Map<Set<UUID>, CompositeEntry> compositeMap = new HashMap<>();
 
-    public StagesCache(@NonNull ServerGameStageManager manager) {
+    public StagesCache(ServerGameStageManager manager) {
         this.manager = manager;
     }
 
-    public void release(@NonNull CompositeStages stages) {
+    public void release(CompositeStages stages) {
         lock.lock();
         try {
             Set<UUID> uuids = new HashSet<>();
@@ -28,10 +29,10 @@ public class StagesCache {
                 uuids.add(dependency.key().uuid());
             }
             uuids = Set.copyOf(uuids);
-            System.out.println("Release " + uuids);
+            LOGGER.log(Level.INFO, "Release {0}", uuids);
             var entry = Objects.requireNonNull(compositeMap.get(uuids));
             if (entry.referenceCount.decrementAndGet() == 0) {
-                System.out.println("Empty composite");
+                LOGGER.log(Level.INFO, "Delete composite");
                 compositeMap.remove(uuids);
                 for (var dependency : stages.dependencies()) {
                     release(dependency);
@@ -42,23 +43,23 @@ public class StagesCache {
         }
     }
 
-    public void releaseComposite(@NonNull Set<@NonNull UUID> uuids) {
+    public void releaseComposite(Set<UUID> uuids) {
         uuids = Set.copyOf(uuids);
         var stages = Objects.requireNonNull(compositeMap.get(uuids));
         release(stages.stages);
     }
 
-    public @NonNull CompositeStages requireComposite(@NonNull Set<@NonNull UUID> uuids) {
+    public CompositeStages requireComposite(Set<UUID> uuids) {
         uuids = Objects.requireNonNull(Set.copyOf(uuids));
         lock.lock();
-        System.out.println("Require " + uuids);
+        LOGGER.log(Level.INFO, "Require {0}", uuids);
         try {
             if (compositeMap.containsKey(uuids)) {
                 var entry = Objects.requireNonNull(compositeMap.get(uuids));
                 entry.referenceCount.incrementAndGet();
                 return entry.stages;
             }
-            System.out.println("New composite");
+            LOGGER.log(Level.INFO, "Creating new composite");
             var players = new HashSet<PlayerStages>();
             for (var uuid : uuids) {
                 var player = requirePlayer(uuid);
@@ -73,15 +74,15 @@ public class StagesCache {
         }
     }
 
-    public @NonNull PlayerStages requirePlayer(@NonNull UUID uuid) {
+    public PlayerStages requirePlayer(UUID uuid) {
         return (PlayerStages) require(StagesFileProvider.player(uuid));
     }
 
-    public @NonNull TeamStages requireTeam(@NonNull UUID uuid) {
+    public TeamStages requireTeam(UUID uuid) {
         return (TeamStages) require(StagesFileProvider.team(uuid));
     }
 
-    public @NonNull ServerStages require(StagesFileProvider.@NonNull Key key) {
+    public ServerStages require(StagesFileProvider.Key key) {
         lock.lock();
         try {
             if (entryMap.containsKey(key)) {
@@ -117,22 +118,22 @@ public class StagesCache {
         }
     }
 
-    public void release(@NonNull ServerStages stages) {
+    public void release(ServerStages stages) {
         lock.lock();
         try {
             var entry = Objects.requireNonNull(entryMap.get(stages.key()));
             if (entry.referenceCount.decrementAndGet() == 0) {
                 entryMap.remove(stages.key());
                 stages.unload();
-                System.out.println("Unload " + stages.key());
+                LOGGER.log(Level.INFO, "Unload {0}", stages.key());
             }
         } finally {
             lock.unlock();
         }
     }
 
-    private ServerStages load(StagesFileProvider.@NonNull Key key) throws IOException {
-        System.out.println("Load " + key);
+    private ServerStages load(StagesFileProvider.Key key) throws IOException {
+        LOGGER.log(Level.INFO, "Loading {0}", key);
         var file = manager.stagesFileProvider().readStages(key);
         switch (key.type()) {
             case "player" -> {
@@ -146,10 +147,10 @@ public class StagesCache {
     }
 
     private static class CompositeEntry {
-        private final @NonNull AtomicInteger referenceCount = new AtomicInteger(1);
-        private final @NonNull CompositeStages stages;
+        private final AtomicInteger referenceCount = new AtomicInteger(1);
+        private final CompositeStages stages;
 
-        private CompositeEntry(@NonNull CompositeStages stages) {
+        private CompositeEntry(CompositeStages stages) {
             this.stages = stages;
         }
 
@@ -160,10 +161,10 @@ public class StagesCache {
     }
 
     private static class Entry {
-        private final @NonNull AtomicInteger referenceCount = new AtomicInteger();
-        private final @NonNull ServerStages stages;
+        private final AtomicInteger referenceCount = new AtomicInteger();
+        private final ServerStages stages;
 
-        private Entry(@NonNull ServerStages stages) {
+        private Entry(ServerStages stages) {
             this.stages = stages;
         }
 

@@ -4,25 +4,26 @@ import de.dasbabypixel.gamestages.common.addon.Addon;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.*;
 
+@NullMarked
 public abstract class BaseStages {
-    protected final @NonNull Map<@NonNull RestrictionEntry<?, ?>, @NonNull CompiledRestrictionEntry> compiledRestrictionEntryMap = new HashMap<>();
-    protected final @NonNull Map<@NonNull GameStage, @NonNull CompiledRestrictionPredicate> compiledGameStages = new HashMap<>();
-    protected final @NonNull Map<@NonNull GameContentType<?>, TypeIndex> typeIndexMap = new HashMap<>();
-    protected final @NonNull Map<@NonNull Addon, @NonNull Object> addonData = new HashMap<>();
-    private final @NonNull Set<@NonNull GameStage> unlockedStages;
+    protected final Map<RestrictionEntry<?, ?>, CompiledRestrictionEntry> compiledRestrictionEntryMap = new HashMap<>();
+    protected final Map<GameStage, CompiledRestrictionPredicate> compiledGameStages = new HashMap<>();
+    protected final Map<GameContentType<?>, TypeIndex> typeIndexMap = new HashMap<>();
+    protected final Map<Addon, Object> addonData = new HashMap<>();
+    private final Set<GameStage> unlockedStages;
 
-    public BaseStages(@NonNull Set<GameStage> stages) {
+    public BaseStages(Set<GameStage> stages) {
         unlockedStages = new HashSet<>(stages);
     }
 
     /**
      * Invalidates the stage for recalculation
      */
-    protected void update(@NonNull GameStage gameStage) {
+    protected void update(GameStage gameStage) {
         var compiled = compiledGameStages.get(gameStage);
         if (compiled != null) {
             compiled.invalidate();
@@ -32,7 +33,7 @@ public abstract class BaseStages {
     /**
      * Add a stage without notifying players
      */
-    public boolean addSilent(@NonNull GameStage gameStage) {
+    public boolean addSilent(GameStage gameStage) {
         if (!getUnlockedStages().add(gameStage)) return false;
         onAdd(gameStage, true);
         return true;
@@ -41,7 +42,7 @@ public abstract class BaseStages {
     /**
      * Remove a stage without notifying players
      */
-    public boolean removeSilent(@NonNull GameStage gameStage) {
+    public boolean removeSilent(GameStage gameStage) {
         if (!getUnlockedStages().add(gameStage)) return false;
         onRemove(gameStage, true);
         return true;
@@ -50,7 +51,7 @@ public abstract class BaseStages {
     /**
      * Add a stage and notify players
      */
-    public boolean add(@NonNull GameStage gameStage) {
+    public boolean add(GameStage gameStage) {
         if (!getUnlockedStages().add(gameStage)) return false;
         onAdd(gameStage, false);
         return true;
@@ -59,69 +60,69 @@ public abstract class BaseStages {
     /**
      * Remove a stage and notify players
      */
-    public boolean remove(@NonNull GameStage gameStage) {
+    public boolean remove(GameStage gameStage) {
         if (!getUnlockedStages().remove(gameStage)) return false;
         onRemove(gameStage, false);
         return true;
     }
 
-    public void recompileAll(@NonNull AbstractGameStageManager instance) {
+    public void recompileAll(AbstractGameStageManager<?> instance) {
         var recompilationTask = new RecompilationTask(this, instance);
         recompilationTask.recompile();
         recompilationTask.findDuplicates();
         recompilationTask.firePostCompile();
     }
 
-    protected void onAdd(@NonNull GameStage gameStage, boolean silent) {
+    protected void onAdd(GameStage gameStage, boolean silent) {
         update(gameStage);
     }
 
-    protected void onRemove(@NonNull GameStage gameStage, boolean silent) {
+    protected void onRemove(GameStage gameStage, boolean silent) {
         update(gameStage);
     }
 
-    protected @NonNull Set<@NonNull GameStage> getUnlockedStages() {
+    protected Set<GameStage> getUnlockedStages() {
         return unlockedStages;
     }
 
-    public boolean hasUnlocked(@NonNull GameStage gameStage) {
+    public boolean hasUnlocked(GameStage gameStage) {
         return getUnlockedStages().contains(gameStage);
     }
 
-    public @NonNull Set<@NonNull GameStage> getAll() {
+    public Set<GameStage> getAll() {
         return Objects.requireNonNull(Set.copyOf(getUnlockedStages()));
     }
 
-    public @NonNull Map<@NonNull GameStage, @NonNull CompiledRestrictionPredicate> compiledGameStages() {
+    public Map<GameStage, CompiledRestrictionPredicate> compiledGameStages() {
         return compiledGameStages;
     }
 
-    public @NonNull Map<@NonNull RestrictionEntry<?, ?>, @NonNull CompiledRestrictionEntry> compiledRestrictionEntryMap() {
+    public Map<RestrictionEntry<?, ?>, CompiledRestrictionEntry> compiledRestrictionEntryMap() {
         return compiledRestrictionEntryMap;
     }
 
-    public @NonNull Map<@NonNull Addon, @NonNull Object> addonData() {
+    public Map<Addon, Object> addonData() {
         return addonData;
     }
 
-    public @NonNull Map<@NonNull GameContentType<?>, TypeIndex> typeIndexMap() {
+    public Map<GameContentType<?>, TypeIndex> typeIndexMap() {
         return typeIndexMap;
     }
 
     public static final class TypeIndex {
-        private final @NonNull Map<@NonNull Object, @NonNull CompiledRestrictionEntry> entryByContent = new HashMap<>();
-        private final @NonNull Map<@NonNull CompiledRestrictionEntry, @NonNull List<@NonNull Object>> contentListByEntry = new HashMap<>();
-        private final @NonNull Map<@NonNull Object, @NonNull Set<@NonNull CompiledRestrictionEntry>> duplicates = new HashMap<>(0);
+        private final Map<Object, CompiledRestrictionEntry> entryByContent = new HashMap<>();
+        private final Map<CompiledRestrictionEntry, List<Object>> contentListByEntry = new HashMap<>();
+        private final Map<Object, Set<CompiledRestrictionEntry>> duplicates = new HashMap<>(0);
 
-        public @NonNull Map<@NonNull Object, @NonNull Set<@NonNull CompiledRestrictionEntry>> duplicates() {
+        public Map<Object, Set<CompiledRestrictionEntry>> duplicates() {
             return duplicates;
         }
 
-        public @NonNull Map<@NonNull Object, @NonNull CompiledRestrictionEntry> entryByContent() {
+        public Map<Object, CompiledRestrictionEntry> entryByContent() {
             return entryByContent;
         }
 
-        public @NonNull Map<@NonNull CompiledRestrictionEntry, @NonNull List<@NonNull Object>> contentListByEntry() {
+        public Map<CompiledRestrictionEntry, List<Object>> contentListByEntry() {
             return contentListByEntry;
         }
     }

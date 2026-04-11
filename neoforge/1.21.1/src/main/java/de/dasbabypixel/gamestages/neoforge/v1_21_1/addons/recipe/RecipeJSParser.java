@@ -5,11 +5,12 @@ import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContent;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.JSParserBase;
 import dev.latvian.mods.kubejs.core.RecipeLikeKJS;
 import net.minecraft.resources.ResourceLocation;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 import java.util.Set;
 
+@NullMarked
 public class RecipeJSParser extends JSParserBase {
     public RecipeJSParser() {
         registerHandler(RecipeLikeKJS.class, (value, parseAppender) -> value.kjs$getOrCreateId());
@@ -20,7 +21,7 @@ public class RecipeJSParser extends JSParserBase {
             }
 
             @Override
-            public @NonNull CommonGameContent finish(Set<ResourceLocation> set) {
+            public CommonGameContent finish(Set<ResourceLocation> set) {
                 return new CommonRecipeCollection(List.copyOf(set));
             }
         });

@@ -10,68 +10,50 @@ import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestric
 import de.dasbabypixel.gamestages.common.data.ItemStack;
 import de.dasbabypixel.gamestages.common.data.RecompilationTask;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.datadriven.VDataDrivenTypes;
-import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.datadriven.VItemStackRestrictionEntrySettings;
-import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenSerializer;
-import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenType;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenTypes;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 import java.util.Objects;
 
-import static de.dasbabypixel.gamestages.common.v1_21_1.data.CommonCodecs.PREPARED_RESTRICTION_PREDICATE_STREAM_CODEC;
-
+@NullMarked
 public class NeoDataDrivenTypes {
-    public static void register(@NonNull DataDrivenTypes types, @NonNull ItemStackRestrictionResolverFactories factories) {
+    public static void register(DataDrivenTypes types, ItemStackRestrictionResolverFactories factories) {
         VDataDrivenTypes.register(types, factories);
-        types.register(new DataDrivenType<>(VItemStackRestrictionEntrySettings.class, "itemstack_restriction_entry_settings", DataDrivenSerializer.serializer(VItemStackRestrictionEntrySettings::encode, NeoItemStackRestrictionEntrySettings::new)));
-        types.register(new DataDrivenType<>(ItemStackRestrictionEntry.class, "itemstack_restriction_entry", new DataDrivenSerializer<>() {
-            @Override
-            public @NonNull ItemStackRestrictionEntry deserialize(@NonNull RegistryFriendlyByteBuf buf) {
-                return new ItemStackRestrictionEntry(PREPARED_RESTRICTION_PREDICATE_STREAM_CODEC.decode(buf), new NeoItemStackRestrictionEntrySettings(buf));
-            }
-
-            @Override
-            public void serialize(@NonNull RegistryFriendlyByteBuf buf, @NonNull ItemStackRestrictionEntry data) {
-                PREPARED_RESTRICTION_PREDICATE_STREAM_CODEC.encode(buf, data.predicate());
-                ((VItemStackRestrictionEntrySettings) data.settings()).encode(buf);
-            }
-        }));
         factories.register(new BuiltinItemFactory());
     }
 
-    private static class BuiltinItemFactory extends ItemStackRestrictionResolverFactory<BuiltinItemFactory.@NonNull Context> {
+    private static class BuiltinItemFactory extends ItemStackRestrictionResolverFactory<BuiltinItemFactory.Context> {
         public BuiltinItemFactory() {
             super("builtin_item");
         }
 
         @Override
-        public @NonNull Context createContext(@NonNull RecompilationTask task) {
+        public Context createContext(RecompilationTask task) {
             return new Context(task);
         }
 
         @Override
-        protected @NonNull ItemStackRestrictionResolver compileInternal(@NonNull DataDrivenTypedData<?> data, @NonNull Context context) {
+        protected ItemStackRestrictionResolver compileInternal(DataDrivenTypedData<?> data, Context context) {
             var entry = (ItemStackRestrictionEntry) Objects.requireNonNull(data.data());
             var compiled = ItemStackRestrictionEntryCompiler.compile(context.task.predicateCompiler(), entry);
             return new ItemStackRestrictionResolver() {
                 @Override
-                public @NonNull CompiledItemStackRestrictionEntry resolveRestrictionEntry(@NonNull ItemStack itemStack) {
+                public CompiledItemStackRestrictionEntry resolveRestrictionEntry(ItemStack itemStack) {
                     return compiled;
                 }
 
                 @Override
-                public @NonNull List<@NonNull CompiledItemStackRestrictionEntry> restrictionEntries() {
+                public List<CompiledItemStackRestrictionEntry> restrictionEntries() {
                     return List.of(compiled);
                 }
             };
         }
 
         private static class Context {
-            private final @NonNull RecompilationTask task;
+            private final RecompilationTask task;
 
-            public Context(@NonNull RecompilationTask task) {
+            public Context(RecompilationTask task) {
                 this.task = task;
             }
         }

@@ -4,32 +4,35 @@ import de.dasbabypixel.gamestages.common.data.GameContentType;
 import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener.Flattener;
 import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener.FlattenerFactory;
 import net.minecraft.resources.ResourceLocation;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static java.util.function.Predicate.not;
 
+@NullMarked
 public class RecipeFlattenerFactory implements FlattenerFactory<CommonRecipeCollection> {
     @Override
-    public @NonNull GameContentType<CommonRecipeCollection> type() {
+    public GameContentType<CommonRecipeCollection> type() {
         return CommonRecipeCollection.TYPE;
     }
 
     @Override
-    public @NonNull Flattener<CommonRecipeCollection> createUnion() {
+    public Flattener<CommonRecipeCollection> createUnion() {
         return new Flattener<>() {
             private final Set<ResourceLocation> recipes = new HashSet<>();
 
             @Override
-            public void accept(@NonNull CommonRecipeCollection list) {
+            public void accept(CommonRecipeCollection list) {
                 recipes.addAll(list.recipes());
             }
 
             @Override
-            public @NonNull CommonRecipeCollection complete() {
+            public CommonRecipeCollection complete() {
                 if (recipes.isEmpty()) return CommonRecipeCollection.EMPTY;
                 return new CommonRecipeCollection(List.copyOf(recipes));
             }
@@ -37,44 +40,46 @@ public class RecipeFlattenerFactory implements FlattenerFactory<CommonRecipeColl
     }
 
     @Override
-    public @NonNull Flattener<CommonRecipeCollection> createOnly() {
+    public Flattener<CommonRecipeCollection> createOnly() {
         return new Flattener<>() {
-            private Set<ResourceLocation> inclusions;
-            private List<ResourceLocation> base;
+            private @Nullable Set<ResourceLocation> inclusions;
+            private @Nullable List<ResourceLocation> base;
 
             @Override
-            public void accept(@NonNull CommonRecipeCollection list) {
+            public void accept(CommonRecipeCollection list) {
                 if (base == null) {
                     base = list.recipes();
                     inclusions = new HashSet<>();
-                } else inclusions.addAll(list.recipes());
+                } else Objects.requireNonNull(inclusions).addAll(list.recipes());
             }
 
             @Override
-            public @NonNull CommonRecipeCollection complete() {
+            public CommonRecipeCollection complete() {
                 if (base == null) return CommonRecipeCollection.EMPTY;
+                Objects.requireNonNull(inclusions);
                 return new CommonRecipeCollection(base.stream().filter(inclusions::contains).toList());
             }
         };
     }
 
     @Override
-    public @NonNull Flattener<CommonRecipeCollection> createExcept() {
+    public Flattener<CommonRecipeCollection> createExcept() {
         return new Flattener<>() {
-            private Set<ResourceLocation> exclusions;
-            private List<ResourceLocation> base;
+            private @Nullable Set<ResourceLocation> exclusions;
+            private @Nullable List<ResourceLocation> base;
 
             @Override
-            public void accept(@NonNull CommonRecipeCollection list) {
+            public void accept(CommonRecipeCollection list) {
                 if (base == null) {
                     base = list.recipes();
                     exclusions = new HashSet<>();
-                } else exclusions.addAll(list.recipes());
+                } else Objects.requireNonNull(exclusions).addAll(list.recipes());
             }
 
             @Override
-            public @NonNull CommonRecipeCollection complete() {
+            public CommonRecipeCollection complete() {
                 if (base == null) return CommonRecipeCollection.EMPTY;
+                Objects.requireNonNull(exclusions);
                 return new CommonRecipeCollection(base.stream().filter(not(exclusions::contains)).toList());
             }
         };

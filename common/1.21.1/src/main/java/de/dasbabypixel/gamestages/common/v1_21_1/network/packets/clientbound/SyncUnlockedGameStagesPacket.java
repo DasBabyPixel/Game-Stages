@@ -11,13 +11,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 import java.util.Objects;
 
+@NullMarked
 public record SyncUnlockedGameStagesPacket(List<GameStage> gameStages) implements GameStagesPacket {
     public static final Type<SyncUnlockedGameStagesPacket> TYPE = new Type<>(CommonVGameStageMod.location("sync_unlocked_game_stages"));
+    @SuppressWarnings("DataFlowIssue")
     public static final StreamCodec<FriendlyByteBuf, SyncUnlockedGameStagesPacket> STREAM_CODEC = GameStagePayload.STREAM_CODEC_LIST.map(SyncUnlockedGameStagesPacket::new, SyncUnlockedGameStagesPacket::gameStages);
 
     @Override
@@ -28,7 +30,7 @@ public record SyncUnlockedGameStagesPacket(List<GameStage> gameStages) implement
     }
 
     @Override
-    public @NotNull Type<? extends CustomPacketPayload> type() {
+    public Type<? extends CustomPacketPayload> type() {
         return TYPE;
     }
 }

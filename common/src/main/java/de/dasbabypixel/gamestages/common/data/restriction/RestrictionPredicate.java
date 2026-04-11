@@ -2,28 +2,29 @@ package de.dasbabypixel.gamestages.common.data.restriction;
 
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
+@NullMarked
 public interface RestrictionPredicate {
-    default @NonNull PreparedRestrictionPredicate prepare() {
+    default PreparedRestrictionPredicate prepare() {
         return prepare(List.of());
     }
 
-    default @NonNull PreparedRestrictionPredicate prepare(@NonNull PreparedRestrictionPredicate dependency1) {
+    default PreparedRestrictionPredicate prepare(PreparedRestrictionPredicate dependency1) {
         return prepare(List.of(dependency1));
     }
 
-    default @NonNull PreparedRestrictionPredicate prepare(@NonNull PreparedRestrictionPredicate dependency1, @NonNull PreparedRestrictionPredicate dependency2) {
+    default PreparedRestrictionPredicate prepare(PreparedRestrictionPredicate dependency1, PreparedRestrictionPredicate dependency2) {
         return prepare(List.of(dependency1, dependency2));
     }
 
-    default @NonNull PreparedRestrictionPredicate prepare(@NonNull PreparedRestrictionPredicate @NonNull ... dependencies) {
+    default PreparedRestrictionPredicate prepare(PreparedRestrictionPredicate... dependencies) {
         return prepare(List.of(dependencies));
     }
 
-    default @NonNull PreparedRestrictionPredicate prepare(@NonNull List<PreparedRestrictionPredicate> dependencies) {
+    default PreparedRestrictionPredicate prepare(List<PreparedRestrictionPredicate> dependencies) {
         return new CompositePreparedRestrictionPredicate(this, optimize(dependencies));
     }
 
@@ -31,14 +32,14 @@ public interface RestrictionPredicate {
         return list;
     }
 
-    boolean accepts(@NonNull List<? extends @NonNull PreparedRestrictionPredicate> dependencies);
+    boolean accepts(List<? extends PreparedRestrictionPredicate> dependencies);
 
-    boolean test(@NonNull List<? extends @NonNull CompiledRestrictionPredicate> dependencies, @NonNull BaseStages stages);
+    boolean test(List<? extends CompiledRestrictionPredicate> dependencies, BaseStages stages);
 
     @Override
-    @NonNull String toString();
+    String toString();
 
-    default void append(@NonNull StringBuilder builder, @NonNull List<? extends @NonNull PreparedRestrictionPredicate> dependencies) {
+    default void append(StringBuilder builder, List<? extends PreparedRestrictionPredicate> dependencies) {
         if (dependencies.isEmpty()) {
             builder.append(this);
         }

@@ -3,24 +3,26 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.addon;
 import de.dasbabypixel.gamestages.common.BuildConstants;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddonManager;
 import net.neoforged.fml.InterModComms;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Supplier;
 
+@NullMarked
 public class NeoAddonManager extends VAddonManager<NeoAddon> {
-    private static NeoAddonManager INSTANCE;
+    private static @Nullable NeoAddonManager INSTANCE;
 
     private NeoAddonManager() {
         INSTANCE = this;
     }
 
     @Override
-    public void addAddon(@NonNull String id, @NonNull NeoAddon addon) {
+    public void addAddon(String id, NeoAddon addon) {
         super.addAddon(id, addon);
     }
 
-    public static @NonNull NeoAddonManager instance() {
+    public static NeoAddonManager instance() {
         return Objects.requireNonNull(INSTANCE);
     }
 

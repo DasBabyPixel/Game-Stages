@@ -10,13 +10,14 @@ import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.resources.ResourceLocation;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 @JeiPlugin
+@NullMarked
 public class StagesJEIPlugin implements IModPlugin {
     private static final Map<NeoAddon, NeoAddonJEI> ADDON_MAP = new HashMap<>();
     private static boolean populated = false;
@@ -25,22 +26,8 @@ public class StagesJEIPlugin implements IModPlugin {
         NeoAddonManager.registerAddon("jei", () -> JEIAddon.ADDON);
     }
 
-    public static Map<NeoAddon, NeoAddonJEI> addonMap() {
-        if (!populated) {
-            for (var addon : NeoAddonManager.instance().addons()) {
-                ADDON_MAP.put(addon, addon.createJEISupport());
-            }
-            populated = true;
-        }
-        return ADDON_MAP;
-    }
-
-    public static Collection<NeoAddonJEI> addons() {
-        return addonMap().values();
-    }
-
     @Override
-    public void onRuntimeAvailable(@NonNull IJeiRuntime jeiRuntime) {
+    public void onRuntimeAvailable(IJeiRuntime jeiRuntime) {
         for (var addon : addonMap().values()) {
             addon.onRuntimeAvailable(jeiRuntime);
         }
@@ -58,7 +45,21 @@ public class StagesJEIPlugin implements IModPlugin {
     }
 
     @Override
-    public @NonNull ResourceLocation getPluginUid() {
+    public ResourceLocation getPluginUid() {
         return CommonVGameStageMod.location("game_stages");
+    }
+
+    public static Map<NeoAddon, NeoAddonJEI> addonMap() {
+        if (!populated) {
+            for (var addon : NeoAddonManager.instance().addons()) {
+                ADDON_MAP.put(addon, addon.createJEISupport());
+            }
+            populated = true;
+        }
+        return ADDON_MAP;
+    }
+
+    public static Collection<NeoAddonJEI> addons() {
+        return addonMap().values();
     }
 }

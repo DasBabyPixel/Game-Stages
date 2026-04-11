@@ -2,7 +2,9 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event;
 
 import dev.latvian.mods.kubejs.player.KubePlayerEvent;
 import net.minecraft.world.entity.player.Player;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public class StageRemovedFromPlayerEventJS implements KubePlayerEvent {
     private final Player player;
     private final String stage;

@@ -6,32 +6,31 @@ import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener.Fl
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.world.item.Item;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
+@NullMarked
 public class ItemFlattenerFactory implements FlattenerFactory<CommonItemCollection> {
     @Override
-    public @NonNull GameContentType<CommonItemCollection> type() {
+    public GameContentType<CommonItemCollection> type() {
         return CommonItemCollection.TYPE;
     }
 
     @Override
-    public @NonNull Flattener<CommonItemCollection> createUnion() {
+    public Flattener<CommonItemCollection> createUnion() {
         return new Flattener<>() {
             private final List<HolderSet<Item>> holderSets = new ArrayList<>();
 
             @Override
-            public void accept(@NonNull CommonItemCollection list) {
+            public void accept(CommonItemCollection list) {
                 holderSets.add(list.items());
             }
 
             @Override
-            public @NonNull CommonItemCollection complete() {
+            public CommonItemCollection complete() {
                 if (holderSets.isEmpty()) return CommonItemCollection.EMPTY;
                 var holderSet = HolderSet.direct(holderSets.stream().flatMap(HolderSet::stream).toList());
                 return new CommonItemCollection(holderSet);
@@ -40,22 +39,23 @@ public class ItemFlattenerFactory implements FlattenerFactory<CommonItemCollecti
     }
 
     @Override
-    public @NonNull Flattener<CommonItemCollection> createOnly() {
+    public Flattener<CommonItemCollection> createOnly() {
         return new Flattener<>() {
-            private Set<Holder<Item>> inclusions;
-            private Stream<Holder<Item>> base;
+            private @Nullable Set<Holder<Item>> inclusions;
+            private @Nullable Stream<Holder<Item>> base;
 
             @Override
-            public void accept(@NonNull CommonItemCollection list) {
+            public void accept(CommonItemCollection list) {
                 if (base == null) {
                     base = list.items().stream();
                     inclusions = new HashSet<>();
-                } else inclusions.addAll(list.items().stream().toList());
+                } else Objects.requireNonNull(inclusions).addAll(list.items().stream().toList());
             }
 
             @Override
-            public @NonNull CommonItemCollection complete() {
+            public CommonItemCollection complete() {
                 if (base == null) return CommonItemCollection.EMPTY;
+                Objects.requireNonNull(inclusions);
                 var holderSet = HolderSet.direct(base.filter(inclusions::contains).toList());
                 return new CommonItemCollection(holderSet);
             }
@@ -63,22 +63,23 @@ public class ItemFlattenerFactory implements FlattenerFactory<CommonItemCollecti
     }
 
     @Override
-    public @NonNull Flattener<CommonItemCollection> createExcept() {
+    public Flattener<CommonItemCollection> createExcept() {
         return new Flattener<>() {
-            private Set<Holder<Item>> exclusions;
-            private Stream<Holder<Item>> base;
+            private @Nullable Set<Holder<Item>> exclusions;
+            private @Nullable Stream<Holder<Item>> base;
 
             @Override
-            public void accept(@NonNull CommonItemCollection list) {
+            public void accept(CommonItemCollection list) {
                 if (base == null) {
                     base = list.items().stream();
                     exclusions = new HashSet<>();
-                } else exclusions.addAll(list.items().stream().toList());
+                } else Objects.requireNonNull(exclusions).addAll(list.items().stream().toList());
             }
 
             @Override
-            public @NonNull CommonItemCollection complete() {
+            public CommonItemCollection complete() {
                 if (base == null) return CommonItemCollection.EMPTY;
+                Objects.requireNonNull(exclusions);
                 var holderSet = HolderSet.direct(base.filter(h -> !exclusions.contains(h)).toList());
                 return new CommonItemCollection(holderSet);
             }

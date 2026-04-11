@@ -12,20 +12,21 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.Item;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Collection;
 
-public record CommonItemCollection(
-        @NonNull HolderSet<@NonNull Item> items) implements ItemCollection, CommonGameContent {
+@NullMarked
+public record CommonItemCollection(HolderSet<Item> items) implements ItemCollection, CommonGameContent {
     public static final CommonItemCollection EMPTY = new CommonItemCollection(HolderSet.empty());
+    @SuppressWarnings("DataFlowIssue")
     public static final StreamCodec<RegistryFriendlyByteBuf, CommonItemCollection> STREAM_CODEC = ByteBufCodecs
             .holderSet(Registries.ITEM)
             .map(CommonItemCollection::new, CommonItemCollection::items);
-    public static final @NonNull CommonGameContentSerializer<CommonItemCollection> SERIALIZER = () -> CommonItemCollection.STREAM_CODEC;
+    public static final CommonGameContentSerializer<CommonItemCollection> SERIALIZER = () -> CommonItemCollection.STREAM_CODEC;
     public static final CommonGameContentType<CommonItemCollection> TYPE = new CommonGameContentType.AbstractGameContentType<>() {
         @Override
-        public @NonNull CommonItemCollection modContent(String modId) {
+        public CommonItemCollection modContent(String modId) {
             var set = HolderSet.direct(BuiltInRegistries.ITEM
                     .holders()
                     .filter(r -> modId.equals(r.key().location().getNamespace()))
@@ -35,17 +36,17 @@ public record CommonItemCollection(
     };
 
     @Override
-    public @NonNull CommonGameContentSerializer<CommonItemCollection> serializer() {
+    public CommonGameContentSerializer<CommonItemCollection> serializer() {
         return SERIALIZER;
     }
 
     @Override
-    public @NonNull GameContentType<?> type() {
+    public GameContentType<?> type() {
         return TYPE;
     }
 
     @Override
-    public @NonNull Collection<@NonNull Object> content() {
+    public Collection<Object> content() {
         return items.stream().map(s -> (Object) s).toList();
     }
 

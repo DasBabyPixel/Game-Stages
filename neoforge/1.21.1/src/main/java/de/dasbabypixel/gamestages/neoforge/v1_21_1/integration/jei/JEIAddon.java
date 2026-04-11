@@ -5,8 +5,9 @@ import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.RecompilationTask;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public class JEIAddon implements NeoAddon {
     public static final JEIAddon ADDON = new JEIAddon();
 
@@ -14,7 +15,7 @@ public class JEIAddon implements NeoAddon {
     }
 
     @Override
-    public void postCompileAll(@NonNull RecompilationTask recompilationTask) {
+    public void postCompileAll(RecompilationTask recompilationTask) {
         var instance = recompilationTask.instance();
         var stages = recompilationTask.stages();
         if (instance instanceof ClientGameStageManager) {
@@ -28,7 +29,7 @@ public class JEIAddon implements NeoAddon {
         }
     }
 
-    public void singleRefreshAll(@NonNull AbstractGameStageManager instance, @NonNull BaseStages stages) {
+    public void singleRefreshAll(AbstractGameStageManager instance, BaseStages stages) {
         for (var addon : StagesJEIPlugin.addons()) {
             addon.singleRefreshAll(instance, stages);
         }

@@ -9,35 +9,37 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.level.material.Fluid;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Collection;
+import java.util.Objects;
 
-public record CommonFluidCollection(
-        @NonNull HolderSet<@NonNull Fluid> fluids) implements FluidCollection, CommonGameContent {
+@NullMarked
+public record CommonFluidCollection(HolderSet<Fluid> fluids) implements FluidCollection, CommonGameContent {
     public static final CommonGameContentType<CommonFluidCollection> TYPE = new CommonGameContentType.AbstractGameContentType<>() {
         @Override
-        public @NonNull CommonFluidCollection modContent(String modId) {
+        public CommonFluidCollection modContent(String modId) {
             var set = HolderSet.direct(BuiltInRegistries.FLUID
                     .holders()
-                    .filter(r -> modId.equals(r.key().location().getNamespace()))
+                    .filter(r -> modId.equals(Objects.requireNonNull(r).key().location().getNamespace()))
                     .toList());
             return new CommonFluidCollection(set);
         }
     };
     public static final CommonFluidCollection EMPTY = new CommonFluidCollection(HolderSet.empty());
+    @SuppressWarnings("DataFlowIssue")
     public static final StreamCodec<RegistryFriendlyByteBuf, CommonFluidCollection> STREAM_CODEC = ByteBufCodecs
             .holderSet(Registries.FLUID)
             .map(CommonFluidCollection::new, CommonFluidCollection::fluids);
-    public static final @NonNull CommonGameContentSerializer<CommonFluidCollection> SERIALIZER = () -> CommonFluidCollection.STREAM_CODEC;
+    public static final CommonGameContentSerializer<CommonFluidCollection> SERIALIZER = () -> CommonFluidCollection.STREAM_CODEC;
 
     @Override
-    public @NonNull GameContentType<?> type() {
+    public GameContentType<?> type() {
         return TYPE;
     }
 
     @Override
-    public @NonNull Collection<@NonNull Object> content() {
+    public Collection<Object> content() {
         return fluids.stream().map(s -> (Object) s).toList();
     }
 
@@ -47,7 +49,7 @@ public record CommonFluidCollection(
     }
 
     @Override
-    public @NonNull CommonGameContentSerializer<?> serializer() {
+    public CommonGameContentSerializer<?> serializer() {
         return SERIALIZER;
     }
 }

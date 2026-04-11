@@ -6,11 +6,12 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.Collection
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.ModContentWrapper;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.EventJSBase;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.EventType;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public final class RegisterEventJS extends EventJSBase<RegisterEventJS> {
     public static final EventType<RegisterEventJS> TYPE = new EventType<>(RegisterEventJS.class);
-    private final @NonNull AbstractGameStageManager stageManager;
+    private final AbstractGameStageManager<?> stageManager;
 
     static {
         TYPE.addFunction("registerStage", (event, cx, args) -> {
@@ -21,12 +22,12 @@ public final class RegisterEventJS extends EventJSBase<RegisterEventJS> {
         TYPE.addFunctionVarArgs("mods", (event, cx, args) -> args[0], CollectionWrapper.class, CollectionWrapper.class, ModContentWrapper[].class);
     }
 
-    public RegisterEventJS(@NonNull AbstractGameStageManager stageManager) {
+    public RegisterEventJS(AbstractGameStageManager<?> stageManager) {
         super(TYPE);
         this.stageManager = stageManager;
     }
 
-    public @NonNull AbstractGameStageManager stageManager() {
+    public AbstractGameStageManager<?> stageManager() {
         return stageManager;
     }
 }

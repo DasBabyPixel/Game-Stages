@@ -5,11 +5,12 @@ import de.dasbabypixel.gamestages.common.data.restriction.CompositePreparedRestr
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@NullMarked
 public final class And implements RestrictionPredicate {
     public static final And INSTANCE = new And();
 
@@ -47,7 +48,7 @@ public final class And implements RestrictionPredicate {
     }
 
     @Override
-    public @NonNull PreparedRestrictionPredicate prepare(@NonNull List<PreparedRestrictionPredicate> dependencies) {
+    public PreparedRestrictionPredicate prepare(List<PreparedRestrictionPredicate> dependencies) {
         dependencies = optimize(dependencies);
         if (dependencies.isEmpty()) return True.INSTANCE.prepare();
         var f = dependencies.getFirst();
@@ -56,12 +57,12 @@ public final class And implements RestrictionPredicate {
     }
 
     @Override
-    public boolean accepts(@NonNull List<? extends @NonNull PreparedRestrictionPredicate> dependencies) {
+    public boolean accepts(List<? extends PreparedRestrictionPredicate> dependencies) {
         return true;
     }
 
     @Override
-    public boolean test(@NonNull List<? extends CompiledRestrictionPredicate> dependencies, @NonNull BaseStages stages) {
+    public boolean test(List<? extends CompiledRestrictionPredicate> dependencies, BaseStages stages) {
         for (var restriction : dependencies) {
             if (!restriction.test()) {
                 return false;
@@ -71,7 +72,7 @@ public final class And implements RestrictionPredicate {
     }
 
     @Override
-    public @NonNull String toString() {
+    public String toString() {
         return "&&";
     }
 }

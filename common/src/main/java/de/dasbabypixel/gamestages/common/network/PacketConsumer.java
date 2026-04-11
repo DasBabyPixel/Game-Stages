@@ -1,7 +1,8 @@
 package de.dasbabypixel.gamestages.common.network;
 
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public interface PacketConsumer {
-    void send(@NonNull CustomPacket packet);
+    void send(CustomPacket packet);
 }

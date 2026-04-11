@@ -14,14 +14,16 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 
+@NullMarked
 public class StagesCommand {
-    public static void register(@NonNull CommandDispatcher<CommandSourceStack> dispatcher) {
+    @SuppressWarnings("DataFlowIssue")
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         var cmd = Commands.literal("stages");
 
         // @formatter:off
@@ -37,7 +39,7 @@ public class StagesCommand {
                         .then(Commands.argument("stage", new StageArgumentType(false))
                                 .suggests((context, builder) -> {
                                     // @formatter:on
-                                    Collection<net.minecraft.server.level.@NonNull ServerPlayer> targets = EntityArgument.getPlayers(context, "target");
+                                    Collection<net.minecraft.server.level.ServerPlayer> targets = EntityArgument.getPlayers(context, "target");
                                     return SharedSuggestionProvider.suggest(targets
                                             .stream()
                                             .map(ServerPlayer::getGameStages)
@@ -66,19 +68,18 @@ public class StagesCommand {
     }
 
     // TODO move to item addon
-    private static int hand(@NonNull CommandContext<@NonNull CommandSourceStack> context) throws CommandSyntaxException {
+    private static int hand(CommandContext<CommandSourceStack> context) {
         var player = Objects.requireNonNull(context.getSource().getPlayer());
         var stack = player.getItemInHand(InteractionHand.MAIN_HAND);
         var entry = VItemAddon.getEntry(player.getGameStages(), stack, stack);
-        player.sendSystemMessage(Component.literal(entry == null ? "No restriction" : (entry
-                                                                                       .predicate()
-                                                                                       .predicate() + " -> " + entry
-                                                                                                               .predicate()
-                                                                                                               .test())));
+        var msg = entry == null ? "No restriction" : (entry.predicate().predicate() + " -> " + entry
+                                                                                               .predicate()
+                                                                                               .test());
+        player.sendSystemMessage(Component.literal(msg));
         return 0;
     }
 
-    private static int listTarget(@NonNull CommandContext<@NonNull CommandSourceStack> context) throws CommandSyntaxException {
+    private static int listTarget(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         Player player = EntityArgument.getPlayer(context, "target");
         var stages = Set.copyOf(player.getGameStages().getAll());
         context.getSource().sendSuccess(() -> {
@@ -91,11 +92,12 @@ public class StagesCommand {
         return 0;
     }
 
-    private static int addTargetStage(@NonNull CommandContext<@NonNull CommandSourceStack> context) throws CommandSyntaxException {
+    private static int addTargetStage(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         var players = EntityArgument.getPlayers(context, "target");
         var stage = StageArgumentType.getStage(context, "stage");
         var cnt = 0;
-        for (@NonNull Player player : players) {
+        for (var player : players) {
+            Objects.requireNonNull(player);
             if (player.getGameStages().add(stage)) cnt++;
         }
         var fcnt = cnt;
@@ -109,7 +111,8 @@ public class StagesCommand {
         var players = EntityArgument.getPlayers(context, "target");
         var stage = StageArgumentType.getStage(context, "stage");
         var cnt = 0;
-        for (Player player : players) {
+        for (var player : players) {
+            Objects.requireNonNull(player);
             if (player.getGameStages().remove(stage)) cnt++;
         }
         var fcnt = cnt;

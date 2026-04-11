@@ -5,26 +5,27 @@ import de.dasbabypixel.gamestages.common.entity.PlatformPlayerProvider;
 import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
 import net.minecraft.client.Minecraft;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Objects;
 import java.util.UUID;
 
+@NullMarked
 public class PlatformPlayerProviderImpl implements PlatformPlayerProvider {
     @Override
-    public ClientPlayer clientSelfPlayer() {
-        return Minecraft.getInstance().player;
+    public @Nullable ClientPlayer clientSelfPlayer() {
+        return Objects.requireNonNull(Minecraft.getInstance()).player;
     }
 
     @Override
-    public @NonNull Collection<? extends ServerPlayer> allPlayers() {
+    public Collection<? extends ServerPlayer> allPlayers() {
         return Objects.requireNonNull(ServerLifecycleHooks.getCurrentServer()).getPlayerList().getPlayers();
     }
 
     @Override
-    public @Nullable ServerPlayer getPlayer(@NonNull UUID uuid) {
+    public @Nullable ServerPlayer getPlayer(UUID uuid) {
         return Objects.requireNonNull(ServerLifecycleHooks.getCurrentServer()).getPlayerList().getPlayer(uuid);
     }
 }

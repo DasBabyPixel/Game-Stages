@@ -4,11 +4,13 @@ import de.dasbabypixel.gamestages.common.addon.AddonManager;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.GameStage;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@NullMarked
 public class ClientPlayerStages extends BaseStages {
     public ClientPlayerStages() {
         super(Set.of());

@@ -8,12 +8,14 @@ import de.dasbabypixel.gamestages.common.v1_21_1.network.util.GameStagePayload;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
+@NullMarked
 public record SyncRegisteredGameStagesPacket(List<GameStage> gameStages) implements GameStagesPacket {
     public static final Type<SyncRegisteredGameStagesPacket> TYPE = new CustomPacketPayload.Type<>(CommonVGameStageMod.location("sync_registered_game_stages"));
+    @SuppressWarnings("DataFlowIssue")
     public static final StreamCodec<FriendlyByteBuf, SyncRegisteredGameStagesPacket> STREAM_CODEC = GameStagePayload.STREAM_CODEC_LIST.map(SyncRegisteredGameStagesPacket::new, SyncRegisteredGameStagesPacket::gameStages);
 
     @Override
@@ -22,7 +24,7 @@ public record SyncRegisteredGameStagesPacket(List<GameStage> gameStages) impleme
     }
 
     @Override
-    public @NotNull Type<? extends CustomPacketPayload> type() {
+    public Type<? extends CustomPacketPayload> type() {
         return TYPE;
     }
 }

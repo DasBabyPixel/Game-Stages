@@ -6,13 +6,17 @@ import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeColle
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonJEI;
 import mezz.jei.api.constants.RecipeTypes;
 import mezz.jei.api.runtime.IJeiRuntime;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
+import java.util.Objects;
+
+@NullMarked
 public class RecipeJEI implements NeoAddonJEI {
-    private IJeiRuntime runtime;
+    private @Nullable IJeiRuntime runtime;
 
     @Override
-    public void singleRefreshAll(@NonNull AbstractGameStageManager instance, @NonNull BaseStages stages) {
+    public void singleRefreshAll(AbstractGameStageManager instance, BaseStages stages) {
         iterate(stages, CommonRecipeCollection.TYPE, entry -> {
             if (entry instanceof NeoRecipeRestrictionEntry.Compiled(var e, var gameContent, var predicate)) {
                 if (!e.hideInJEI()) return;
@@ -22,7 +26,7 @@ public class RecipeJEI implements NeoAddonJEI {
     }
 
     @Override
-    public void postCompileAll(@NonNull AbstractGameStageManager instance, @NonNull BaseStages stages) {
+    public void postCompileAll(AbstractGameStageManager instance, BaseStages stages) {
         iterate(stages, CommonRecipeCollection.TYPE, entry -> {
             if (entry instanceof NeoRecipeRestrictionEntry.Compiled(var e, var gameContent, var predicate)) {
                 if (!e.hideInJEI()) return;
@@ -32,18 +36,24 @@ public class RecipeJEI implements NeoAddonJEI {
 
 //        var player = stages.getPlayer();
 //        var registries = ((Player) player).registryAccess();
-        runtime.getRecipeManager().createRecipeLookup(RecipeTypes.CRAFTING).includeHidden().get().forEach(holder -> {
-            var recipe = holder.value();
+        Objects
+                .requireNonNull(runtime)
+                .getRecipeManager()
+                .createRecipeLookup(RecipeTypes.CRAFTING)
+                .includeHidden()
+                .get()
+                .forEach(holder -> {
+                    var recipe = holder.value();
 //            System.out.println(recipe.getResultItem(registries));
-            for (var ingredient : recipe.getIngredients()) {
+                    for (var ingredient : recipe.getIngredients()) {
 //                System.out.println(" - " + Arrays
 //                        .stream(ingredient.getItems())
 //                        .map(ItemStack::getItem)
 //                        .map(BuiltInRegistries.ITEM::getKey)
 //                        .map(ResourceLocation::toString)
 //                        .toList());
-            }
-        });
+                    }
+                });
     }
 
     @Override

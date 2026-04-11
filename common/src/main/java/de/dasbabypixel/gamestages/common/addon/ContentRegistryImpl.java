@@ -2,32 +2,33 @@ package de.dasbabypixel.gamestages.common.addon;
 
 import de.dasbabypixel.gamestages.common.data.GameContentType;
 import de.dasbabypixel.gamestages.common.data.TypedGameContent;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.*;
 
+@NullMarked
 public class ContentRegistryImpl implements ContentRegistry {
-    private final @NonNull List<Entry<?>> entries = new ArrayList<>();
+    private final List<Entry<?>> entries = new ArrayList<>();
 
     @Override
-    public <T extends TypedGameContent> @NonNull Builder<T> prepare(@NonNull GameContentType<T> type) {
+    public <T extends TypedGameContent> Builder<T> prepare(GameContentType<T> type) {
         return new Builder<>(type);
     }
 
-    public @NonNull List<@NonNull Entry<?>> entries() {
+    public List<Entry<?>> entries() {
         return entries;
     }
 
     public class Builder<T extends TypedGameContent> implements ContentRegistry.Builder<T> {
-        private final @NonNull GameContentType<T> type;
-        private final @NonNull Map<Attribute, AttributeEntry<?>> attributes = new HashMap<>();
+        private final GameContentType<T> type;
+        private final Map<Attribute, AttributeEntry<?>> attributes = new HashMap<>();
 
-        public Builder(@NonNull GameContentType<T> type) {
+        public Builder(GameContentType<T> type) {
             this.type = type;
         }
 
         @Override
-        public <V> ContentRegistry.@NonNull Builder<T> set(@NonNull Attribute attribute, @NonNull V value) {
+        public <V> ContentRegistry.Builder<T> set(Attribute attribute, V value) {
             attributes.put(attribute, new AttributeEntry<>(attribute, value));
             return this;
         }
@@ -38,14 +39,14 @@ public class ContentRegistryImpl implements ContentRegistry {
         }
     }
 
-    public record Entry<T extends TypedGameContent>(@NonNull GameContentType<T> type,
-                                                    @NonNull Map<Attribute, AttributeEntry<?>> attributes) {
+    public record Entry<T extends TypedGameContent>(GameContentType<T> type,
+                                                    Map<Attribute, AttributeEntry<?>> attributes) {
         public Entry {
             attributes = Objects.requireNonNull(Map.copyOf(attributes));
         }
 
         @SuppressWarnings("unchecked")
-        public <V> @NonNull V attribute(Attribute attribute) {
+        public <V> V attribute(Attribute attribute) {
             return (V) Objects.requireNonNull(Objects.requireNonNull(attributes.get(attribute)).value());
         }
     }

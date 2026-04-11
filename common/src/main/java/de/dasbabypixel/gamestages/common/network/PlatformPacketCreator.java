@@ -1,14 +1,15 @@
 package de.dasbabypixel.gamestages.common.network;
 
 import de.dasbabypixel.gamestages.common.data.GameStage;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
+@NullMarked
 public interface PlatformPacketCreator {
-    @NonNull CustomPacket createSyncRegisteredGameStages(List<GameStage> gameStages);
+    CustomPacket createSyncRegisteredGameStages(List<GameStage> gameStages);
 
-    @NonNull CustomPacket createSyncUnlockedGameStages(List<GameStage> gameStages);
+    CustomPacket createSyncUnlockedGameStages(List<GameStage> gameStages);
 
-    @NonNull CustomPacket createStatusPacket(Status status);
+    CustomPacket createStatusPacket(Status status);
 }

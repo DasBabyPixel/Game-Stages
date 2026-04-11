@@ -1,16 +1,18 @@
 package de.dasbabypixel.gamestages.common.addon;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Supplier;
 
+@NullMarked
 public abstract class AddonManager<Addon extends de.dasbabypixel.gamestages.common.addon.Addon> {
-    private static AddonManager<?> instance = null;
-    private final @NonNull Map<String, AddonEntry<Addon>> addonById = new HashMap<>();
-    private final @NonNull Map<String, Map<String, List<@NonNull MessageListener<? super Addon>>>> messageListeners = new HashMap<>();
-    private final @NonNull List<@NonNull Addon> addons = new ArrayList<>();
+    private static @Nullable AddonManager<?> instance = null;
+    private final Map<String, AddonEntry<Addon>> addonById = new HashMap<>();
+    private final Map<String, Map<String, List<MessageListener<? super Addon>>>> messageListeners = new HashMap<>();
+    private final List<Addon> addons = new ArrayList<>();
 
     protected boolean frozen = false;
 
@@ -19,34 +21,39 @@ public abstract class AddonManager<Addon extends de.dasbabypixel.gamestages.comm
         instance = this;
     }
 
-    public @NonNull List<@NonNull Addon> addons() {
+    public List<Addon> addons() {
         if (!frozen) throw new UnsupportedOperationException();
         return addons;
     }
 
-    protected void addAddon(@NonNull String id, @NonNull Addon addon) {
+    protected void addAddon(String id, Addon addon) {
         if (frozen) throw new UnsupportedOperationException("Frozen");
         addonById.put(id, new AddonEntry<>(id, addon));
         this.addons.add(addon);
     }
 
-    public void addMessageListener(@NonNull String targetAddonId, @NonNull String messageId, @NonNull MessageListener<? super Addon> listener) {
+    public void addMessageListener(String targetAddonId, String messageId, MessageListener<? super Addon> listener) {
         messageListeners
                 .computeIfAbsent(targetAddonId, s -> new HashMap<>())
                 .computeIfAbsent(messageId, s -> new ArrayList<>())
                 .add(listener);
     }
 
-    public <M> @Nullable M sendMessage(de.dasbabypixel.gamestages.common.addon.Addon origin, String originId, String messageId, @NonNull Supplier<M> message) {
-        return sendMessage(origin, originId, messageId, Supplier::get, message);
+    @SuppressWarnings("DataFlowIssue")
+    @NullUnmarked
+    public <M> @Nullable M sendMessage(de.dasbabypixel.gamestages.common.addon.@NonNull Addon origin, @NonNull String originId, @NonNull String messageId, @NonNull Send0Args<M> message) {
+        return sendMessage(origin, originId, messageId, Send0Args::create, message);
     }
 
-    public <A1, M> @Nullable M sendMessage(de.dasbabypixel.gamestages.common.addon.Addon origin, String originId, String messageId, @NonNull Send1Args<A1, M> message, A1 a1) {
-        return sendMessage(origin, originId, messageId, Send1Args::create, message, a1);
+    @SuppressWarnings("DataFlowIssue")
+    @NullUnmarked
+    public <A1, M> @Nullable M sendMessage(de.dasbabypixel.gamestages.common.addon.@NonNull Addon origin, @NonNull String originId, @NonNull String messageId, @NonNull Send1Args<A1, M> message, @Nullable A1 a1) {
+        return this.<@NonNull Send1Args<A1, M>, @Nullable A1, M>sendMessage(origin, originId, messageId, Send1Args::create, message, a1);
     }
 
     @SuppressWarnings("unchecked")
-    public <A1, A2, M> @Nullable M sendMessage(de.dasbabypixel.gamestages.common.addon.Addon origin, String originId, String messageId, @NonNull Send2Args<A1, A2, M> message, A1 a1, A2 a2) {
+    @NullUnmarked
+    public <A1, A2, M> @Nullable M sendMessage(de.dasbabypixel.gamestages.common.addon.@NonNull Addon origin, @NonNull String originId, @NonNull String messageId, @NonNull Send2Args<A1, A2, M> message, @Nullable A1 a1, @Nullable A2 a2) {
         var byMsg = messageListeners.get(originId);
         if (byMsg == null) return null;
         var l = Objects.requireNonNull(byMsg.get(messageId));
@@ -57,16 +64,23 @@ public abstract class AddonManager<Addon extends de.dasbabypixel.gamestages.comm
         return msg;
     }
 
-    public static @NonNull AddonManager<?> instance() {
+    public static AddonManager<?> instance() {
         return Objects.requireNonNull(instance);
     }
 
-    public interface Send1Args<A1, R> {
-        R create(A1 arg1);
+    @NullUnmarked
+    public interface Send0Args<R> {
+        @Nullable R create();
     }
 
+    @NullUnmarked
+    public interface Send1Args<A1, R> {
+        @Nullable R create(@Nullable A1 arg1);
+    }
+
+    @NullUnmarked
     public interface Send2Args<A1, A2, R> {
-        R create(A1 arg1, A2 arg2);
+        @Nullable R create(@Nullable A1 arg1, @Nullable A2 arg2);
     }
 
     public record AddonEntry<A extends de.dasbabypixel.gamestages.common.addon.Addon>(String id, A addon) {

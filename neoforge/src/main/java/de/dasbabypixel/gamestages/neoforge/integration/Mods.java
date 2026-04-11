@@ -1,9 +1,11 @@
 package de.dasbabypixel.gamestages.neoforge.integration;
 
 import de.dasbabypixel.gamestages.neoforge.NeoForgeInstances;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 
+@NullMarked
 public class Mods {
     public static final Mod KUBEJS = new Mod("kubejs", Objects.requireNonNull(NeoForgeInstances.modProvider));
     public static final Mod PROBEJS = new Mod("probejs", Objects.requireNonNull(NeoForgeInstances.modProvider));

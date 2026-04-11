@@ -57,7 +57,7 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import net.neoforged.neoforge.registries.RegistryBuilder;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,8 +69,9 @@ import java.util.UUID;
 import static de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod.location;
 
 @Mod(BuildConstants.MOD_ID)
+@NullMarked
 public class NeoForgeEntrypoint {
-    public static final @NonNull Logger LOGGER = LoggerFactory.getLogger(NeoForgeEntrypoint.class);
+    public static final Logger LOGGER = LoggerFactory.getLogger(NeoForgeEntrypoint.class);
     public static final Registry<CommonGameContentType<?>> GAME_CONTENT_TYPE_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonGameContentType.REGISTRY_KEY)
             .sync(true)
             .create();
@@ -92,7 +93,7 @@ public class NeoForgeEntrypoint {
         CommonVGameStageMod.init();
     }
 
-    public NeoForgeEntrypoint(@NonNull IEventBus modBus) {
+    public NeoForgeEntrypoint(IEventBus modBus) {
         modBus.addListener(NeoNetworkHandler::register);
         modBus.addListener(this::handleRegistries);
         modBus.addListener(this::handleRegister);
@@ -139,7 +140,7 @@ public class NeoForgeEntrypoint {
         }
     }
 
-    private synchronized @NonNull ContentRegistryImpl contentRegistry() {
+    private synchronized ContentRegistryImpl contentRegistry() {
         if (contentRegistry == null) {
             loadAndFreezeAddons();
             contentRegistry = new ContentRegistryImpl();
@@ -154,11 +155,11 @@ public class NeoForgeEntrypoint {
     private void processMessages() {
     }
 
-    private void handleInterModProcess(@NonNull InterModProcessEvent event) {
+    private void handleInterModProcess(InterModProcessEvent event) {
         processMessages();
     }
 
-    private void handleLoadComplete(@NonNull FMLLoadCompleteEvent event) {
+    private void handleLoadComplete(FMLLoadCompleteEvent event) {
         if (Mods.KUBEJS.isLoaded()) {
             var eventRegistry = new EventRegistryImpl();
             eventRegistry.add(RegisterEventJS.class, RegisterEventJS.TYPE);
@@ -173,7 +174,7 @@ public class NeoForgeEntrypoint {
         }
     }
 
-    private void handleCommonSetup(@NonNull FMLCommonSetupEvent event) {
+    private void handleCommonSetup(FMLCommonSetupEvent event) {
         NeoDataDrivenTypes.register(DataDrivenTypes.instance(), ItemStackRestrictionResolverFactories.instance());
 
         for (var entry : contentRegistry().entries()) {
@@ -181,13 +182,13 @@ public class NeoForgeEntrypoint {
         }
     }
 
-    private void handleRegistries(@NonNull NewRegistryEvent event) {
+    private void handleRegistries(NewRegistryEvent event) {
         event.register(RESTRICTION_PREDICATE_SERIALIZER_REGISTRY);
         event.register(PREPARED_RESTRICTION_PREDICATE_SERIALIZER_REGISTRY);
         event.register(GAME_CONTENT_TYPE_SERIALIZER_REGISTRY);
     }
 
-    private void handleRegister(@NonNull RegisterEvent event) {
+    private void handleRegister(RegisterEvent event) {
         event.register(CommonGameContent.REGISTRY_KEY, registry -> {
             assert registry != null;
             registry.register(location("mod"), CommonGameContentSerializer.MOD);
@@ -223,21 +224,19 @@ public class NeoForgeEntrypoint {
         });
     }
 
-    private void handleRegisterCommands(@NonNull RegisterCommandsEvent event) {
+    private void handleRegisterCommands(RegisterCommandsEvent event) {
         StagesCommand.register(event.getDispatcher());
     }
 
-    private void onTeamJoin(PlayerJoinedPartyTeamEvent event) {
+    private void onTeamJoin(@Nullable PlayerJoinedPartyTeamEvent event) {
         Objects.requireNonNull(event);
         var team = Objects.requireNonNull(event.getTeam());
-        System.out.println("join team " + team.getId());
         event.getPlayer().getGameStages().setTeam(team.getId());
     }
 
-    private void onTeamLeave(PlayerLeftPartyTeamEvent event) {
+    private void onTeamLeave(@Nullable PlayerLeftPartyTeamEvent event) {
         Objects.requireNonNull(event);
         var team = Objects.requireNonNull(event.getTeam());
-        System.out.println("leave team " + team.getId());
         if (event.getPlayer() == null) {
             var cache = Objects.requireNonNull(ServerGameStageManager.INSTANCE).playerStagesCache();
             var stages = cache.requirePlayer(Objects.requireNonNull(event.getPlayerId()));
@@ -248,11 +247,10 @@ public class NeoForgeEntrypoint {
         }
     }
 
-    private void onTeamDelete(TeamEvent event) {
+    private void onTeamDelete(@Nullable TeamEvent event) {
         Objects.requireNonNull(event);
         var team = Objects.requireNonNull(event.getTeam());
         var id = team.getId();
-        System.out.println("Delete team " + id);
     }
 
     private void handleChunkLoad(ChunkEvent.Load event) {
@@ -297,11 +295,7 @@ public class NeoForgeEntrypoint {
         }
     }
 
-    private void handleBlockBreak(BlockEvent.BreakEvent event) {
-    }
-
-    private void handleBlockPlaceInternal(@NonNull BlockEntity blockEntity, @NonNull Set<UUID> owners) {
-        System.out.println("Attach origin to " + blockEntity.getBlockPos());
+    private void handleBlockPlaceInternal(BlockEntity blockEntity, Set<UUID> owners) {
         var data = blockEntity.getData(Attachments.SOURCE);
         data.setOwners(owners);
         blockEntity.setChanged();

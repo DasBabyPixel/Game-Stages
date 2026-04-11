@@ -3,28 +3,29 @@ package de.dasbabypixel.gamestages.common.data;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
-public record GameStage(@NonNull String name) implements RestrictionPredicate, PreparedRestrictionPredicate {
+@NullMarked
+public record GameStage(String name) implements RestrictionPredicate, PreparedRestrictionPredicate {
     @Override
-    public boolean accepts(@NonNull List<? extends @NonNull PreparedRestrictionPredicate> dependencies) {
+    public boolean accepts(List<? extends PreparedRestrictionPredicate> dependencies) {
         return dependencies.isEmpty();
     }
 
     @Override
-    public boolean test(@NonNull List<? extends CompiledRestrictionPredicate> dependencies, @NonNull BaseStages stages) {
+    public boolean test(List<? extends CompiledRestrictionPredicate> dependencies, BaseStages stages) {
         return stages.hasUnlocked(this);
     }
 
     @Override
-    public @NonNull String toString() {
+    public String toString() {
         return name();
     }
 
     @Override
-    public @NonNull RestrictionPredicate predicate() {
+    public RestrictionPredicate predicate() {
         return this;
     }
 }

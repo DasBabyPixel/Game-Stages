@@ -3,14 +3,15 @@ package de.dasbabypixel.gamestages.common.addons.item.datadriven.sequential;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.CompiledItemStackRestrictionEntry;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.CompiledResolverAlgorithm;
 import de.dasbabypixel.gamestages.common.data.ItemStack;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
 
-public record SequentialCompiled(@NonNull List<@NonNull CompiledResolverAlgorithm> subAlgorithms,
-                                 @NonNull List<@NonNull CompiledItemStackRestrictionEntry> entries) implements CompiledResolverAlgorithm {
+@NullMarked
+public record SequentialCompiled(List<CompiledResolverAlgorithm> subAlgorithms,
+                                 List<CompiledItemStackRestrictionEntry> entries) implements CompiledResolverAlgorithm {
     public SequentialCompiled {
         subAlgorithms = Objects.requireNonNull(List.copyOf(subAlgorithms));
         entries = Objects.requireNonNull(List.copyOf(entries));

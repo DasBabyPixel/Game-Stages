@@ -1,19 +1,21 @@
 package de.dasbabypixel.gamestages.common.data;
 
+import de.dasbabypixel.gamestages.common.data.attribute.AbstractAttributeHolder;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.*;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-public abstract class AbstractGameStageManager {
+@NullMarked
+public abstract class AbstractGameStageManager<H extends AbstractGameStageManager<H>> extends AbstractAttributeHolder<H> {
     protected final Set<GameStage> gameStages = new HashSet<>();
     protected final List<RestrictionEntry<?, ?>> restrictions = new ArrayList<>();
-    private final Map<Attribute<?>, Object> attributeMap = new HashMap<>();
 
-    public void add(@NonNull GameStage gameStage) {
+    public void add(GameStage gameStage) {
         if (!mayMutate()) throw new IllegalStateException("Cannot mutate");
         if (containsKey(gameStage)) {
             throw new IllegalArgumentException("Multiple GameStages have the same name");
@@ -21,23 +23,18 @@ public abstract class AbstractGameStageManager {
         add0(gameStage);
     }
 
-    public @Nullable GameStage get(@NonNull String name) {
+    public @Nullable GameStage get(String name) {
         var stage = new GameStage(name);
         if (!containsKey(stage)) return null;
         return stage;
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> @NonNull T get(@NonNull Attribute<? extends T> attribute) {
-        return (T) Objects.requireNonNull(attributeMap.computeIfAbsent(attribute, a -> a.defaultValue().apply(this)));
-    }
-
-    public <T extends RestrictionEntry<T, ?>> @NonNull T addRestriction(@NonNull T restriction) {
+    public <T extends RestrictionEntry<T, ?>> T addRestriction(T restriction) {
         this.restrictions.add(restriction);
         return restriction;
     }
 
-    public void set(@NonNull List<@NonNull GameStage> gameStages) {
+    public void set(List<GameStage> gameStages) {
         reset();
         gameStages.forEach(this::add);
     }
@@ -46,11 +43,11 @@ public abstract class AbstractGameStageManager {
         clear0();
     }
 
-    public @NonNull Set<@NonNull GameStage> gameStages() {
+    public Set<GameStage> gameStages() {
         return gameStages;
     }
 
-    public @NonNull List<@NonNull RestrictionEntry<?, ?>> restrictions() {
+    public List<RestrictionEntry<?, ?>> restrictions() {
         return restrictions;
     }
 
@@ -60,22 +57,15 @@ public abstract class AbstractGameStageManager {
         attributeMap.clear();
     }
 
-    protected boolean containsKey(@NonNull GameStage gameStage) {
+    protected boolean containsKey(GameStage gameStage) {
         return gameStages.contains(gameStage);
     }
 
-    protected void add0(@NonNull GameStage stage) {
+    protected void add0(GameStage stage) {
         gameStages.add(stage);
     }
 
     protected boolean mayMutate() {
         return true;
-    }
-
-    public record Attribute<T>(
-            @NonNull Function<@NonNull AbstractGameStageManager, ? extends @NonNull T> defaultValue) {
-        public Attribute(@NonNull Supplier<? extends @NonNull T> defaultValue) {
-            this(ignore -> defaultValue.get());
-        }
     }
 }

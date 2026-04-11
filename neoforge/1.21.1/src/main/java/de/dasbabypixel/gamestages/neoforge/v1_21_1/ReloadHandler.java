@@ -15,10 +15,11 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 
+@NullMarked
 public class ReloadHandler {
     public static void registerListeners() {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, ReloadHandler::handleAddReloadListener);
@@ -26,7 +27,6 @@ public class ReloadHandler {
     }
 
     private static void handleAddReloadListener(AddReloadListenerEvent event) {
-        Objects.requireNonNull(event);
         var serverResources = event.getServerResources();
         var registryAccess = event.getRegistryAccess();
         for (var addon : NeoAddonManager.instance().addons()) {
@@ -35,7 +35,7 @@ public class ReloadHandler {
         event.addListener((ResourceManagerReloadListener) resourceManager -> fullReload(serverResources, registryAccess));
     }
 
-    public static void fullReload(@NonNull ReloadableServerResources serverResources, @NonNull RegistryAccess registryAccess) {
+    public static void fullReload(ReloadableServerResources serverResources, RegistryAccess registryAccess) {
         var instance = ServerGameStageManager.instance();
 
         for (var addon : NeoAddonManager.instance().addons()) {
@@ -60,6 +60,7 @@ public class ReloadHandler {
 
         for (var addon : NeoAddonManager.instance().addons()) {
             addon.postReload(instance);
+            addon.postReload(instance, serverResources, registryAccess);
         }
 
         if (ServerGameStageManager.INSTANCE != null) {
@@ -68,14 +69,13 @@ public class ReloadHandler {
     }
 
     private static void handlePlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
-        Objects.requireNonNull(event);
         var player = (ServerPlayer) event.getEntity();
         var instance = Objects.requireNonNull(ServerGameStageManager.INSTANCE);
         instance.sync(packet -> CommonInstances.platformPacketDistributor.sendToPlayer(player, packet));
         playerUpdate(instance, player);
     }
 
-    private static void playerUpdate(@NonNull ServerGameStageManager instance, @NonNull ServerPlayer player) {
+    private static void playerUpdate(ServerGameStageManager instance, ServerPlayer player) {
         try {
             player.getGameStages().recompileAll(instance);
         } catch (DuplicatesException d) {
@@ -84,7 +84,7 @@ public class ReloadHandler {
         player.getGameStages().fullSync();
     }
 
-    public static void pushFullUpdate(@NonNull ServerGameStageManager instance) {
+    public static void pushFullUpdate(ServerGameStageManager instance) {
         var preCompiler = instance.get(RestrictionEntryPreCompiler.ATTRIBUTE);
         for (var restriction : instance.restrictions()) {
             preCompiler.precompile(restriction);

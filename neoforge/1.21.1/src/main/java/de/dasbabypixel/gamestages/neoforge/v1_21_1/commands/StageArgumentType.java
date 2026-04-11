@@ -19,11 +19,12 @@ import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.neoforged.fml.loading.FMLEnvironment;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+@NullMarked
 public class StageArgumentType implements ArgumentType<StageArgumentType.Provider> {
     private static final DynamicCommandExceptionType UNKNOWN_STAGE = new DynamicCommandExceptionType(arg1 -> Component.literal("Unknown stage: " + arg1));
     private final boolean enforceExistence;
@@ -33,7 +34,7 @@ public class StageArgumentType implements ArgumentType<StageArgumentType.Provide
     }
 
     @Override
-    public <S> CompletableFuture<Suggestions> listSuggestions(@NonNull CommandContext<S> context, @NonNull SuggestionsBuilder builder) {
+    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
         AbstractGameStageManager manager;
         if (FMLEnvironment.dist.isClient()) {
             if (context.getSource() instanceof ClientSuggestionProvider) {
@@ -49,11 +50,11 @@ public class StageArgumentType implements ArgumentType<StageArgumentType.Provide
             return SharedSuggestionProvider.suggest(manager.gameStages().stream().map(GameStage::name), builder);
         }
 
-        return builder.buildFuture();
+        return Objects.requireNonNull(builder.buildFuture());
     }
 
     @Override
-    public Provider parse(@NonNull StringReader reader) throws CommandSyntaxException {
+    public Provider parse(StringReader reader) throws CommandSyntaxException {
         var stageName = reader.readString();
 
         return context -> {
@@ -79,32 +80,32 @@ public class StageArgumentType implements ArgumentType<StageArgumentType.Provide
         };
     }
 
-    public static @NonNull GameStage getStage(@NonNull CommandContext<?> ctx, @NonNull String name) throws CommandSyntaxException {
+    public static GameStage getStage(CommandContext<?> ctx, String name) throws CommandSyntaxException {
         return Objects.requireNonNull(Objects.requireNonNull(ctx.getArgument(name, Provider.class)).getStage(ctx));
     }
 
     public interface Provider {
-        @NonNull GameStage getStage(@NonNull CommandContext<?> context) throws CommandSyntaxException;
+        GameStage getStage(CommandContext<?> context) throws CommandSyntaxException;
     }
 
     public static class Info implements ArgumentTypeInfo<StageArgumentType, Info.ITemplate> {
         @Override
-        public void serializeToNetwork(@NonNull ITemplate iTemplate, @NonNull FriendlyByteBuf friendlyByteBuf) {
+        public void serializeToNetwork(ITemplate iTemplate, FriendlyByteBuf friendlyByteBuf) {
             friendlyByteBuf.writeBoolean(iTemplate.enforceExistence);
         }
 
         @Override
-        public @NonNull ITemplate deserializeFromNetwork(@NonNull FriendlyByteBuf friendlyByteBuf) {
+        public ITemplate deserializeFromNetwork(FriendlyByteBuf friendlyByteBuf) {
             return new ITemplate(friendlyByteBuf.readBoolean());
         }
 
         @Override
-        public void serializeToJson(@NonNull ITemplate iTemplate, @NonNull JsonObject jsonObject) {
+        public void serializeToJson(ITemplate iTemplate, JsonObject jsonObject) {
             jsonObject.addProperty("enforce_existence", iTemplate.enforceExistence);
         }
 
         @Override
-        public @NonNull ITemplate unpack(@NonNull StageArgumentType stageArgumentType) {
+        public ITemplate unpack(StageArgumentType stageArgumentType) {
             return new ITemplate(stageArgumentType.enforceExistence);
         }
 
@@ -116,12 +117,12 @@ public class StageArgumentType implements ArgumentType<StageArgumentType.Provide
             }
 
             @Override
-            public @NonNull StageArgumentType instantiate(@NonNull CommandBuildContext commandBuildContext) {
+            public StageArgumentType instantiate(CommandBuildContext commandBuildContext) {
                 return new StageArgumentType(enforceExistence);
             }
 
             @Override
-            public @NonNull ArgumentTypeInfo<StageArgumentType, ?> type() {
+            public ArgumentTypeInfo<StageArgumentType, ?> type() {
                 return Info.this;
             }
         }

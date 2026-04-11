@@ -2,26 +2,27 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.addon;
 
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.EventJSBase;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.EventType;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+@NullMarked
 public class EventRegistryImpl implements EventRegistry {
-    private final @NonNull Map<@NonNull Class<?>, @NonNull EventType<?>> types = new HashMap<>();
+    private final Map<Class<?>, EventType<?>> types = new HashMap<>();
 
     @SuppressWarnings("unchecked")
     @Override
-    public <Event extends EventJSBase<Event>> @NonNull EventType<Event> get(Class<Event> cls) {
+    public <Event extends EventJSBase<Event>> EventType<Event> get(Class<Event> cls) {
         return (EventType<Event>) Objects.requireNonNull(types.get(cls));
     }
 
-    public <E extends EventJSBase<E>> void add(@NonNull Class<E> cls, @NonNull EventType<E> type) {
+    public <E extends EventJSBase<E>> void add(Class<E> cls, EventType<E> type) {
         types.put(cls, type);
     }
 
-    public @NonNull Map<Class<?>, EventType<?>> types() {
+    public Map<Class<?>, EventType<?>> types() {
         return types;
     }
 

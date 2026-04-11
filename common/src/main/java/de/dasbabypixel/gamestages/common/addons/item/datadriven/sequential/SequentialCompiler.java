@@ -1,16 +1,17 @@
 package de.dasbabypixel.gamestages.common.addons.item.datadriven.sequential;
 
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.*;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
+@NullMarked
 public class SequentialCompiler implements DirectCompiler<SequentialData> {
     @Override
-    public @NonNull CompiledResolverAlgorithm compile(@NonNull DataDrivenCompiler compiler, @NonNull SequentialData data, DataDrivenResolverFactory.@NonNull Context context) {
+    public CompiledResolverAlgorithm compile(DataDrivenCompiler compiler, SequentialData data, DataDrivenResolverFactory.Context context) {
         var entries = new HashSet<CompiledItemStackRestrictionEntry>();
         var list = new ArrayList<CompiledResolverAlgorithm>();
         for (var value : data.values()) {

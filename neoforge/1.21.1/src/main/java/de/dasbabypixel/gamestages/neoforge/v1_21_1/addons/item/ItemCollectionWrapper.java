@@ -2,7 +2,8 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.item;
 
 import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.ContentWrapper;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
-public record ItemCollectionWrapper(@NonNull GameContent content) implements ContentWrapper {
+@NullMarked
+public record ItemCollectionWrapper(GameContent content) implements ContentWrapper {
 }

@@ -1,13 +1,14 @@
 package de.dasbabypixel.gamestages.common.data;
 
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public interface GameContent {
-    @NonNull GameContent except(@NonNull GameContent @NonNull ... other);
+    GameContent except(GameContent... other);
 
-    @NonNull GameContent only(@NonNull GameContent @NonNull ... other);
+    GameContent only(GameContent... other);
 
-    @NonNull GameContent union(@NonNull GameContent @NonNull ... other);
+    GameContent union(GameContent... other);
 
-    @NonNull GameContent filterType(@NonNull GameContentType<?> type);
+    GameContent filterType(GameContentType<?> type);
 }

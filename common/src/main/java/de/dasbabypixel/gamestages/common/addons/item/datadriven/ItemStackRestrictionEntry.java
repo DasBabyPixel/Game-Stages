@@ -1,8 +1,10 @@
 package de.dasbabypixel.gamestages.common.addons.item.datadriven;
 
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 
-public record ItemStackRestrictionEntry(@NonNull PreparedRestrictionPredicate predicate,
-                                        @NonNull ItemStackRestrictionEntrySettings settings) implements DataDrivenData {
+@NullMarked
+public record ItemStackRestrictionEntry(PreparedRestrictionPredicate predicate,
+                                        ItemStackRestrictionEntrySettings settings) implements DataDrivenData {
+    public static final String TYPE = "itemstack_restriction_entry";
 }

@@ -1,42 +1,53 @@
 package de.dasbabypixel.gamestages.common.data.server;
 
+import de.dasbabypixel.gamestages.common.addon.AddonManager;
+import de.dasbabypixel.gamestages.common.data.attribute.Attribute;
 import de.dasbabypixel.gamestages.common.network.PacketConsumer;
 import de.dasbabypixel.gamestages.common.network.Status;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static de.dasbabypixel.gamestages.common.CommonInstances.platformPacketCreator;
 
-public class ServerGameStageManager extends MutatableGameStageManager {
+@NullMarked
+public class ServerGameStageManager extends MutableGameStageManager {
     public static @Nullable ServerGameStageManager INSTANCE;
     private static boolean queuing = false;
-    private final @NonNull StagesFileProvider stagesFileProvider;
-    private final @NonNull StagesCache stagesCache;
+    private final StagesFileProvider stagesFileProvider;
+    private final StagesCache stagesCache;
 
-    private ServerGameStageManager(@NonNull Path dataDirectory) {
+    private ServerGameStageManager(Path dataDirectory) {
         this.stagesFileProvider = new StagesFileProvider(Objects.requireNonNull(dataDirectory.resolve("unlocked")));
         this.stagesCache = new StagesCache(this);
     }
 
-    public @NonNull StagesCache playerStagesCache() {
+    void initAttributeMap(Map<Attribute<? super MutableGameStageManager, ?>, Object> attributeMap) {
+        this.attributeMap.putAll(attributeMap);
+    }
+
+    public StagesCache playerStagesCache() {
         return stagesCache;
     }
 
-    public @NonNull StagesFileProvider stagesFileProvider() {
+    public StagesFileProvider stagesFileProvider() {
         return stagesFileProvider;
     }
 
-    public void sync(@NonNull PacketConsumer packetConsumer) {
+    public void sync(PacketConsumer packetConsumer) {
         packetConsumer.send(platformPacketCreator.createStatusPacket(Status.BEGIN_SYNC));
         var gameStages = List.copyOf(this.gameStages());
         packetConsumer.send(platformPacketCreator.createSyncRegisteredGameStages(gameStages));
         for (var restriction : restrictions()) {
             packetConsumer.send(restriction.createPacket(this));
+        }
+        for (var addon : AddonManager.instance().addons()) {
+            addon.onSyncConfigToPlayer(this, packetConsumer);
         }
         packetConsumer.send(platformPacketCreator.createStatusPacket(Status.END_SYNC));
     }
@@ -52,7 +63,7 @@ public class ServerGameStageManager extends MutatableGameStageManager {
         INSTANCE = null;
     }
 
-    public static void init(@NonNull Path dataDirectory) {
+    public static void init(Path dataDirectory) {
         if (INSTANCE != null) throw new IllegalStateException("Instance not null");
         INSTANCE = new ServerGameStageManager(dataDirectory);
         INSTANCE.disallowMutation();
@@ -62,7 +73,7 @@ public class ServerGameStageManager extends MutatableGameStageManager {
         }
     }
 
-    public static @NonNull MutatableGameStageManager instance() {
+    public static MutableGameStageManager instance() {
         if (INSTANCE != null) {
             if (queuing) {
                 QueuingGameStageManager.INSTANCE.end(INSTANCE);
