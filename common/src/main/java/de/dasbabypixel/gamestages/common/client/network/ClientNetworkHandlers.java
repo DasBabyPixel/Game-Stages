@@ -21,6 +21,5 @@ public class ClientNetworkHandlers {
     }
 
     public static void status(Status status) {
-        System.out.println("client status " + status);
     }
 }

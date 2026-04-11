@@ -24,6 +24,8 @@ import java.util.*;
 public class ItemJEI implements NeoAddonJEI {
     private static final Logger LOGGER = LoggerFactory.getLogger(ItemJEI.class);
     private final Map<Item, List<ItemStack>> itemCache = new HashMap<>();
+    private final List<ItemStack> showCache = new ArrayList<>();
+    private final List<ItemStack> hideCache = new ArrayList<>();
     private boolean cachePopulated = false;
     private @Nullable IJeiRuntime runtime;
 
@@ -55,26 +57,34 @@ public class ItemJEI implements NeoAddonJEI {
     }
 
     @Override
-    public void singleRefreshAll(AbstractGameStageManager instance, BaseStages stages) {
+    public void singleRefreshAll(AbstractGameStageManager<?> instance, BaseStages stages) {
         if (runtime == null) {
             LOGGER.warn("JEI runtime missing when refreshing game stages");
             return;
         }
         iterate(stages, CommonItemCollection.TYPE, entry -> {
-            if (entry instanceof CommonItemRestrictionEntry.Compiled(var ignored, var gameContent, var resolver)) {
-                updateItems(gameContent.items(), resolver);
+            if (entry instanceof CommonItemRestrictionEntry.Compiled compiled) {
+                updateItems(compiled.gameContent().items(), compiled.resolver());
             }
         });
+        if (!showCache.isEmpty()) {
+            runtime.getIngredientManager().addIngredientsAtRuntime(VanillaTypes.ITEM_STACK, showCache);
+            showCache.clear();
+        }
+        if (!hideCache.isEmpty()) {
+            runtime.getIngredientManager().removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hideCache);
+            hideCache.clear();
+        }
     }
 
     @Override
-    public void postCompileAll(AbstractGameStageManager instance, BaseStages stages) {
+    public void postCompileAll(AbstractGameStageManager<?> instance, BaseStages stages) {
         var byEntry = new HashMap<CompiledItemStackRestrictionEntry, List<ItemStack>>();
         iterate(stages, CommonItemCollection.TYPE, entry -> {
-            if (entry instanceof CommonItemRestrictionEntry.Compiled(var ignoredE, var gameContent, var resolver)) {
-                var items = getItems(gameContent.items());
+            if (entry instanceof CommonItemRestrictionEntry.Compiled compiled) {
+                var items = getItems(compiled.gameContent().items());
                 for (var item : items) {
-                    var resolved = resolver.resolveRestrictionEntry(item);
+                    var resolved = compiled.resolver().resolveRestrictionEntry(item);
                     if (resolved != null) {
                         var list = byEntry.computeIfAbsent(resolved, ignored -> new ArrayList<>());
                         list.add(item);
@@ -123,10 +133,10 @@ public class ItemJEI implements NeoAddonJEI {
             }
         }
         if (!showItems.isEmpty()) {
-            runtime.getIngredientManager().addIngredientsAtRuntime(VanillaTypes.ITEM_STACK, showItems);
+            showCache.addAll(showItems);
         }
         if (!hideItems.isEmpty()) {
-            runtime.getIngredientManager().removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hideItems);
+            hideCache.addAll(hideItems);
         }
     }
 

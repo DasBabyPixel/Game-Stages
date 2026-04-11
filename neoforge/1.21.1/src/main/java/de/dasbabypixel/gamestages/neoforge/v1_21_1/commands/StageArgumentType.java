@@ -35,7 +35,7 @@ public class StageArgumentType implements ArgumentType<StageArgumentType.Provide
 
     @Override
     public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
-        AbstractGameStageManager manager;
+        AbstractGameStageManager<?> manager;
         if (FMLEnvironment.dist.isClient()) {
             if (context.getSource() instanceof ClientSuggestionProvider) {
                 manager = ClientGameStageManager.instance();
@@ -61,7 +61,7 @@ public class StageArgumentType implements ArgumentType<StageArgumentType.Provide
             var stage = new GameStage(stageName);
             if (!enforceExistence) return stage;
 
-            AbstractGameStageManager manager;
+            AbstractGameStageManager<?> manager;
 
             if (FMLEnvironment.dist.isClient()) {
                 if (context.getSource() instanceof ClientSuggestionProvider) {

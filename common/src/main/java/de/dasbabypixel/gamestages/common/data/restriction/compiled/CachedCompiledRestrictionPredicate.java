@@ -28,6 +28,7 @@ final class CachedCompiledRestrictionPredicate implements CompiledRestrictionPre
 
     @Override
     public void addNotifier(UpdateNotifier updateNotifier) {
+        test();
         updateNotifiers.add(updateNotifier);
     }
 

@@ -49,7 +49,12 @@ public class ItemKJS implements NeoAddonKJS {
             public Object invoke(RegisterEventJS event, KubeJSContext cx, @Nullable RegisteredItemStackEntries s, Object[] args) {
                 Objects.requireNonNull(s);
                 var predicate = (PreparedRestrictionPredicate) Objects.requireNonNull(args[0]);
-                var entry = new RegisteredItemStackEntries.Entry(s.id++, predicate);
+                var compilationContext = event.stageManager().get(ItemAddon.STAGE_MANAGER_CONTEXT);
+                var settings = VItemStackRestrictionEntrySettings.instance();
+                var restrictionEntry = new ItemStackRestrictionEntry(predicate, settings);
+                var reference = compilationContext.addRestrictionEntry(restrictionEntry);
+
+                var entry = new RegisteredItemStackEntries.Entry(reference, predicate, settings);
                 s.entries.add(entry);
                 return entry;
             }
@@ -57,31 +62,28 @@ public class ItemKJS implements NeoAddonKJS {
             @Override
             public void finish(RegisterEventJS event, @Nullable RegisteredItemStackEntries registeredItemStackEntries) {
                 Objects.requireNonNull(registeredItemStackEntries);
-                var compilationContext = event.stageManager().get(ItemAddon.STAGE_MANAGER_CONTEXT);
                 for (var entry : registeredItemStackEntries.entries()) {
-                    var referenceId = entry.str();
                     var predicate = entry.predicate;
                     var settings = entry.settings;
-                    compilationContext.addRestrictionEntry(new ItemStackRestrictionEntryReference(referenceId), new ItemStackRestrictionEntry(predicate, settings));
                 }
             }
-        }, ItemStackRestrictionEntry.class, PreparedRestrictionPredicate.class);
+        }, RegisteredItemStackEntries.Entry.class, PreparedRestrictionPredicate.class);
         type.addFunctionVarArgs("restrictItemStacks", RestrictContext::new, new EventJSBase.ContextFunction<>() {
             @Override
-            public Object invoke(RegisterEventJS event, KubeJSContext cx, RestrictContext restrictContext, Object[] args) {
+            public Object invoke(RegisterEventJS event, KubeJSContext cx, @Nullable RestrictContext restrictContext, Object[] args) {
                 var origin = RestrictionEntryOrigin.string(Objects.requireNonNull(SourceLine.of(cx)).toString());
                 var data = (DataDrivenTypedData<?>) Objects.requireNonNull(args[0]);
                 var items = ((ItemCollectionWrapper) Objects.requireNonNull(args[1])).content();
-                var dataDrivenType = DataDrivenTypes.instance().get(data.type()).unsafeCast(DataDrivenData.class);
+                var dataDrivenType = DataDrivenTypes.instance().get(data.type()).unsafeCast();
                 var factoryId = "data_driven";
 
-                var networkData = new DataDrivenNetwork.NetworkData<DataDrivenData>(dataDrivenType, Objects.requireNonNull(data.data()), factoryId);
+                var networkData = new DataDrivenNetwork.NetworkData<DataDrivenData<?, ?>>(dataDrivenType, Objects.requireNonNull(data.data()), factoryId);
                 var entry = new CommonItemRestrictionEntry(origin, items, networkData);
                 return event.stageManager().addRestriction(entry);
             }
 
             @Override
-            public void finish(RegisterEventJS event, RestrictContext restrictContext) {
+            public void finish(RegisterEventJS event, @Nullable RestrictContext restrictContext) {
                 EventJSBase.ContextFunction.super.finish(event, restrictContext);
             }
         }, ItemCollectionWrapper.class, void.class, DataDrivenTypedData.class, ItemCollectionWrapper[].class);
@@ -93,15 +95,17 @@ public class ItemKJS implements NeoAddonKJS {
 
     private CommonItemRestrictionEntry restrictItems(RegisterEventJS event, KubeJSContext cx, PreparedRestrictionPredicate predicate, GameContent itemsContent) {
         var origin = RestrictionEntryOrigin.string(Objects.requireNonNull(SourceLine.of(cx)).toString());
-        var dataDrivenType = DataDrivenTypes
-                .instance()
-                .get("itemstack_restriction_entry")
-                .unsafeCast(ItemStackRestrictionEntry.class);
-        var factoryId = "builtin_item";
+        var dataDrivenType = DataDrivenTypes.instance().get(ValueData.TYPE).unsafeCast();
+        var factoryId = "data_driven";
         var itemStackSettings = VItemStackRestrictionEntrySettings.instance();
         var itemStackRestrictionEntry = new ItemStackRestrictionEntry(predicate, itemStackSettings);
+        var reference = event
+                .stageManager()
+                .get(ItemAddon.STAGE_MANAGER_CONTEXT)
+                .addRestrictionEntry(itemStackRestrictionEntry);
+        var data = new ValueData(reference);
 
-        var networkData = new DataDrivenNetwork.NetworkData<>(dataDrivenType, itemStackRestrictionEntry, factoryId);
+        var networkData = new DataDrivenNetwork.NetworkData<>(dataDrivenType, data, factoryId);
         var entry = new CommonItemRestrictionEntry(origin, itemsContent, networkData);
         return event.stageManager().addRestriction(entry);
     }
@@ -112,7 +116,7 @@ public class ItemKJS implements NeoAddonKJS {
         registry.register(DataDrivenTypedData.class, (context, o, typeInfo) -> parse((KubeJSContext) context, o));
         registry.register(ItemStackRestrictionEntryReference.class, (context, o, typeInfo) -> switch (o) {
             case ItemStackRestrictionEntryReference ref -> ref;
-            case RegisteredItemStackEntries.Entry e -> new ItemStackRestrictionEntryReference(e.str());
+            case RegisteredItemStackEntries.Entry e -> e.reference;
             case null, default -> throw new IllegalStateException("Unexpected value: " + o);
         });
     }
@@ -176,28 +180,24 @@ public class ItemKJS implements NeoAddonKJS {
 
     public static class RegisteredItemStackEntries {
         private final List<Entry> entries = new ArrayList<>();
-        private int id = 0;
 
         public List<Entry> entries() {
             return entries;
         }
 
         public static class Entry {
-            private final int id;
+            private final ItemStackRestrictionEntryReference reference;
             private final PreparedRestrictionPredicate predicate;
-            private final VItemStackRestrictionEntrySettings settings = VItemStackRestrictionEntrySettings.instance();
+            private final VItemStackRestrictionEntrySettings settings;
 
-            public Entry(int id, PreparedRestrictionPredicate predicate) {
-                this.id = id;
+            public Entry(ItemStackRestrictionEntryReference reference, PreparedRestrictionPredicate predicate, VItemStackRestrictionEntrySettings settings) {
+                this.reference = reference;
                 this.predicate = predicate;
+                this.settings = settings;
             }
 
             public VItemStackRestrictionEntrySettings settings() {
                 return settings;
-            }
-
-            public String str() {
-                return "gen_" + id;
             }
         }
     }

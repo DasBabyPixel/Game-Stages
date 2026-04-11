@@ -17,7 +17,7 @@ public class KJSListeners {
         NeoForge.EVENT_BUS.addListener(KJSListeners::handleStageCreation);
     }
 
-    public static void postRegisterEvent(AbstractGameStageManager instance) {
+    public static void postRegisterEvent(AbstractGameStageManager<?> instance) {
         StageEvents.REGISTER.post(ScriptType.SERVER, new RegisterEventJS(instance));
     }
 

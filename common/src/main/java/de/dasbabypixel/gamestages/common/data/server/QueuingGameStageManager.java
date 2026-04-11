@@ -27,7 +27,7 @@ public class QueuingGameStageManager extends MutableGameStageManager {
     }
 
     @Override
-    public <T extends RestrictionEntry<T, ?>> T addRestriction(T restriction) {
+    public <T extends RestrictionEntry<T, ?, ?>> T addRestriction(T restriction) {
         super.addRestriction(restriction);
         recorded.add(c -> c.addRestriction(restriction));
         return restriction;

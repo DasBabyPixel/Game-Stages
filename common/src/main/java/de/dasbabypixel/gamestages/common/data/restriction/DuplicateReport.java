@@ -1,6 +1,5 @@
 package de.dasbabypixel.gamestages.common.data.restriction;
 
-import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.HashSet;
@@ -10,9 +9,9 @@ import java.util.function.Consumer;
 @NullMarked
 public class DuplicateReport {
     private final Object object;
-    private final Set<CompiledRestrictionEntry> entries = new HashSet<>();
+    private final Set<RestrictionEntry.PreCompiled<?, ?>> entries = new HashSet<>();
 
-    public DuplicateReport(Object object, CompiledRestrictionEntry mainEntry, Set<CompiledRestrictionEntry> duplicates) {
+    public DuplicateReport(Object object, RestrictionEntry.PreCompiled<?, ?> mainEntry, Set<RestrictionEntry.PreCompiled<?, ?>> duplicates) {
         this.object = object;
         this.entries.add(mainEntry);
         this.entries.addAll(duplicates);

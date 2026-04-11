@@ -5,10 +5,10 @@ import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.RecompilationTask;
 import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
+import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
-import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryPreCompiler;
 import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
 import de.dasbabypixel.gamestages.common.network.CustomPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.fluid.CommonFluidRestrictionPacket;
@@ -17,7 +17,7 @@ import de.dasbabypixel.gamestages.common.v1_21_1.data.restriction.types.CommonFl
 import org.jspecify.annotations.NullMarked;
 
 @NullMarked
-public class NeoFluidRestrictionEntry extends CommonFluidRestrictionEntry<NeoFluidRestrictionEntry, NeoFluidRestrictionEntry.PreCompiled> {
+public class NeoFluidRestrictionEntry extends CommonFluidRestrictionEntry<NeoFluidRestrictionEntry, NeoFluidRestrictionEntry.PreCompiled, NeoFluidRestrictionEntry.Compiled> {
     public NeoFluidRestrictionEntry(PreparedRestrictionPredicate predicate, RestrictionEntryOrigin origin, GameContent targetFluids) {
         super(predicate, origin, targetFluids);
     }
@@ -31,26 +31,24 @@ public class NeoFluidRestrictionEntry extends CommonFluidRestrictionEntry<NeoFlu
     }
 
     @Override
-    public PreCompiled precompile(AbstractGameStageManager instance, RestrictionEntryPreCompiler preCompiler) {
+    public PreCompiled precompile(AbstractGameStageManager<?> instance) {
         var fluids = instance
                 .get(GameContentFlattener.Attribute.INSTANCE)
                 .flatten(targetFluids(), CommonFluidCollection.TYPE);
-        return new PreCompiled(fluids);
+        return new PreCompiled(this, predicate(), fluids, hideInJEI());
     }
 
-    @Override
-    public CompiledRestrictionEntry compile(RecompilationTask task, PreCompiled preCompiled) {
-        return new Compiled(this, preCompiled.fluids, task.predicateCompiler().compile(predicate()));
+    public record Compiled(PreCompiled preCompiled, CommonFluidCollection gameContent,
+                           CompiledRestrictionPredicate predicate,
+                           boolean hideInJEI) implements CompiledRestrictionEntry<Compiled, PreCompiled> {
     }
 
-    public record Compiled(NeoFluidRestrictionEntry entry, CommonFluidCollection gameContent,
-                           CompiledRestrictionPredicate predicate) implements CompiledRestrictionEntry {
+    public record PreCompiled(NeoFluidRestrictionEntry entry, PreparedRestrictionPredicate predicate,
+                              CommonFluidCollection gameContent,
+                              boolean hideInJEI) implements RestrictionEntry.PreCompiled<PreCompiled, Compiled> {
         @Override
-        public RestrictionEntryOrigin origin() {
-            return entry.origin();
+        public Compiled compile(RecompilationTask task) {
+            return new Compiled(this, gameContent, task.predicateCompiler().compile(predicate), hideInJEI);
         }
-    }
-
-    public record PreCompiled(CommonFluidCollection fluids) {
     }
 }

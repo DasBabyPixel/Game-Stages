@@ -21,7 +21,7 @@ import java.util.*;
 
 @NullMarked
 public final class RecipeIndex {
-    private final AbstractGameStageManager manager;
+    private final AbstractGameStageManager<?> manager;
     private final Map<ResourceLocation, Entry> recipeEntries = new HashMap<>();
     //    protected final Map<Item, Set<RecipeHolder>> recipesForInput = new HashMap<>();
 //    protected final Map<Item, Set<RecipeHolder>> recipesForOutput = new HashMap<>();
@@ -29,7 +29,7 @@ public final class RecipeIndex {
     private final HolderLookup.Provider lookup;
     private final VRecipeAddon recipeAddon;
 
-    public RecipeIndex(RecipeManager recipeManager, VRecipeAddon recipeAddon, AbstractGameStageManager manager, HolderLookup.Provider lookup) {
+    public RecipeIndex(RecipeManager recipeManager, VRecipeAddon recipeAddon, AbstractGameStageManager<?> manager, HolderLookup.Provider lookup) {
         this.recipeAddon = recipeAddon;
         this.manager = manager;
         this.lookup = lookup;

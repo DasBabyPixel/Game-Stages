@@ -2,11 +2,17 @@ package de.dasbabypixel.gamestages.common.addons.fluid;
 
 import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
+import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import org.jspecify.annotations.NullMarked;
 
 @NullMarked
-public interface FluidRestrictionEntry<T extends FluidRestrictionEntry<T, P>, P> extends RestrictionEntry<T, P> {
+public interface FluidRestrictionEntry<T extends FluidRestrictionEntry<T, P, C>, P extends RestrictionEntry.PreCompiled<P, C>, C extends CompiledRestrictionEntry<C, P>> extends RestrictionEntry<T, P, C> {
     GameContent targetFluids();
+
+    @Override
+    default GameContent gameContent() {
+        return targetFluids();
+    }
 
     T setHideInJEI(boolean hideInJEI);
 }

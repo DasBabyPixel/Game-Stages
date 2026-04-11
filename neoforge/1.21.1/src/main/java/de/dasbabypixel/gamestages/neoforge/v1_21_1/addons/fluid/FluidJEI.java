@@ -33,20 +33,24 @@ public class FluidJEI implements NeoAddonJEI {
     }
 
     @Override
-    public void postCompileAll(AbstractGameStageManager instance, BaseStages stages) {
+    public void postCompileAll(AbstractGameStageManager<?> instance, BaseStages stages) {
         iterate(stages, CommonFluidCollection.TYPE, entry -> {
-            if (entry instanceof NeoFluidRestrictionEntry.Compiled(var e, var gameContent, var predicate)) {
-                if (!e.hideInJEI()) return;
+            if (entry instanceof NeoFluidRestrictionEntry.Compiled(
+                    var e, var gameContent, var predicate, var hideInJEI
+            )) {
+                if (!hideInJEI) return;
                 predicate.addNotifier(newTest -> updateVisibility(newTest, gameContent.fluids(), this::showFluids, this::hideFluids));
             }
         });
     }
 
     @Override
-    public void singleRefreshAll(AbstractGameStageManager instance, BaseStages stages) {
+    public void singleRefreshAll(AbstractGameStageManager<?> instance, BaseStages stages) {
         iterate(stages, CommonFluidCollection.TYPE, entry -> {
-            if (entry instanceof NeoFluidRestrictionEntry.Compiled(var e, var gameContent, var predicate)) {
-                if (!e.hideInJEI()) return;
+            if (entry instanceof NeoFluidRestrictionEntry.Compiled(
+                    var e, var gameContent, var predicate, var hideInJEI
+            )) {
+                if (!hideInJEI) return;
                 updateVisibility(predicate.test(), gameContent.fluids(), this::showFluids, this::hideFluids);
             }
         });

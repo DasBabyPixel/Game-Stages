@@ -5,9 +5,7 @@ import de.dasbabypixel.gamestages.common.addon.AddonManager;
 import de.dasbabypixel.gamestages.common.addon.ContentRegistry;
 import de.dasbabypixel.gamestages.common.addons.item.ItemAddon;
 import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolverFactories;
-import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolverFactory;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.CompiledItemStackRestrictionEntry;
-import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenCompiler;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestrictionEntry;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestrictionEntryReference;
 import de.dasbabypixel.gamestages.common.client.ClientGameStageManager;
@@ -23,8 +21,6 @@ import de.dasbabypixel.gamestages.common.network.CustomPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.PacketRegistry;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VContentRegistry;
-import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.datadriven.predicate.PredicateCompiler;
-import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.datadriven.predicate.PredicateData;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.CommonItemRestrictionPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.CommonItemStackRestrictionEntryPacket;
 import net.minecraft.core.Holder;
@@ -47,7 +43,6 @@ public abstract class VItemAddon extends ItemAddon implements VAddon {
 
     public VItemAddon() {
         instance = this;
-        DataDrivenCompiler.instance().register("predicate", PredicateData.class, new PredicateCompiler());
     }
 
     @Override
@@ -56,39 +51,35 @@ public abstract class VItemAddon extends ItemAddon implements VAddon {
     }
 
     @Override
-    public void preReload(MutableGameStageManager instance) {
-        VAddon.super.preReload(instance);
+    public void reloadPre(AbstractGameStageManager<?> instance) {
+        VAddon.super.reloadPre(instance);
     }
 
     @Override
-    public void postReload(MutableGameStageManager instance) {
-        VAddon.super.postReload(instance);
+    public void reloadPost(AbstractGameStageManager<?> instance) {
+        super.reloadPost(instance);
     }
 
     @Override
-    public void preCompileAll(RecompilationTask recompilationTask) {
-        var factoryContextMap = new HashMap<ItemStackRestrictionResolverFactory<?>, Object>();
-        for (var factory : ItemStackRestrictionResolverFactories.instance().getAll()) {
-            factoryContextMap.put(factory, factory.createContext(recompilationTask));
-        }
-        recompilationTask.setContext(this, new ItemCompileContext(factoryContextMap, new CompilationContext()));
-
-        super.preCompileAll(recompilationTask);
+    public void compileAllPre(RecompilationTask recompilationTask) {
+        super.compileAllPre(recompilationTask);
     }
 
     @Override
-    public void postCompileAll(RecompilationTask recompilationTask) {
-        var itemMap = new HashMap<Holder<Item>, CompiledRestrictionEntry>();
+    public void compileAllPost(RecompilationTask recompilationTask) {
+        var itemMap = new HashMap<Holder<Item>, CompiledRestrictionEntry<?, ?>>();
         var flattener = recompilationTask.instance().get(GameContentFlattener.Attribute.INSTANCE);
-        for (var value : recompilationTask.stages().compiledRestrictionEntryMap().values()) {
+        var compileIndex = recompilationTask.stages().get(BaseStages.CompileIndex.ATTRIBUTE);
+        for (var value : compileIndex.compiledRestrictionEntries()) {
             var items = flattener.flatten(value.gameContent(), CommonItemCollection.TYPE);
             for (var item : items.items()) {
                 assert item != null;
                 itemMap.put(item, value);
             }
         }
-        recompilationTask.stages().addonData().put(this, new ItemAddonData(itemMap));
-        var context = (ItemCompileContext) Objects.requireNonNull(recompilationTask.getContext(this));
+
+        var stages = recompilationTask.stages();
+        stages.get(ItemAddonDataHolder.ATTRIBUTE).itemAddonData = new ItemAddonData(itemMap);
     }
 
     @Override
@@ -128,8 +119,8 @@ public abstract class VItemAddon extends ItemAddon implements VAddon {
     }
 
     @Override
-    public void postReload(MutableGameStageManager gameStageManager, ReloadableServerResources serverResources, RegistryAccess registryAccess) {
-        VAddon.super.postReload(gameStageManager, serverResources, registryAccess);
+    public void postReloadServer(AbstractGameStageManager<?> gameStageManager, ReloadableServerResources serverResources, RegistryAccess registryAccess) {
+        VAddon.super.postReloadServer(gameStageManager, serverResources, registryAccess);
         var flattener = gameStageManager.get(GameContentFlattener.Attribute.INSTANCE);
         var index = gameStageManager.get(Index.ATTRIBUTE);
         for (var restriction : gameStageManager.restrictions()) {
@@ -147,13 +138,13 @@ public abstract class VItemAddon extends ItemAddon implements VAddon {
         var index = instance.get(Index.ATTRIBUTE);
         var entry = index.entryMap.get(nmsItemStack.getItemHolder());
         if (entry == null) return null;
+        
 
         return null;
     }
 
     public static @Nullable CompiledItemStackRestrictionEntry getEntry(BaseStages stages, ItemStack nmsItemStack, de.dasbabypixel.gamestages.common.data.ItemStack ourItemStack) {
-        var data = (ItemAddonData) stages.addonData().get(instance());
-        if (data == null) return null;
+        var data = stages.get(ItemAddonDataHolder.ATTRIBUTE).itemAddonData();
         var entry = data.itemMap.get(nmsItemStack.getItemHolder());
         if (entry == null) return null;
         var resolver = ((CommonItemRestrictionEntry.Compiled) entry).resolver();
@@ -169,10 +160,18 @@ public abstract class VItemAddon extends ItemAddon implements VAddon {
         public final Map<Holder<Item>, CommonItemRestrictionEntry> entryMap = new HashMap<>();
     }
 
-    public record ItemAddonData(Map<Holder<Item>, CompiledRestrictionEntry> itemMap) {
+    public static class ItemAddonDataHolder {
+        public static final Attribute<BaseStages, ItemAddonDataHolder> ATTRIBUTE = new Attribute<>(ItemAddonDataHolder::new);
+        private @Nullable ItemAddonData itemAddonData;
+
+        public ItemAddonData itemAddonData() {
+            return Objects.requireNonNull(itemAddonData);
+        }
     }
 
-    public record ItemCompileContext(Map<ItemStackRestrictionResolverFactory<?>, Object> factoryContextMap,
-                                     CompilationContext compilationContext) implements RecompileContext {
+    public record ItemAddonData(Map<Holder<Item>, CompiledRestrictionEntry<?, ?>> itemMap) {
+        public ItemAddonData {
+            itemMap = Map.copyOf(itemMap);
+        }
     }
 }

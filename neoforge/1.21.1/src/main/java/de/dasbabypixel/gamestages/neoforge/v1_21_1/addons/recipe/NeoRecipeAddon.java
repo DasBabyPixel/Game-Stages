@@ -34,19 +34,19 @@ public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
     }
 
     @Override
-    public void beforeRegisterEvent(AbstractGameStageManager<?> gameStageManager, ReloadableServerResources serverResources, RegistryAccess registryAccess) {
+    public void beforeRegisterEvent(MutableGameStageManager gameStageManager, ReloadableServerResources serverResources, RegistryAccess registryAccess) {
 //        gameStageManager.get(RECIPE_INDEX).recipeIndex = recipeIndex;
 //        System.out.println(recipeTree.findRelated(Items.OAK_PLANKS).size());
     }
 
     @Override
-    public void afterRegisterEvent(AbstractGameStageManager<?> gameStageManager, ReloadableServerResources serverResources, RegistryAccess registryAccess) {
+    public void afterRegisterEvent(MutableGameStageManager gameStageManager, ReloadableServerResources serverResources, RegistryAccess registryAccess) {
         NeoAddon.super.afterRegisterEvent(gameStageManager, serverResources, registryAccess);
     }
 
     @Override
-    public void postReload(MutableGameStageManager gameStageManager, ReloadableServerResources serverResources, RegistryAccess registryAccess) {
-        super.postReload(gameStageManager, serverResources, registryAccess);
+    public void postReloadServer(AbstractGameStageManager<?> gameStageManager, ReloadableServerResources serverResources, RegistryAccess registryAccess) {
+        super.postReloadServer(gameStageManager, serverResources, registryAccess);
         var recipeIndex = new RecipeIndex(serverResources.getRecipeManager(), this, gameStageManager, registryAccess);
         gameStageManager.get(RECIPE_INDEX).recipeIndex = recipeIndex;
         var deps = recipeIndex.getImplicitDependencies(ResourceLocation.parse("minecraft:oak_planks"));

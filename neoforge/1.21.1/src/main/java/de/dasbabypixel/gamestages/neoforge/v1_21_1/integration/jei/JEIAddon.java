@@ -15,7 +15,7 @@ public class JEIAddon implements NeoAddon {
     }
 
     @Override
-    public void postCompileAll(RecompilationTask recompilationTask) {
+    public void compileAllPost(RecompilationTask recompilationTask) {
         var instance = recompilationTask.instance();
         var stages = recompilationTask.stages();
         if (instance instanceof ClientGameStageManager) {
@@ -29,7 +29,7 @@ public class JEIAddon implements NeoAddon {
         }
     }
 
-    public void singleRefreshAll(AbstractGameStageManager instance, BaseStages stages) {
+    public void singleRefreshAll(AbstractGameStageManager<?> instance, BaseStages stages) {
         for (var addon : StagesJEIPlugin.addons()) {
             addon.singleRefreshAll(instance, stages);
         }

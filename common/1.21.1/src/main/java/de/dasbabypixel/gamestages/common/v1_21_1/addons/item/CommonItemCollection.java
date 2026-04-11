@@ -11,10 +11,12 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.world.item.AirItem;
 import net.minecraft.world.item.Item;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Collection;
+import java.util.Objects;
 
 @NullMarked
 public record CommonItemCollection(HolderSet<Item> items) implements ItemCollection, CommonGameContent {
@@ -29,7 +31,8 @@ public record CommonItemCollection(HolderSet<Item> items) implements ItemCollect
         public CommonItemCollection modContent(String modId) {
             var set = HolderSet.direct(BuiltInRegistries.ITEM
                     .holders()
-                    .filter(r -> modId.equals(r.key().location().getNamespace()))
+                    .filter(r -> modId.equals(Objects.requireNonNull(r).key().location().getNamespace()))
+                    .filter(r -> !(r.value() instanceof AirItem))
                     .toList());
             return new CommonItemCollection(set);
         }

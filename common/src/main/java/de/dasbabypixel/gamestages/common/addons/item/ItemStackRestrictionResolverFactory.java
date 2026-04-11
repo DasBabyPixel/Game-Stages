@@ -1,7 +1,9 @@
 package de.dasbabypixel.gamestages.common.addons.item;
 
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenTypedData;
+import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.RecompilationTask;
+import de.dasbabypixel.gamestages.common.data.compilation.CompilableResource;
 import org.jspecify.annotations.NullMarked;
 
 @NullMarked
@@ -16,11 +18,16 @@ public abstract class ItemStackRestrictionResolverFactory<CompilationContext> {
         return factoryId;
     }
 
-    public ItemStackRestrictionResolver compile(DataDrivenTypedData<?> data, CompilationContext context) {
-        return compileInternal(data, context);
+    public PreCompiled precompile(DataDrivenTypedData<?> data, CompilationContext context) {
+        return precompileInternal(data, context);
     }
 
-    public abstract CompilationContext createContext(RecompilationTask task);
+    public abstract CompilationContext createContext(AbstractGameStageManager<?> instance);
 
-    protected abstract ItemStackRestrictionResolver compileInternal(DataDrivenTypedData<?> data, CompilationContext context);
+    protected abstract PreCompiled precompileInternal(DataDrivenTypedData<?> data, CompilationContext context);
+
+    public interface PreCompiled extends CompilableResource.PreCompiled<RecompilationTask, ItemStackRestrictionResolver> {
+        @Override
+        ItemStackRestrictionResolver compile(RecompilationTask task);
+    }
 }

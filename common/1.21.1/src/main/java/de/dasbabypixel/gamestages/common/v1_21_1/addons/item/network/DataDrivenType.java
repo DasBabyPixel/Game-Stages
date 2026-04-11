@@ -6,22 +6,22 @@ import net.minecraft.network.codec.StreamCodec;
 import org.jspecify.annotations.NullMarked;
 
 @NullMarked
-public record DataDrivenType<B extends ByteBuf, Data extends DataDrivenData>(Class<Data> cls, String type,
-                                                                             StreamCodec<B, Data> codec,
-                                                                             StreamCodec<B, DataDrivenRTypedData<Data>> typedCodec) {
+public record DataDrivenType<B extends ByteBuf, Data extends DataDrivenData<?, ?>>(Class<Data> cls, String type,
+                                                                                   StreamCodec<B, Data> codec,
+                                                                                   StreamCodec<B, DataDrivenRTypedData<Data>> typedCodec) {
     @SuppressWarnings("DataFlowIssue")
     public DataDrivenType(Class<Data> cls, String type, StreamCodec<B, Data> codec) {
         this(cls, type, codec, StreamCodec.composite(DataDrivenNetwork.DATA_DRIVEN_TYPE_STREAM_CODEC, DataDrivenRTypedData::type, codec, DataDrivenRTypedData::data, DataDrivenRTypedData::fromTypedData));
     }
 
     @SuppressWarnings("unchecked")
-    public <D extends DataDrivenData> DataDrivenType<B, D> cast(Class<D> cls) {
+    public <D extends DataDrivenData<?, ?>> DataDrivenType<B, D> cast(Class<D> cls) {
         if (this.cls != cls) throw new IllegalStateException();
         return (DataDrivenType<B, D>) this;
     }
 
     @SuppressWarnings("unchecked")
-    public <D extends DataDrivenData> DataDrivenType<B, D> unsafeCast(Class<D> cls) {
+    public <D extends DataDrivenData<?, ?>> DataDrivenType<B, D> unsafeCast() {
         return (DataDrivenType<B, D>) this;
     }
 }

@@ -2,7 +2,6 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1;
 
 import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.data.DuplicatesException;
-import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryPreCompiler;
 import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
 import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
 import de.dasbabypixel.gamestages.neoforge.integration.Mods;
@@ -39,7 +38,7 @@ public class ReloadHandler {
         var instance = ServerGameStageManager.instance();
 
         for (var addon : NeoAddonManager.instance().addons()) {
-            addon.preReload(instance);
+            addon.reloadPre(instance);
         }
 
         instance.allowMutation();
@@ -59,9 +58,11 @@ public class ReloadHandler {
         instance.disallowMutation();
 
         for (var addon : NeoAddonManager.instance().addons()) {
-            addon.postReload(instance);
-            addon.postReload(instance, serverResources, registryAccess);
+            addon.reloadPost(instance);
+            addon.postReloadServer(instance, serverResources, registryAccess);
         }
+
+        instance.precompileRestrictions();
 
         if (ServerGameStageManager.INSTANCE != null) {
             pushFullUpdate(ServerGameStageManager.INSTANCE);
@@ -85,10 +86,6 @@ public class ReloadHandler {
     }
 
     public static void pushFullUpdate(ServerGameStageManager instance) {
-        var preCompiler = instance.get(RestrictionEntryPreCompiler.ATTRIBUTE);
-        for (var restriction : instance.restrictions()) {
-            preCompiler.precompile(restriction);
-        }
         instance.sync(CommonInstances.platformPacketDistributor::sendToAllPlayers);
         for (var player : CommonInstances.platformPlayerProvider.allPlayers()) {
             playerUpdate(instance, player);

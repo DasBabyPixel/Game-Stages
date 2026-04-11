@@ -35,7 +35,7 @@ public class DataDrivenNetwork {
     @SuppressWarnings("DataFlowIssue")
     public static final StreamCodec<RegistryFriendlyByteBuf, NetworkData<?>> NETWORK_DATA_STREAM_CODEC = StreamCodec.composite(DATA_DRIVEN_R_TYPED_DATA_STREAM_CODEC, NetworkData::data, ByteBufCodecs.STRING_UTF8, NetworkData::factoryId, NetworkData::new);
     public static final StreamCodec<RegistryFriendlyByteBuf, DataDrivenTypedData<?>> DATA_DRIVEN_TYPED_DATA_STREAM_CODEC = DATA_DRIVEN_R_TYPED_DATA_STREAM_CODEC.map(DataDrivenRTypedData::toTypedData, r -> {
-        var type = DataDrivenTypes.instance().get(r.type()).unsafeCast(DataDrivenData.class);
+        var type = DataDrivenTypes.instance().get(r.type()).unsafeCast();
         return new DataDrivenRTypedData<>(type, r.data());
     });
     @SuppressWarnings("DataFlowIssue")
@@ -66,7 +66,7 @@ public class DataDrivenNetwork {
         });
     }
 
-    public record NetworkData<Data extends DataDrivenData>(DataDrivenRTypedData<Data> data, String factoryId) {
+    public record NetworkData<Data extends DataDrivenData<?, ?>>(DataDrivenRTypedData<Data> data, String factoryId) {
         public NetworkData(DataDrivenType<?, Data> type, Data data, String factoryId) {
             this(new DataDrivenRTypedData<>(type, data), factoryId);
         }

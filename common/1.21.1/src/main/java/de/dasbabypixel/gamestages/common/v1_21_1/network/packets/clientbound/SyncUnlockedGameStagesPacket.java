@@ -1,13 +1,11 @@
 package de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound;
 
-import de.dasbabypixel.gamestages.common.client.ClientPlayerStages;
+import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.client.network.ClientNetworkHandlers;
 import de.dasbabypixel.gamestages.common.data.GameStage;
-import de.dasbabypixel.gamestages.common.entity.Player;
 import de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.GameStagesPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.util.GameStagePayload;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -25,8 +23,8 @@ public record SyncUnlockedGameStagesPacket(List<GameStage> gameStages) implement
     @Override
     public void handle() {
         ClientNetworkHandlers.syncUnlockedGameStages(gameStages);
-        var player = (Player) Objects.requireNonNull(Minecraft.getInstance().player);
-        ((ClientPlayerStages) player.getGameStages()).syncUnlockedStages(gameStages);
+        var player = Objects.requireNonNull(CommonInstances.platformPlayerProvider.clientSelfPlayer());
+        player.getGameStages().syncUnlockedStages(gameStages);
     }
 
     @Override

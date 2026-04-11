@@ -3,7 +3,6 @@ package de.dasbabypixel.gamestages.common.client;
 import de.dasbabypixel.gamestages.common.addon.AddonManager;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.GameStage;
-import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.HashSet;
@@ -32,7 +31,9 @@ public class ClientPlayerStages extends BaseStages {
             }
         }
         updated.forEach(this::update);
-        compiledGameStages.values().forEach(CompiledRestrictionPredicate::test);
+        // TODO do we need to test eagerly?
+//        var compileIndex = get(CompileIndex.ATTRIBUTE);
+//        compileIndex.compiledGameStages().values().forEach(CompiledRestrictionPredicate::test);
         for (var addon : AddonManager.instance().addons()) {
             addon.clientPostSyncUnlockedStages(this);
         }

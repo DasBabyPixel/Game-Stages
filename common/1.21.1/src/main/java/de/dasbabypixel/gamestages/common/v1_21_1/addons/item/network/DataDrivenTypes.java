@@ -16,7 +16,7 @@ public class DataDrivenTypes {
     private DataDrivenTypes() {
     }
 
-    public <B extends ByteBuf, T extends DataDrivenData> DataDrivenType<B, T> register(DataDrivenType<B, T> type) {
+    public <B extends ByteBuf, T extends DataDrivenData<?, ?>> DataDrivenType<B, T> register(DataDrivenType<B, T> type) {
         this.types.put(type.type(), type);
         return type;
     }

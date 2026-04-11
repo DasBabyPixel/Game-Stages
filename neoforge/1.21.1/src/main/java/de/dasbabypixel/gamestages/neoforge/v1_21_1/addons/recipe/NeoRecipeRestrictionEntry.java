@@ -5,10 +5,10 @@ import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.RecompilationTask;
 import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
+import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
-import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionEntryPreCompiler;
 import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
 import de.dasbabypixel.gamestages.common.network.CustomPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeCollection;
@@ -17,7 +17,7 @@ import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeRestr
 import org.jspecify.annotations.NullMarked;
 
 @NullMarked
-public class NeoRecipeRestrictionEntry extends CommonRecipeRestrictionEntry<NeoRecipeRestrictionEntry, NeoRecipeRestrictionEntry.PreCompiled> {
+public class NeoRecipeRestrictionEntry extends CommonRecipeRestrictionEntry<NeoRecipeRestrictionEntry, NeoRecipeRestrictionEntry.PreCompiled, NeoRecipeRestrictionEntry.Compiled> {
     public NeoRecipeRestrictionEntry(PreparedRestrictionPredicate predicate, RestrictionEntryOrigin origin, GameContent targetRecipes) {
         super(predicate, origin, targetRecipes);
     }
@@ -31,26 +31,23 @@ public class NeoRecipeRestrictionEntry extends CommonRecipeRestrictionEntry<NeoR
     }
 
     @Override
-    public PreCompiled precompile(AbstractGameStageManager instance, RestrictionEntryPreCompiler preCompiler) {
+    public PreCompiled precompile(AbstractGameStageManager<?> instance) {
         var recipes = instance
                 .get(GameContentFlattener.Attribute.INSTANCE)
                 .flatten(targetRecipes(), CommonRecipeCollection.TYPE);
-        return new PreCompiled(recipes);
+        return new PreCompiled(this, predicate(), recipes, hideInJEI());
     }
 
-    @Override
-    public CompiledRestrictionEntry compile(RecompilationTask task, NeoRecipeRestrictionEntry.PreCompiled preCompiled) {
-        return new Compiled(this, preCompiled.recipes, task.predicateCompiler().compile(predicate()));
+    public record Compiled(PreCompiled preCompiled, CompiledRestrictionPredicate predicate,
+                           boolean hideInJEI) implements CompiledRestrictionEntry<Compiled, PreCompiled> {
     }
 
-    public record Compiled(NeoRecipeRestrictionEntry entry, CommonRecipeCollection gameContent,
-                           CompiledRestrictionPredicate predicate) implements CompiledRestrictionEntry {
+    public record PreCompiled(NeoRecipeRestrictionEntry entry, PreparedRestrictionPredicate predicate,
+                              CommonRecipeCollection gameContent,
+                              boolean hideInJEI) implements RestrictionEntry.PreCompiled<PreCompiled, Compiled> {
         @Override
-        public RestrictionEntryOrigin origin() {
-            return entry.origin();
+        public Compiled compile(RecompilationTask task) {
+            return new Compiled(this, task.predicateCompiler().compile(predicate), hideInJEI);
         }
-    }
-
-    public record PreCompiled(CommonRecipeCollection recipes) {
     }
 }

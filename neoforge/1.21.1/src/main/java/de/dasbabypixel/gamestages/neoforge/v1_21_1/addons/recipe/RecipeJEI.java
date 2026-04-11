@@ -16,21 +16,26 @@ public class RecipeJEI implements NeoAddonJEI {
     private @Nullable IJeiRuntime runtime;
 
     @Override
-    public void singleRefreshAll(AbstractGameStageManager instance, BaseStages stages) {
+    public void singleRefreshAll(AbstractGameStageManager<?> instance, BaseStages stages) {
         iterate(stages, CommonRecipeCollection.TYPE, entry -> {
-            if (entry instanceof NeoRecipeRestrictionEntry.Compiled(var e, var gameContent, var predicate)) {
-                if (!e.hideInJEI()) return;
-                System.out.println(gameContent.content().size() + ": " + predicate.test());
+            if (entry instanceof NeoRecipeRestrictionEntry.Compiled compiled) {
+                if (!compiled.hideInJEI()) return;
+                System.out.println(compiled.gameContent().content().size() + ": " + compiled.predicate().test());
             }
         });
     }
 
     @Override
-    public void postCompileAll(AbstractGameStageManager instance, BaseStages stages) {
+    public void postCompileAll(AbstractGameStageManager<?> instance, BaseStages stages) {
         iterate(stages, CommonRecipeCollection.TYPE, entry -> {
-            if (entry instanceof NeoRecipeRestrictionEntry.Compiled(var e, var gameContent, var predicate)) {
-                if (!e.hideInJEI()) return;
-                predicate.addNotifier(newTest -> System.out.println(gameContent.content().size() + ": " + newTest));
+            if (entry instanceof NeoRecipeRestrictionEntry.Compiled compiled) {
+                if (!compiled.hideInJEI()) return;
+                compiled
+                        .predicate()
+                        .addNotifier(newTest -> System.out.println(compiled
+                                .gameContent()
+                                .content()
+                                .size() + ": " + newTest));
             }
         });
 

@@ -84,7 +84,7 @@ public class CommonGameContentFlattener implements GameContentFlattener {
                 return completeFlattening(flatteners, requestType);
             }
             case CommonGameContent.FilterType(var base, var type) -> {
-                return flatten(base, type);
+                return flattenTyped(flatten(base, type), requestType);
             }
             case CommonGameContent.Mod(var modId) -> {
                 if (requestType == null) {
@@ -99,26 +99,31 @@ public class CommonGameContentFlattener implements GameContentFlattener {
                 }
             }
             case TypedGameContent typed -> {
-                var type = typed.type();
-                if (requestType == type) return typed;
-                if (requestType != null)
-                    return Objects.requireNonNull(FACTORY_BY_TYPE.get(requestType)).createUnion().complete();
-
-                var map = new HashMap<GameContentType<?>, TypedGameContent>();
-                for (var factory : FACTORIES) {
-                    if (factory.type() != type) {
-                        map.put(factory.type(), factory.createUnion().complete());
-                    } else {
-                        map.put(type, typed);
-                    }
-                }
-
-                return new FlattenedGameContent(map);
+                return flattenTyped(typed, requestType);
             }
             default -> throw new IllegalArgumentException("GameContent has illegal type: " + gameContent
                     .getClass()
                     .getName());
         }
+    }
+
+    private Object flattenTyped(TypedGameContent typed, @Nullable CommonGameContentType<?> requestType) {
+        var type = typed.type();
+        if (requestType == type) return typed;
+        if (requestType != null) {
+            return Objects.requireNonNull(FACTORY_BY_TYPE.get(requestType)).createUnion().complete();
+        }
+
+        var map = new HashMap<GameContentType<?>, TypedGameContent>();
+        for (var factory : FACTORIES) {
+            if (factory.type() != type) {
+                map.put(factory.type(), factory.createUnion().complete());
+            } else {
+                map.put(type, typed);
+            }
+        }
+
+        return new FlattenedGameContent(map);
     }
 
     private Object completeFlattening(List<Flattener0<?>> flatteners, @Nullable GameContentType<?> requestType) {
