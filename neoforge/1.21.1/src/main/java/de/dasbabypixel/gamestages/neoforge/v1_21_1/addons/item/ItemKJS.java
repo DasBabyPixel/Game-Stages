@@ -4,18 +4,20 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 import de.dasbabypixel.gamestages.common.addons.item.ItemAddon;
+import de.dasbabypixel.gamestages.common.addons.item.ItemCollection;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenData;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenTypedData;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestrictionEntry;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestrictionEntryReference;
-import de.dasbabypixel.gamestages.common.addons.item.datadriven.sequential.SequentialData;
-import de.dasbabypixel.gamestages.common.addons.item.datadriven.value.ValueData;
-import de.dasbabypixel.gamestages.common.data.GameContent;
+import de.dasbabypixel.gamestages.common.addons.item.datadriven.data.SequentialData;
+import de.dasbabypixel.gamestages.common.addons.item.datadriven.data.ValueData;
+import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemCollection;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemRestrictionEntry;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.datadriven.VItemStackRestrictionEntrySettings;
-import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.datadriven.predicate.PredicateData;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.datadriven.data.PredicateData;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenNetwork;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenTypes;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.EventRegistry;
@@ -31,7 +33,11 @@ import net.minecraft.resources.RegistryOps;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @NullMarked
 public class ItemKJS implements NeoAddonKJS {
@@ -73,7 +79,8 @@ public class ItemKJS implements NeoAddonKJS {
             public Object invoke(RegisterEventJS event, KubeJSContext cx, @Nullable RestrictContext restrictContext, Object[] args) {
                 var origin = RestrictionEntryOrigin.string(Objects.requireNonNull(SourceLine.of(cx)).toString());
                 var data = (DataDrivenTypedData<?>) Objects.requireNonNull(args[0]);
-                var items = ((ItemCollectionWrapper) Objects.requireNonNull(args[1])).content();
+                var flattener = event.stageManager().get(GameContentFlattener.Attribute.INSTANCE);
+                var items = flattener.flatten(((ItemCollectionWrapper) Objects.requireNonNull(args[1])).content(), CommonItemCollection.TYPE);
                 var dataDrivenType = DataDrivenTypes.instance().get(data.type()).unsafeCast();
                 var factoryId = "data_driven";
 
@@ -90,17 +97,17 @@ public class ItemKJS implements NeoAddonKJS {
     }
 
     private CommonItemRestrictionEntry restrictItems(RegisterEventJS event, KubeJSContext cx, Object[] args) {
-        return restrictItems(event, cx, (PreparedRestrictionPredicate) args[0], ((ItemCollectionWrapper) Objects.requireNonNull(args[1])).content());
+        var flattener = event.stageManager().get(GameContentFlattener.Attribute.INSTANCE);
+        return restrictItems(event, cx, (PreparedRestrictionPredicate) args[0], flattener.flatten(((ItemCollectionWrapper) Objects.requireNonNull(args[1])).content(), CommonItemCollection.TYPE));
     }
 
-    private CommonItemRestrictionEntry restrictItems(RegisterEventJS event, KubeJSContext cx, PreparedRestrictionPredicate predicate, GameContent itemsContent) {
+    private CommonItemRestrictionEntry restrictItems(RegisterEventJS event, KubeJSContext cx, PreparedRestrictionPredicate predicate, ItemCollection itemsContent) {
         var origin = RestrictionEntryOrigin.string(Objects.requireNonNull(SourceLine.of(cx)).toString());
         var dataDrivenType = DataDrivenTypes.instance().get(ValueData.TYPE).unsafeCast();
         var factoryId = "data_driven";
         var itemStackSettings = VItemStackRestrictionEntrySettings.instance();
         var itemStackRestrictionEntry = new ItemStackRestrictionEntry(predicate, itemStackSettings);
-        var reference = event
-                .stageManager()
+        var reference = event.stageManager()
                 .get(ItemAddon.STAGE_MANAGER_CONTEXT)
                 .addRestrictionEntry(itemStackRestrictionEntry);
         var data = new ValueData(reference);
@@ -145,14 +152,13 @@ public class ItemKJS implements NeoAddonKJS {
                     }
                     case "predicate" -> {
                         var json = (JsonObject) cx.jsToJava(map.remove("condition"), JSON_TYPE);
-                        var ops = RegistryOps.create(JsonOps.INSTANCE, Objects.requireNonNull(Objects
-                                .requireNonNull(cx.getRegistries())
+                        var ops = RegistryOps.create(JsonOps.INSTANCE, Objects.requireNonNull(Objects.requireNonNull(cx.getRegistries())
                                 .access()));
                         var predicateResult = Objects.requireNonNull(ItemPredicate.CODEC.parse(ops, json));
-                        if (predicateResult.isError()) throw new IllegalStateException(Objects
-                                .requireNonNull(predicateResult.error())
-                                .orElseThrow()
-                                .message());
+                        if (predicateResult.isError())
+                            throw new IllegalStateException(Objects.requireNonNull(predicateResult.error())
+                                    .orElseThrow()
+                                    .message());
                         var predicate = Objects.requireNonNull(predicateResult.result()).orElseThrow();
                         var reference = (ItemStackRestrictionEntryReference) Objects.requireNonNull(cx.jsToJava(map.remove("return"), RESTRICTION_ENTRY_REFERENCE_TYPE));
                         yield new PredicateData(predicate, reference);

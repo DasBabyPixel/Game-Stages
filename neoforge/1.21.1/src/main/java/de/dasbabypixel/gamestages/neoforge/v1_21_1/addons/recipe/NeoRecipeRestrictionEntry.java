@@ -1,8 +1,8 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe;
 
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
-import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.RecompilationTask;
+import de.dasbabypixel.gamestages.common.data.TypedGameContent;
 import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
@@ -18,22 +18,20 @@ import org.jspecify.annotations.NullMarked;
 
 @NullMarked
 public class NeoRecipeRestrictionEntry extends CommonRecipeRestrictionEntry<NeoRecipeRestrictionEntry, NeoRecipeRestrictionEntry.PreCompiled, NeoRecipeRestrictionEntry.Compiled> {
-    public NeoRecipeRestrictionEntry(PreparedRestrictionPredicate predicate, RestrictionEntryOrigin origin, GameContent targetRecipes) {
+    public NeoRecipeRestrictionEntry(PreparedRestrictionPredicate predicate, RestrictionEntryOrigin origin, TypedGameContent targetRecipes) {
         super(predicate, origin, targetRecipes);
     }
 
     @Override
     public CustomPacket createPacket(ServerGameStageManager instance) {
-        var recipes = instance
-                .get(GameContentFlattener.Attribute.INSTANCE)
+        var recipes = instance.get(GameContentFlattener.Attribute.INSTANCE)
                 .flatten(targetRecipes(), CommonRecipeCollection.TYPE);
         return new CommonRecipeRestrictionPacket(predicate(), recipes, origin().toString());
     }
 
     @Override
     public PreCompiled precompile(AbstractGameStageManager<?> instance) {
-        var recipes = instance
-                .get(GameContentFlattener.Attribute.INSTANCE)
+        var recipes = instance.get(GameContentFlattener.Attribute.INSTANCE)
                 .flatten(targetRecipes(), CommonRecipeCollection.TYPE);
         return new PreCompiled(this, predicate(), recipes, hideInJEI());
     }

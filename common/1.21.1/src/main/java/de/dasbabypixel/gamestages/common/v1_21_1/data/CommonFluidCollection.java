@@ -2,6 +2,7 @@ package de.dasbabypixel.gamestages.common.v1_21_1.data;
 
 import de.dasbabypixel.gamestages.common.addons.fluid.FluidCollection;
 import de.dasbabypixel.gamestages.common.data.GameContentType;
+import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -19,8 +20,7 @@ public record CommonFluidCollection(HolderSet<Fluid> fluids) implements FluidCol
     public static final CommonGameContentType<CommonFluidCollection> TYPE = new CommonGameContentType.AbstractGameContentType<>() {
         @Override
         public CommonFluidCollection modContent(String modId) {
-            var set = HolderSet.direct(BuiltInRegistries.FLUID
-                    .holders()
+            var set = HolderSet.direct(BuiltInRegistries.FLUID.holders()
                     .filter(r -> modId.equals(Objects.requireNonNull(r).key().location().getNamespace()))
                     .toList());
             return new CommonFluidCollection(set);
@@ -28,8 +28,7 @@ public record CommonFluidCollection(HolderSet<Fluid> fluids) implements FluidCol
     };
     public static final CommonFluidCollection EMPTY = new CommonFluidCollection(HolderSet.empty());
     @SuppressWarnings("DataFlowIssue")
-    public static final StreamCodec<RegistryFriendlyByteBuf, CommonFluidCollection> STREAM_CODEC = ByteBufCodecs
-            .holderSet(Registries.FLUID)
+    public static final StreamCodec<RegistryFriendlyByteBuf, CommonFluidCollection> STREAM_CODEC = ByteBufCodecs.holderSet(Registries.FLUID)
             .map(CommonFluidCollection::new, CommonFluidCollection::fluids);
     public static final CommonGameContentSerializer<CommonFluidCollection> SERIALIZER = () -> CommonFluidCollection.STREAM_CODEC;
 
@@ -39,8 +38,13 @@ public record CommonFluidCollection(HolderSet<Fluid> fluids) implements FluidCol
     }
 
     @Override
-    public Collection<Object> content() {
-        return fluids.stream().map(s -> (Object) s).toList();
+    public Iterable<Holder<Fluid>> content() {
+        return fluids;
+    }
+
+    @Override
+    public Collection<? extends Object> contentCollection() {
+        return fluids.stream().toList();
     }
 
     @Override

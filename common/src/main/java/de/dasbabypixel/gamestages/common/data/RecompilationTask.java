@@ -1,11 +1,12 @@
 package de.dasbabypixel.gamestages.common.data;
 
-import de.dasbabypixel.gamestages.common.addon.AddonManager;
 import de.dasbabypixel.gamestages.common.data.attribute.AbstractAttributeHolder;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.RestrictionPredicateCompiler;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
+
+import static de.dasbabypixel.gamestages.common.addon.Addon.*;
 
 @NullMarked
 public class RecompilationTask extends AbstractAttributeHolder<RecompilationTask> {
@@ -34,14 +35,10 @@ public class RecompilationTask extends AbstractAttributeHolder<RecompilationTask
     public void recompile() {
         var compileIndex = stages.get(BaseStages.CompileIndex.ATTRIBUTE);
         compileIndex.clear();
-        for (var addon : AddonManager.instance().addons()) {
-            addon.compileAllPre(this);
-        }
+        COMPILE_ALL_PRE_EVENT.call(new CompileAllPreEvent(this));
         recompileGameStages(compileIndex);
         recompileEntries(compileIndex);
-        for (var addon : AddonManager.instance().addons()) {
-            addon.compileAllPost(this);
-        }
+        COMPILE_ALL_POST_EVENT.call(new CompileAllPostEvent(this));
     }
 
     private void recompileEntries(BaseStages.CompileIndex compileIndex) {
@@ -54,11 +51,10 @@ public class RecompilationTask extends AbstractAttributeHolder<RecompilationTask
             compileIndex.compiledRestrictionEntries().add(compiledEntry);
             var type = restriction.gameContent().type();
             var typeIndex = typeIndexMap.computeIfAbsent(type, ignored -> new BaseStages.TypeIndex());
-            typeIndex.contentListByEntry().put(compiledEntry, List.copyOf(compiledEntry.gameContent().content()));
+            typeIndex.contentListByEntry()
+                    .put(compiledEntry, List.copyOf(compiledEntry.gameContent().contentCollection()));
 
-            for (var addon : AddonManager.instance().addons()) {
-                addon.compilePost(this, compiledEntry);
-            }
+            COMPILE_POST_EVENT.call(new CompilePostEvent(this, compiledEntry));
         }
     }
 

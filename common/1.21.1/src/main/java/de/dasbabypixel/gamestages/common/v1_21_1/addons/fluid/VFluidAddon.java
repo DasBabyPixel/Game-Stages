@@ -1,7 +1,6 @@
 package de.dasbabypixel.gamestages.common.v1_21_1.addons.fluid;
 
 import de.dasbabypixel.gamestages.common.addon.ContentRegistry;
-import de.dasbabypixel.gamestages.common.v1_21_1.addon.PacketRegistry;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VContentRegistry;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonFluidCollection;
@@ -17,11 +16,12 @@ public abstract class VFluidAddon implements VAddon {
 
     public VFluidAddon() {
         instance = this;
+        REGISTER_CUSTOM_CONTENT_EVENT.addListener(this::handle);
+        REGISTER_PACKETS_EVENT.addListener(this::handle);
     }
 
-    @Override
-    public void registerCustomContent(ContentRegistry registry) {
-        registry
+    private void handle(RegisterCustomContentEvent event) {
+        event.contentRegistry()
                 .prepare(CommonFluidCollection.TYPE)
                 .set(ContentRegistry.NAME, "fluid")
                 .set(ContentRegistry.FLATTENER_FACTORY, new FluidFlattenerFactory())
@@ -29,8 +29,8 @@ public abstract class VFluidAddon implements VAddon {
                 .register();
     }
 
-    @Override
-    public void registerPackets(PacketRegistry registry) {
+    private void handle(RegisterPacketsEvent event) {
+        var registry = event.registry();
         registry.playClientBound(CommonFluidRestrictionPacket.TYPE, CommonFluidRestrictionPacket.STREAM_CODEC);
     }
 

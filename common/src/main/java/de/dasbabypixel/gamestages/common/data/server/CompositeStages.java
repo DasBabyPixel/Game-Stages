@@ -1,5 +1,6 @@
 package de.dasbabypixel.gamestages.common.data.server;
 
+import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.GameStage;
 import org.jspecify.annotations.NullMarked;
@@ -12,8 +13,8 @@ public class CompositeStages extends BaseStages {
     private final Set<PlayerStages> dependencies;
     private boolean valid = false;
 
-    public CompositeStages(Set<PlayerStages> dependencies) {
-        super(Set.of());
+    public CompositeStages(AbstractGameStageManager<?> manager, Set<PlayerStages> dependencies) {
+        super(manager, Set.of());
         this.dependencies = dependencies;
     }
 
@@ -22,7 +23,7 @@ public class CompositeStages extends BaseStages {
     }
 
     @Override
-    protected Set<GameStage> getUnlockedStages() {
+    public Set<GameStage> getUnlockedStages() {
         var set = super.getUnlockedStages();
         if (valid) return set;
 

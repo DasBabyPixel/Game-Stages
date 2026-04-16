@@ -1,7 +1,6 @@
 package de.dasbabypixel.gamestages.common.data.restriction;
 
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
-import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.RecompilationTask;
 import de.dasbabypixel.gamestages.common.data.TypedGameContent;
 import de.dasbabypixel.gamestages.common.data.compilation.CompilableResource;
@@ -12,14 +11,14 @@ import org.jspecify.annotations.NullMarked;
 
 @NullMarked
 public interface RestrictionEntry<T extends RestrictionEntry<T, P, C>, P extends RestrictionEntry.PreCompiled<P, C>, C extends CompiledRestrictionEntry<C, P>> extends CompilableResource<AbstractGameStageManager<?>, P, RecompilationTask, C> {
-    GameContent gameContent();
+    TypedGameContent gameContent();
 
     RestrictionEntryOrigin origin();
 
-    CustomPacket createPacket(ServerGameStageManager serverGameStageManager);
+    CustomPacket createPacket(ServerGameStageManager manager);
 
     @Override
-    P precompile(AbstractGameStageManager<?> abstractGameStageManager);
+    P precompile(AbstractGameStageManager<?> manager);
 
     @SuppressWarnings("unchecked")
     default T self() {

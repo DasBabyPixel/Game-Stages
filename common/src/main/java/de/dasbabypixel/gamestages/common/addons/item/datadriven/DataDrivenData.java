@@ -5,13 +5,21 @@ import de.dasbabypixel.gamestages.common.data.RecompilationTask;
 import de.dasbabypixel.gamestages.common.data.compilation.CompilableResource;
 import org.jspecify.annotations.NullMarked;
 
-@NullMarked
-public interface DataDrivenData<PreCompiled extends DataDrivenData.PreCompiled<Compiled>, Compiled extends CompiledResolverAlgorithm> extends CompilableResource<AbstractGameStageManager<?>, PreCompiled, RecompilationTask, Compiled> {
-    @Override
-    PreCompiled precompile(AbstractGameStageManager<?> abstractGameStageManager);
+import java.util.List;
 
-    interface PreCompiled<Compiled extends CompiledResolverAlgorithm> extends CompilableResource.PreCompiled<RecompilationTask, Compiled> {
+@NullMarked
+public interface DataDrivenData<P extends DataDrivenData.PreCompiled<?, C>, C extends DataDrivenData.Compiled<?>> extends CompilableResource<AbstractGameStageManager<?>, P, RecompilationTask, C> {
+    @Override
+    P precompile(AbstractGameStageManager<?> abstractGameStageManager);
+
+    interface PreCompiled<CustomData, C extends Compiled<?>> extends CompilableResource.PreCompiled<RecompilationTask, C>, ResolverAlgorithmData<CustomData, ItemStackRestrictionEntry> {
         @Override
-        Compiled compile(RecompilationTask recompilationTask);
+        C compile(RecompilationTask recompilationTask);
+
+        @Override
+        List<ItemStackRestrictionEntry> entries();
+    }
+
+    interface Compiled<CustomData> extends ResolverAlgorithmData<CustomData, CompiledItemStackRestrictionEntry> {
     }
 }

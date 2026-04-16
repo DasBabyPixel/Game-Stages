@@ -3,7 +3,6 @@ package de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe;
 import de.dasbabypixel.gamestages.common.addon.ContentRegistry;
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.attribute.Attribute;
-import de.dasbabypixel.gamestages.common.v1_21_1.addon.PacketRegistry;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VContentRegistry;
 import org.jspecify.annotations.NullMarked;
@@ -18,11 +17,13 @@ public abstract class VRecipeAddon implements VAddon {
 
     public VRecipeAddon() {
         instance = this;
+        REGISTER_CUSTOM_CONTENT_EVENT.addListener(this::handle);
+        REGISTER_PACKETS_EVENT.addListener(this::handle);
+        SERVER_BUILD_DEPENDENCY_GRAPH_EVENT.addListener(this::handle);
     }
 
-    @Override
-    public void registerCustomContent(ContentRegistry registry) {
-        registry
+    private void handle(RegisterCustomContentEvent event) {
+        event.contentRegistry()
                 .prepare(CommonRecipeCollection.TYPE)
                 .set(ContentRegistry.NAME, "recipe")
                 .set(ContentRegistry.FLATTENER_FACTORY, new RecipeFlattenerFactory())
@@ -30,8 +31,12 @@ public abstract class VRecipeAddon implements VAddon {
                 .register();
     }
 
-    @Override
-    public void registerPackets(PacketRegistry registry) {
+    private void handle(ServerBuildDependencyGraphEvent event) {
+        var graph = event.dependencyGraph();
+    }
+
+    private void handle(RegisterPacketsEvent event) {
+        var registry = event.registry();
         registry.playClientBound(CommonRecipeRestrictionPacket.TYPE, CommonRecipeRestrictionPacket.STREAM_CODEC);
     }
 

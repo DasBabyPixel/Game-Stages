@@ -28,8 +28,7 @@ public record CommonRecipeCollection(List<ResourceLocation> recipes) implements 
     public static final CommonGameContentType<CommonRecipeCollection> TYPE = new CommonGameContentType.AbstractGameContentType<>() {
         @Override
         public CommonRecipeCollection modContent(String modId) {
-            var recipes = Objects
-                    .requireNonNull(recipeManager)
+            var recipes = Objects.requireNonNull(recipeManager, "RecipeManager is null")
                     .getRecipes()
                     .stream()
                     .filter(Objects::nonNull)
@@ -51,6 +50,11 @@ public record CommonRecipeCollection(List<ResourceLocation> recipes) implements 
 
     @Override
     public Collection<? extends Object> content() {
+        return recipes;
+    }
+
+    @Override
+    public Collection<? extends Object> contentCollection() {
         return recipes;
     }
 

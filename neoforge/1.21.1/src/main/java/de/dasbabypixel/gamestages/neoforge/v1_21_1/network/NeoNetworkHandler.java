@@ -1,12 +1,13 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.network;
 
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.PacketRegistry;
+import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon;
+import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon.RegisterPacketsEvent;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.GameStagesPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.StatusPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.SyncRegisteredGameStagesPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.SyncUnlockedGameStagesPacket;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.NeoForgeEntrypoint;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -27,9 +28,7 @@ public class NeoNetworkHandler {
         registrar.executesOn(HandlerThread.NETWORK);
 
         var registry = new PacketRegistryImpl(registrar);
-        for (var addon : NeoAddonManager.instance().addons()) {
-            addon.registerPackets(registry);
-        }
+        VAddon.REGISTER_PACKETS_EVENT.call(new RegisterPacketsEvent(registry));
 
         registry.playClientBound(SyncRegisteredGameStagesPacket.TYPE, SyncRegisteredGameStagesPacket.STREAM_CODEC);
         registry.playClientBound(SyncUnlockedGameStagesPacket.TYPE, SyncUnlockedGameStagesPacket.STREAM_CODEC);

@@ -8,7 +8,9 @@ import java.util.Collection;
 public interface TypedGameContent extends GameContent {
     GameContentType<?> type();
 
-    Collection<? extends Object> content();
+    Iterable<? extends Object> content();
+
+    Collection<? extends Object> contentCollection();
 
     boolean isEmpty();
 }

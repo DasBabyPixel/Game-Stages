@@ -1,6 +1,6 @@
 package de.dasbabypixel.gamestages.common.addons.fluid;
 
-import de.dasbabypixel.gamestages.common.data.GameContent;
+import de.dasbabypixel.gamestages.common.data.TypedGameContent;
 import de.dasbabypixel.gamestages.common.data.restriction.AbstractRestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
@@ -10,11 +10,11 @@ import org.jspecify.annotations.NullMarked;
 
 @NullMarked
 public abstract class AbstractFluidRestrictionEntry<T extends AbstractFluidRestrictionEntry<T, P, C>, P extends RestrictionEntry.PreCompiled<P, C>, C extends CompiledRestrictionEntry<C, P>> extends AbstractRestrictionEntry<T, P, C> implements FluidRestrictionEntry<T, P, C> {
-    private final GameContent targetFluids;
+    private final TypedGameContent targetFluids;
     private final PreparedRestrictionPredicate predicate;
     private boolean hideInJEI = true;
 
-    public AbstractFluidRestrictionEntry(PreparedRestrictionPredicate predicate, RestrictionEntryOrigin origin, GameContent targetFluids) {
+    public AbstractFluidRestrictionEntry(PreparedRestrictionPredicate predicate, RestrictionEntryOrigin origin, TypedGameContent targetFluids) {
         super(origin);
         this.predicate = predicate;
         this.targetFluids = targetFluids;
@@ -25,7 +25,7 @@ public abstract class AbstractFluidRestrictionEntry<T extends AbstractFluidRestr
     }
 
     @Override
-    public GameContent targetFluids() {
+    public TypedGameContent targetFluids() {
         return targetFluids;
     }
 

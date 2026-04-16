@@ -8,9 +8,7 @@ import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestric
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.RecompilationTask;
 import de.dasbabypixel.gamestages.common.data.attribute.Attribute;
-import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
 import de.dasbabypixel.gamestages.common.network.CustomPacket;
-import de.dasbabypixel.gamestages.common.network.PacketConsumer;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -25,10 +23,14 @@ public abstract class ItemAddon implements Addon {
 
     public ItemAddon() {
         instance = this;
+        NETWORK_SYNC_CONFIG_EVENT.addListener(this::handle);
+        COMPILE_ALL_PRE_EVENT.addListener(this::handle);
+        RELOAD_POST_EVENT.addListener(this::handle);
+        PRE_COMPILE_PREPARE_EVENT.addListener(this::handle);
     }
 
-    @Override
-    public void compileAllPre(RecompilationTask recompilationTask) {
+    private void handle(CompileAllPreEvent event) {
+        var recompilationTask = event.recompilationTask();
         var context = recompilationTask.instance().get(STAGE_MANAGER_CONTEXT);
         var compilationContext = recompilationTask.get(CompilationContext.ATTRIBUTE);
         for (var entry : context.restrictionEntryMap.entrySet()) {
@@ -38,9 +40,9 @@ public abstract class ItemAddon implements Addon {
         }
     }
 
-    @Override
-    public void onSyncConfigToPlayer(ServerGameStageManager instance, PacketConsumer packetConsumer) {
-        Addon.super.onSyncConfigToPlayer(instance, packetConsumer);
+    private void handle(NetworkSyncConfigEvent event) {
+        var instance = event.manager();
+        var packetConsumer = event.packetConsumer();
         for (var entry : instance.get(STAGE_MANAGER_CONTEXT).restrictionEntryMap.entrySet()) {
             assert entry != null;
             var packet = createPacket(entry.getKey(), entry.getValue());
@@ -48,14 +50,16 @@ public abstract class ItemAddon implements Addon {
         }
     }
 
-    @Override
-    public void reloadPost(AbstractGameStageManager<?> instance) {
-        var preCompileContext = instance.get(PreCompileContext.ATTRIBUTE);
+    private void handle(PreCompilePrepareEvent event) {
+        var manager = event.manager();
+        var preCompileContext = manager.get(PreCompileContext.ATTRIBUTE);
         if (!preCompileContext.factoryContextMap.isEmpty()) throw new IllegalStateException();
-        Addon.super.reloadPost(instance);
         for (var factory : ItemStackRestrictionResolverFactories.instance().getAll()) {
-            preCompileContext.factoryContextMap.put(factory, factory.createContext(instance));
+            preCompileContext.factoryContextMap.put(factory, factory.createContext(manager));
         }
+    }
+
+    private void handle(ReloadPostEvent event) {
     }
 
     protected abstract CustomPacket createPacket(ItemStackRestrictionEntryReference reference, ItemStackRestrictionEntry entry);

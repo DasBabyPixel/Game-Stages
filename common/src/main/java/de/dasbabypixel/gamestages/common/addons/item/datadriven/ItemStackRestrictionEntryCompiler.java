@@ -12,6 +12,11 @@ public class ItemStackRestrictionEntryCompiler {
             private final CompiledRestrictionPredicate predicate = compiledPredicate;
 
             @Override
+            public ItemStackRestrictionEntry entry() {
+                return entry;
+            }
+
+            @Override
             public CompiledRestrictionPredicate predicate() {
                 return predicate;
             }

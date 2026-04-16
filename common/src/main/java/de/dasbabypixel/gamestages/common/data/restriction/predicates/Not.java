@@ -1,12 +1,14 @@
 package de.dasbabypixel.gamestages.common.data.restriction.predicates;
 
-import de.dasbabypixel.gamestages.common.data.BaseStages;
+import de.dasbabypixel.gamestages.common.data.restriction.CompositePreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionPredicate;
-import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
 import org.jspecify.annotations.NullMarked;
+import org.logicng.formulas.Formula;
+import org.logicng.formulas.FormulaFactory;
 
 import java.util.List;
+import java.util.Objects;
 
 @NullMarked
 public record Not() implements RestrictionPredicate {
@@ -18,17 +20,37 @@ public record Not() implements RestrictionPredicate {
     }
 
     @Override
-    public boolean test(List<? extends CompiledRestrictionPredicate> dependencies, BaseStages stages) {
-        return !dependencies.getFirst().test();
+    public PreparedRestrictionPredicate prepare(List<PreparedRestrictionPredicate> dependencies) {
+        if (!accepts(dependencies)) throw new IllegalStateException();
+        var dep = dependencies.getFirst();
+        var predicate = dep.predicate();
+        return switch (predicate) {
+            case True ignored -> False.INSTANCE.prepare();
+            case False ignored -> True.INSTANCE.prepare();
+            case Not ignored -> ((CompositePreparedRestrictionPredicate) dep).dependencies().getFirst();
+            default -> RestrictionPredicate.super.prepare(dependencies);
+        };
     }
 
     @Override
-    public PreparedRestrictionPredicate prepare(List<PreparedRestrictionPredicate> dependencies) {
-        if (!accepts(dependencies)) throw new IllegalStateException();
-        var predicate = dependencies.getFirst().predicate();
-        if (predicate instanceof True) return False.INSTANCE.prepare();
-        if (predicate instanceof False) return True.INSTANCE.prepare();
-        return RestrictionPredicate.super.prepare(dependencies);
+    public Formula convertToLogicNG(FormulaFactory factory, Formula[] dependencies) {
+        if (dependencies.length != 1) throw new IllegalArgumentException();
+        return Objects.requireNonNull(factory.not(dependencies[0]));
+    }
+
+    @Override
+    public boolean equals(List<PreparedRestrictionPredicate> dependencies1, List<PreparedRestrictionPredicate> dependencies2) {
+        return dependencies1.getFirst().equals(dependencies2.getFirst());
+    }
+
+    @Override
+    public int hash(List<PreparedRestrictionPredicate> dependencies) {
+        return Objects.hash(this, dependencies);
+    }
+
+    @Override
+    public int hashCode() {
+        return 0x13c0a42d;
     }
 
     @Override

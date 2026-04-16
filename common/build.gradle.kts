@@ -23,4 +23,5 @@ sourceSets {
 dependencies {
     compileOnly(projects.compileHacks)
     api("org.jspecify:jspecify:1.0.0")
+    api("org.logicng:logicng:2.6.0")
 }

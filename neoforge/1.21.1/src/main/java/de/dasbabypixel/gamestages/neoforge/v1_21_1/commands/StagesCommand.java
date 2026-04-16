@@ -19,6 +19,7 @@ import org.jspecify.annotations.NullMarked;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 @NullMarked
 public class StagesCommand {
@@ -40,8 +41,7 @@ public class StagesCommand {
                                 .suggests((context, builder) -> {
                                     // @formatter:on
                                     Collection<net.minecraft.server.level.ServerPlayer> targets = EntityArgument.getPlayers(context, "target");
-                                    return SharedSuggestionProvider.suggest(targets
-                                            .stream()
+                                    return SharedSuggestionProvider.suggest(targets.stream()
                                             .map(ServerPlayer::getGameStages)
                                             .map(BaseStages::getAll)
                                             .flatMap(Set::stream)
@@ -72,8 +72,7 @@ public class StagesCommand {
         var player = Objects.requireNonNull(context.getSource().getPlayer());
         var stack = player.getItemInHand(InteractionHand.MAIN_HAND);
         var entry = VItemAddon.getEntry(player.getGameStages(), stack, stack);
-        var msg = entry == null ? "No restriction" : (entry.predicate().predicate() + " -> " + entry
-                                                                                               .predicate()
+        var msg = entry == null ? "No restriction" : (entry.predicate().predicate() + " -> " + entry.predicate()
                                                                                                .test());
         player.sendSystemMessage(Component.literal(msg));
         return 0;
@@ -98,11 +97,16 @@ public class StagesCommand {
         var cnt = 0;
         for (var player : players) {
             Objects.requireNonNull(player);
-            if (player.getGameStages().add(stage)) cnt++;
+            var time1 = System.nanoTime();
+            if (player.getGameStages().add(stage)) {
+                cnt++;
+                var took = System.nanoTime() - time1;
+                context.getSource()
+                        .sendSuccess(() -> Component.literal("Took " + TimeUnit.NANOSECONDS.toMicros(took) + "µs for " + player.getName()), true);
+            }
         }
         var fcnt = cnt;
-        context
-                .getSource()
+        context.getSource()
                 .sendSuccess(() -> Component.literal("Added stage " + stage + " to " + fcnt + " players"), true);
         return 0;
     }
@@ -113,11 +117,16 @@ public class StagesCommand {
         var cnt = 0;
         for (var player : players) {
             Objects.requireNonNull(player);
-            if (player.getGameStages().remove(stage)) cnt++;
+            var time1 = System.nanoTime();
+            if (player.getGameStages().remove(stage)) {
+                cnt++;
+                var took = System.nanoTime() - time1;
+                context.getSource()
+                        .sendSuccess(() -> Component.literal("Took " + TimeUnit.NANOSECONDS.toMicros(took) + "µs for " + player.getName()), true);
+            }
         }
         var fcnt = cnt;
-        context
-                .getSource()
+        context.getSource()
                 .sendSuccess(() -> Component.literal("Removed stage " + stage + " from " + fcnt + " players"), true);
         return 0;
     }

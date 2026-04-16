@@ -6,7 +6,11 @@ import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -53,7 +57,7 @@ public class PlayerStages extends ServerStages {
     }
 
     @Override
-    protected Set<GameStage> getUnlockedStages() {
+    public Set<GameStage> getUnlockedStages() {
         if (!valid) throw new IllegalStateException();
         return super.getUnlockedStages();
     }

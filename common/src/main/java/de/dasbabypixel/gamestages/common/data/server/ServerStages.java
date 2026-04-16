@@ -7,7 +7,11 @@ import de.dasbabypixel.gamestages.common.data.server.StagesFileProvider.Key;
 import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
 import org.jspecify.annotations.NullMarked;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 @NullMarked
 public abstract class ServerStages extends BaseStages {
@@ -16,7 +20,7 @@ public abstract class ServerStages extends BaseStages {
     protected final Set<CompositeStages> compositeDependencies = new HashSet<>();
 
     public ServerStages(ServerGameStageManager manager, Key key, StagesFileProvider.StagesFile stagesFile) {
-        super(stagesFile.stages());
+        super(manager, stagesFile.stages());
         this.manager = manager;
         this.key = key;
     }

@@ -20,7 +20,8 @@ public class RecipeJEI implements NeoAddonJEI {
         iterate(stages, CommonRecipeCollection.TYPE, entry -> {
             if (entry instanceof NeoRecipeRestrictionEntry.Compiled compiled) {
                 if (!compiled.hideInJEI()) return;
-                System.out.println(compiled.gameContent().content().size() + ": " + compiled.predicate().test());
+                System.out.println(compiled.gameContent().contentCollection().size() + ": " + compiled.predicate()
+                        .test());
             }
         });
     }
@@ -30,19 +31,16 @@ public class RecipeJEI implements NeoAddonJEI {
         iterate(stages, CommonRecipeCollection.TYPE, entry -> {
             if (entry instanceof NeoRecipeRestrictionEntry.Compiled compiled) {
                 if (!compiled.hideInJEI()) return;
-                compiled
-                        .predicate()
-                        .addNotifier(newTest -> System.out.println(compiled
-                                .gameContent()
-                                .content()
+                compiled.predicate()
+                        .addNotifier(newTest -> System.out.println(compiled.gameContent()
+                                .contentCollection()
                                 .size() + ": " + newTest));
             }
         });
 
 //        var player = stages.getPlayer();
 //        var registries = ((Player) player).registryAccess();
-        Objects
-                .requireNonNull(runtime)
+        Objects.requireNonNull(runtime)
                 .getRecipeManager()
                 .createRecipeLookup(RecipeTypes.CRAFTING)
                 .includeHidden()

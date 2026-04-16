@@ -5,6 +5,7 @@ import de.dasbabypixel.gamestages.common.data.GameContentType;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContent;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContentSerializer;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContentType;
+import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -22,15 +23,13 @@ import java.util.Objects;
 public record CommonItemCollection(HolderSet<Item> items) implements ItemCollection, CommonGameContent {
     public static final CommonItemCollection EMPTY = new CommonItemCollection(HolderSet.empty());
     @SuppressWarnings("DataFlowIssue")
-    public static final StreamCodec<RegistryFriendlyByteBuf, CommonItemCollection> STREAM_CODEC = ByteBufCodecs
-            .holderSet(Registries.ITEM)
+    public static final StreamCodec<RegistryFriendlyByteBuf, CommonItemCollection> STREAM_CODEC = ByteBufCodecs.holderSet(Registries.ITEM)
             .map(CommonItemCollection::new, CommonItemCollection::items);
     public static final CommonGameContentSerializer<CommonItemCollection> SERIALIZER = () -> CommonItemCollection.STREAM_CODEC;
     public static final CommonGameContentType<CommonItemCollection> TYPE = new CommonGameContentType.AbstractGameContentType<>() {
         @Override
         public CommonItemCollection modContent(String modId) {
-            var set = HolderSet.direct(BuiltInRegistries.ITEM
-                    .holders()
+            var set = HolderSet.direct(BuiltInRegistries.ITEM.holders()
                     .filter(r -> modId.equals(Objects.requireNonNull(r).key().location().getNamespace()))
                     .filter(r -> !(r.value() instanceof AirItem))
                     .toList());
@@ -49,8 +48,13 @@ public record CommonItemCollection(HolderSet<Item> items) implements ItemCollect
     }
 
     @Override
-    public Collection<Object> content() {
-        return items.stream().map(s -> (Object) s).toList();
+    public Iterable<Holder<Item>> content() {
+        return items;
+    }
+
+    @Override
+    public Collection<? extends Object> contentCollection() {
+        return items.stream().toList();
     }
 
     @Override

@@ -1,14 +1,22 @@
 package de.dasbabypixel.gamestages.common.data;
 
+import de.dasbabypixel.gamestages.common.addon.Addon.PreCompilePrepareEvent;
 import de.dasbabypixel.gamestages.common.data.attribute.AbstractAttributeHolder;
 import de.dasbabypixel.gamestages.common.data.attribute.Attribute;
-import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.data.restriction.DuplicateReport;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
+import static de.dasbabypixel.gamestages.common.addon.Addon.PRE_COMPILE_PREPARE_EVENT;
 
 @NullMarked
 public abstract class AbstractGameStageManager<H extends AbstractGameStageManager<H>> extends AbstractAttributeHolder<H> {
@@ -39,49 +47,48 @@ public abstract class AbstractGameStageManager<H extends AbstractGameStageManage
         gameStages.forEach(this::add);
     }
 
-    public void precompileRestrictions() {
-        var flattener = get(GameContentFlattener.Attribute.INSTANCE);
-
+    public void preparePrecompileRestrictions() {
+        PRE_COMPILE_PREPARE_EVENT.call(new PreCompilePrepareEvent(this));
         var preCompileIndex = get(PreCompileIndex.ATTRIBUTE);
-        var typeIndexMap = preCompileIndex.typeIndexMap;
-        typeIndexMap.clear();
+        preCompileIndex.clear();
+    }
+
+    public void precompileRestrictions() {
+        var preCompileIndex = get(PreCompileIndex.ATTRIBUTE);
 
         var duplicates = new HashMap<GameContentType<?>, Map<Object, Set<RestrictionEntry.PreCompiled<?, ?>>>>(0);
 
-        for (var entry : restrictions()) {
-            var flattened = flattener.flatten(entry.gameContent());
-            var preCompiled = entry.precompile(this);
+        for (var restriction : restrictions()) {
+            var preCompiled = restriction.precompile(this);
+            var typed = restriction.gameContent();
+            var type = typed.type();
             preCompileIndex.entries.add(preCompiled);
 
-            for (var type : flattened.types()) {
-                var typed = flattened.get(type);
-                if (typed.isEmpty()) continue;
-                var typeIndex = typeIndexMap.computeIfAbsent(type, ignored -> new TypeIndex());
+            if (typed.isEmpty()) continue;
+            var typeIndex = preCompileIndex.typeIndex(type);
 
-                typeIndex.entries.add(preCompiled);
+            typeIndex.entries.add(preCompiled);
 
-                for (var content : typed.content()) {
-                    if (typeIndex.preCompiledByContent.containsKey(content)) {
-                        duplicates
-                                .computeIfAbsent(type, ignored -> new HashMap<>())
-                                .computeIfAbsent(content, ignored -> new HashSet<>())
-                                .add(preCompiled);
-                    } else {
-                        typeIndex.preCompiledByContent.put(content, preCompiled);
-                    }
+            for (var content : typed.content()) {
+                if (typeIndex.preCompiledByContent.containsKey(content)) {
+                    duplicates.computeIfAbsent(type, ignored -> new HashMap<>())
+                            .computeIfAbsent(content, ignored -> new HashSet<>())
+                            .add(preCompiled);
+                } else {
+                    typeIndex.preCompiledByContent.put(content, preCompiled);
                 }
             }
         }
 
-        var reports = collectDuplicateReports(typeIndexMap, duplicates);
+        var reports = collectDuplicateReports(preCompileIndex.typeIndexMap, duplicates);
 
         if (!reports.isEmpty()) {
-            typeIndexMap.clear();
+            preCompileIndex.clear();
             throw new DuplicatesException(reports);
         }
     }
 
-    private List<DuplicateReport> collectDuplicateReports(Map<GameContentType<?>, TypeIndex> typeIndexMap, Map<GameContentType<?>, Map<Object, Set<RestrictionEntry.PreCompiled<?, ?>>>> duplicatesByType) {
+    private List<DuplicateReport> collectDuplicateReports(Map<GameContentType<?>, TypeIndex<?>> typeIndexMap, Map<GameContentType<?>, Map<Object, Set<RestrictionEntry.PreCompiled<?, ?>>>> duplicatesByType) {
         if (duplicatesByType.isEmpty()) return List.of();
         var reports = new ArrayList<DuplicateReport>();
         for (var entry : duplicatesByType.entrySet()) {
@@ -133,15 +140,30 @@ public abstract class AbstractGameStageManager<H extends AbstractGameStageManage
         public static final Attribute<AbstractGameStageManager<?>, PreCompileIndex> ATTRIBUTE = new Attribute<>(PreCompileIndex::new);
 
         private final Set<RestrictionEntry.PreCompiled<?, ?>> entries = new HashSet<>();
-        private final Map<GameContentType<?>, TypeIndex> typeIndexMap = new HashMap<>();
+        private final Map<GameContentType<?>, TypeIndex<?>> typeIndexMap = new HashMap<>();
 
         public Set<RestrictionEntry.PreCompiled<?, ?>> preCompiledRestrictions() {
             return entries;
         }
+
+        @SuppressWarnings("unchecked")
+        public <Type extends TypedGameContent> TypeIndex<Type> typeIndex(GameContentType<Type> type) {
+            return (TypeIndex<Type>) typeIndexMap.computeIfAbsent(type, ignored -> new TypeIndex<>());
+        }
+
+        private void clear() {
+            entries.clear();
+            typeIndexMap.clear();
+        }
     }
 
-    public static final class TypeIndex {
+    public static final class TypeIndex<Type extends TypedGameContent> {
         private final Set<RestrictionEntry.PreCompiled<?, ?>> entries = new HashSet<>();
         private final Map<Object, RestrictionEntry.PreCompiled<?, ?>> preCompiledByContent = new HashMap<>();
+
+        @SuppressWarnings("unchecked")
+        public <PC extends RestrictionEntry.PreCompiled<?, ?>> Set<PC> entries() {
+            return (Set<PC>) entries;
+        }
     }
 }

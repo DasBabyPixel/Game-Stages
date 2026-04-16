@@ -24,24 +24,29 @@ public class DataDrivenResolverFactory extends ItemStackRestrictionResolverFacto
     @Override
     protected PreCompiled<?> precompileInternal(DataDrivenTypedData<?> data, Context context) {
         var pc = data.data().precompile(context.instance());
-        return new PreCompiled<>(pc);
+        return new PreCompiled<>(pc, pc.entries());
     }
 
-    public record PreCompiled<Compiled extends CompiledResolverAlgorithm>(
-            DataDrivenData.PreCompiled<Compiled> preCompiled) implements ItemStackRestrictionResolverFactory.PreCompiled {
+    public record PreCompiled<Compiled extends DataDrivenData.Compiled<?>>(
+            DataDrivenData.PreCompiled<?, Compiled> preCompiled,
+            List<ItemStackRestrictionEntry> entries) implements ItemStackRestrictionResolverFactory.PreCompiled {
+        public PreCompiled {
+            entries = List.copyOf(entries);
+        }
+
+        @Override
+        public @Nullable ItemStackRestrictionEntry resolve(ItemStack itemStack) {
+            return preCompiled.resolve(itemStack);
+        }
+
         @Override
         public ItemStackRestrictionResolver compile(RecompilationTask task) {
             return new ItemStackRestrictionResolver() {
-                private final CompiledResolverAlgorithm algorithm = preCompiled.compile(task);
+                private final ResolverAlgorithmData<?, CompiledItemStackRestrictionEntry> data = preCompiled.compile(task);
 
                 @Override
                 public @Nullable CompiledItemStackRestrictionEntry resolveRestrictionEntry(ItemStack itemStack) {
-                    return algorithm.resolve(itemStack);
-                }
-
-                @Override
-                public List<CompiledItemStackRestrictionEntry> restrictionEntries() {
-                    return algorithm.entries();
+                    return data.resolve(itemStack);
                 }
             };
         }

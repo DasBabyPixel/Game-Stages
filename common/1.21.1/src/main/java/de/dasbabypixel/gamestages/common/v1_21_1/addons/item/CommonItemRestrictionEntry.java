@@ -1,11 +1,14 @@
 package de.dasbabypixel.gamestages.common.v1_21_1.addons.item;
 
-import de.dasbabypixel.gamestages.common.addons.item.*;
+import de.dasbabypixel.gamestages.common.addons.item.AbstractItemRestrictionEntry;
+import de.dasbabypixel.gamestages.common.addons.item.ItemAddon;
+import de.dasbabypixel.gamestages.common.addons.item.ItemCollection;
+import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolver;
+import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolverFactories;
+import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolverFactory;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenTypedData;
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
-import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.RecompilationTask;
-import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
@@ -14,21 +17,23 @@ import de.dasbabypixel.gamestages.common.network.CustomPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.CommonItemRestrictionPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenNetwork;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
+import java.util.Objects;
 
 @NullMarked
 public final class CommonItemRestrictionEntry extends AbstractItemRestrictionEntry<CommonItemRestrictionEntry, CommonItemRestrictionEntry.PreCompiled, CommonItemRestrictionEntry.Compiled> {
     private final DataDrivenNetwork.NetworkData<?> dataDrivenNetworkData;
+    public ItemStackRestrictionResolverFactory.@Nullable PreCompiled preCompiledItemStackResolver;
 
-    public CommonItemRestrictionEntry(RestrictionEntryOrigin origin, GameContent targetItems, DataDrivenNetwork.NetworkData<?> dataDrivenNetworkData) {
+    public CommonItemRestrictionEntry(RestrictionEntryOrigin origin, ItemCollection targetItems, DataDrivenNetwork.NetworkData<?> dataDrivenNetworkData) {
         super(origin, targetItems);
         this.dataDrivenNetworkData = dataDrivenNetworkData;
     }
 
     @Override
     public CustomPacket createPacket(ServerGameStageManager instance) {
-        var items = instance
-                .get(GameContentFlattener.Attribute.INSTANCE)
-                .flatten(targetItems(), CommonItemCollection.TYPE);
+        var items = (CommonItemCollection) targetItems();
         return new CommonItemRestrictionPacket(items, origin().toString(), dataDrivenNetworkData());
     }
 
@@ -38,15 +43,18 @@ public final class CommonItemRestrictionEntry extends AbstractItemRestrictionEnt
 
     @Override
     public PreCompiled precompile(AbstractGameStageManager<?> instance) {
-        var items = instance
-                .get(GameContentFlattener.Attribute.INSTANCE)
-                .flatten(targetItems(), CommonItemCollection.TYPE);
+        var items = (CommonItemCollection) targetItems();
+        return new PreCompiled(this, items, Objects.requireNonNull(preCompiledItemStackResolver));
+    }
+
+    public ItemStackRestrictionResolverFactory.PreCompiled precompileItemStackResolver(AbstractGameStageManager<?> manager) {
+        if (preCompiledItemStackResolver != null) throw new IllegalStateException();
         var networkData = dataDrivenNetworkData();
         var factoryId = networkData.factoryId();
         var factory = ItemStackRestrictionResolverFactories.instance().getFactory(factoryId);
         if (factory == null) throw new IllegalStateException("Unknown factory " + factoryId);
-        var preCompiledItemStack = precompile(instance, factory, networkData.data().toTypedData());
-        return new PreCompiled(this, items, preCompiledItemStack);
+        preCompiledItemStackResolver = precompile(manager, factory, networkData.data().toTypedData());
+        return preCompiledItemStackResolver;
     }
 
     private <T> ItemStackRestrictionResolverFactory.PreCompiled precompile(AbstractGameStageManager<?> instance, ItemStackRestrictionResolverFactory<T> factory, DataDrivenTypedData<?> data) {

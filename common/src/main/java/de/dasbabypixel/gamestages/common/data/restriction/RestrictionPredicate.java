@@ -1,8 +1,8 @@
 package de.dasbabypixel.gamestages.common.data.restriction;
 
-import de.dasbabypixel.gamestages.common.data.BaseStages;
-import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
 import org.jspecify.annotations.NullMarked;
+import org.logicng.formulas.Formula;
+import org.logicng.formulas.FormulaFactory;
 
 import java.util.List;
 
@@ -25,16 +25,24 @@ public interface RestrictionPredicate {
     }
 
     default PreparedRestrictionPredicate prepare(List<PreparedRestrictionPredicate> dependencies) {
-        return new CompositePreparedRestrictionPredicate(this, optimize(dependencies));
+        return optimize(new CompositePreparedRestrictionPredicate(this, optimize(dependencies)));
     }
 
-    default List<PreparedRestrictionPredicate> optimize(List<PreparedRestrictionPredicate> list) {
-        return list;
+    default List<PreparedRestrictionPredicate> optimize(List<PreparedRestrictionPredicate> dependencies) {
+        return dependencies;
     }
+
+    default PreparedRestrictionPredicate optimize(CompositePreparedRestrictionPredicate predicate) {
+        return predicate;
+    }
+
+    Formula convertToLogicNG(FormulaFactory factory, Formula[] dependencies);
+
+    boolean equals(List<PreparedRestrictionPredicate> dependencies1, List<PreparedRestrictionPredicate> dependencies2);
+
+    int hash(List<PreparedRestrictionPredicate> dependencies);
 
     boolean accepts(List<? extends PreparedRestrictionPredicate> dependencies);
-
-    boolean test(List<? extends CompiledRestrictionPredicate> dependencies, BaseStages stages);
 
     @Override
     String toString();

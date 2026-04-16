@@ -1,12 +1,13 @@
 package de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound;
 
 import de.dasbabypixel.gamestages.common.CommonInstances;
+import de.dasbabypixel.gamestages.common.addon.Addon.ReloadPostEvent;
+import de.dasbabypixel.gamestages.common.addon.Addon.ReloadPreEvent;
 import de.dasbabypixel.gamestages.common.client.ClientGameStageManager;
 import de.dasbabypixel.gamestages.common.client.network.ClientNetworkHandlers;
 import de.dasbabypixel.gamestages.common.data.DuplicatesException;
 import de.dasbabypixel.gamestages.common.network.Status;
 import de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod;
-import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddonManager;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.GameStagesPacket;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.ChatFormatting;
@@ -20,6 +21,9 @@ import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 import java.util.function.IntFunction;
+
+import static de.dasbabypixel.gamestages.common.addon.Addon.RELOAD_POST_EVENT;
+import static de.dasbabypixel.gamestages.common.addon.Addon.RELOAD_PRE_EVENT;
 
 @NullMarked
 public record StatusPacket(Status status) implements GameStagesPacket {
@@ -36,16 +40,13 @@ public record StatusPacket(Status status) implements GameStagesPacket {
         switch (status) {
             case BEGIN_SYNC -> {
                 var instance = ClientGameStageManager.instance();
-                for (var addon : VAddonManager.instance().addons()) {
-                    addon.reloadPre(instance);
-                }
+                RELOAD_PRE_EVENT.call(new ReloadPreEvent(instance));
             }
             case END_SYNC -> {
                 var instance = ClientGameStageManager.instance();
-                for (var addon : VAddonManager.instance().addons()) {
-                    addon.reloadPost(instance);
-                }
+                instance.preparePrecompileRestrictions();
                 instance.precompileRestrictions();
+                RELOAD_POST_EVENT.call(new ReloadPostEvent(instance));
                 var player = Objects.requireNonNull(CommonInstances.platformPlayerProvider.clientSelfPlayer());
                 try {
                     player.getGameStages().recompileAll(instance);

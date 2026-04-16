@@ -6,14 +6,27 @@ import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestr
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
 import org.jspecify.annotations.NullMarked;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 @NullMarked
-public abstract class BaseStages extends AbstractAttributeHolder<BaseStages> {
+public class BaseStages extends AbstractAttributeHolder<BaseStages> {
+    private final AbstractGameStageManager<?> manager;
     private final Set<GameStage> unlockedStages;
 
-    public BaseStages(Set<GameStage> stages) {
+    public BaseStages(AbstractGameStageManager<?> manager, Collection<GameStage> stages) {
+        this.manager = manager;
         unlockedStages = new HashSet<>(stages);
+    }
+
+    public AbstractGameStageManager<?> manager() {
+        return manager;
     }
 
     /**
@@ -76,7 +89,7 @@ public abstract class BaseStages extends AbstractAttributeHolder<BaseStages> {
         update(gameStage);
     }
 
-    protected Set<GameStage> getUnlockedStages() {
+    public Set<GameStage> getUnlockedStages() {
         return unlockedStages;
     }
 

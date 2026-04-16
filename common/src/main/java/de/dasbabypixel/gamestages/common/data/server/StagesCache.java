@@ -3,7 +3,12 @@ package de.dasbabypixel.gamestages.common.data.server;
 import org.jspecify.annotations.NullMarked;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
@@ -65,7 +70,7 @@ public class StagesCache {
                 var player = requirePlayer(uuid);
                 players.add(player);
             }
-            var stages = new CompositeStages(players);
+            var stages = new CompositeStages(Objects.requireNonNull(ServerGameStageManager.INSTANCE), players);
             var entry = new CompositeEntry(stages);
             compositeMap.put(uuids, entry);
             return stages;

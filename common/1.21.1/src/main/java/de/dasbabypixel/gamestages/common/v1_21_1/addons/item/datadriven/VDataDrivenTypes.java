@@ -1,9 +1,9 @@
 package de.dasbabypixel.gamestages.common.v1_21_1.addons.item.datadriven;
 
 import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolverFactories;
-import de.dasbabypixel.gamestages.common.addons.item.datadriven.sequential.SequentialData;
-import de.dasbabypixel.gamestages.common.addons.item.datadriven.value.ValueData;
-import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.datadriven.predicate.PredicateData;
+import de.dasbabypixel.gamestages.common.addons.item.datadriven.data.SequentialData;
+import de.dasbabypixel.gamestages.common.addons.item.datadriven.data.ValueData;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.datadriven.data.PredicateData;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenType;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenTypes;
 import org.jspecify.annotations.NullMarked;

@@ -1,6 +1,6 @@
 package de.dasbabypixel.gamestages.common.data.server;
 
-import de.dasbabypixel.gamestages.common.addon.AddonManager;
+import de.dasbabypixel.gamestages.common.addon.Addon.NetworkSyncConfigEvent;
 import de.dasbabypixel.gamestages.common.data.attribute.Attribute;
 import de.dasbabypixel.gamestages.common.network.PacketConsumer;
 import de.dasbabypixel.gamestages.common.network.Status;
@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static de.dasbabypixel.gamestages.common.CommonInstances.platformPacketCreator;
+import static de.dasbabypixel.gamestages.common.addon.Addon.NETWORK_SYNC_CONFIG_EVENT;
 
 @NullMarked
 public class ServerGameStageManager extends MutableGameStageManager {
@@ -46,9 +47,7 @@ public class ServerGameStageManager extends MutableGameStageManager {
         for (var restriction : restrictions()) {
             packetConsumer.send(restriction.createPacket(this));
         }
-        for (var addon : AddonManager.instance().addons()) {
-            addon.onSyncConfigToPlayer(this, packetConsumer);
-        }
+        NETWORK_SYNC_CONFIG_EVENT.call(new NetworkSyncConfigEvent(this, packetConsumer));
         packetConsumer.send(platformPacketCreator.createStatusPacket(Status.END_SYNC));
     }
 

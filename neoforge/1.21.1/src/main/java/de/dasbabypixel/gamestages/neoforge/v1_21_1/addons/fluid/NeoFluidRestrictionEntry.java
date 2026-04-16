@@ -1,8 +1,8 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.fluid;
 
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
-import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.RecompilationTask;
+import de.dasbabypixel.gamestages.common.data.TypedGameContent;
 import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
@@ -18,22 +18,20 @@ import org.jspecify.annotations.NullMarked;
 
 @NullMarked
 public class NeoFluidRestrictionEntry extends CommonFluidRestrictionEntry<NeoFluidRestrictionEntry, NeoFluidRestrictionEntry.PreCompiled, NeoFluidRestrictionEntry.Compiled> {
-    public NeoFluidRestrictionEntry(PreparedRestrictionPredicate predicate, RestrictionEntryOrigin origin, GameContent targetFluids) {
+    public NeoFluidRestrictionEntry(PreparedRestrictionPredicate predicate, RestrictionEntryOrigin origin, TypedGameContent targetFluids) {
         super(predicate, origin, targetFluids);
     }
 
     @Override
     public CustomPacket createPacket(ServerGameStageManager instance) {
-        var fluids = instance
-                .get(GameContentFlattener.Attribute.INSTANCE)
+        var fluids = instance.get(GameContentFlattener.Attribute.INSTANCE)
                 .flatten(targetFluids(), CommonFluidCollection.TYPE);
         return new CommonFluidRestrictionPacket(predicate(), fluids, origin().toString(), hideInJEI());
     }
 
     @Override
     public PreCompiled precompile(AbstractGameStageManager<?> instance) {
-        var fluids = instance
-                .get(GameContentFlattener.Attribute.INSTANCE)
+        var fluids = instance.get(GameContentFlattener.Attribute.INSTANCE)
                 .flatten(targetFluids(), CommonFluidCollection.TYPE);
         return new PreCompiled(this, predicate(), fluids, hideInJEI());
     }

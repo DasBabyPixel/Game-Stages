@@ -1,11 +1,20 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1;
 
 import de.dasbabypixel.gamestages.common.CommonInstances;
+import de.dasbabypixel.gamestages.common.addon.Addon.ReloadPostEvent;
+import de.dasbabypixel.gamestages.common.addon.Addon.ReloadPreEvent;
 import de.dasbabypixel.gamestages.common.data.DuplicatesException;
+import de.dasbabypixel.gamestages.common.data.graph.CompiledImplicitDependencyGraph;
+import de.dasbabypixel.gamestages.common.data.graph.ImplicitDependencyGraph;
 import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
 import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
+import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon.PreCompileServerPrepareEvent;
+import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon.ReloadPostServerEvent;
+import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon.ReloadPreServerEvent;
+import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon.ServerBuildDependencyGraphEvent;
 import de.dasbabypixel.gamestages.neoforge.integration.Mods;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon.InitResourcesEvent;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon.RegisterEventData;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.listener.KJSListeners;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.server.ReloadableServerResources;
@@ -18,6 +27,16 @@ import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 
+import static de.dasbabypixel.gamestages.common.addon.Addon.RELOAD_POST_EVENT;
+import static de.dasbabypixel.gamestages.common.addon.Addon.RELOAD_PRE_EVENT;
+import static de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon.PRE_COMPILE_SERVER_PREPARE_EVENT;
+import static de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon.RELOAD_POST_SERVER_EVENT;
+import static de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon.RELOAD_PRE_SERVER_EVENT;
+import static de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon.SERVER_BUILD_DEPENDENCY_GRAPH_EVENT;
+import static de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon.AFTER_REGISTER_EVENT;
+import static de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon.BEFORE_REGISTER_EVENT;
+import static de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon.INIT_RESOURCES_EVENT;
+
 @NullMarked
 public class ReloadHandler {
     public static void registerListeners() {
@@ -28,41 +47,46 @@ public class ReloadHandler {
     private static void handleAddReloadListener(AddReloadListenerEvent event) {
         var serverResources = event.getServerResources();
         var registryAccess = event.getRegistryAccess();
-        for (var addon : NeoAddonManager.instance().addons()) {
-            addon.initResources(serverResources, registryAccess);
-        }
+        INIT_RESOURCES_EVENT.call(new InitResourcesEvent(serverResources, registryAccess));
         event.addListener((ResourceManagerReloadListener) resourceManager -> fullReload(serverResources, registryAccess));
     }
 
     public static void fullReload(ReloadableServerResources serverResources, RegistryAccess registryAccess) {
-        var instance = ServerGameStageManager.instance();
+        var manager = ServerGameStageManager.instance();
 
-        for (var addon : NeoAddonManager.instance().addons()) {
-            addon.reloadPre(instance);
-        }
+        RELOAD_PRE_SERVER_EVENT.call(new ReloadPreServerEvent(manager, serverResources, registryAccess));
+        RELOAD_PRE_EVENT.call(new ReloadPreEvent(manager));
 
-        instance.allowMutation();
-        instance.reset();
+        manager.allowMutation();
+        manager.reset();
 
-        for (var addon : NeoAddonManager.instance().addons()) {
-            addon.beforeRegisterEvent(instance, serverResources, registryAccess);
-        }
 
         if (Mods.KUBEJS.isLoaded()) {
-            KJSListeners.postRegisterEvent(instance);
+            BEFORE_REGISTER_EVENT.call(new RegisterEventData(manager, serverResources, registryAccess));
+            KJSListeners.postRegisterEvent(manager);
+            AFTER_REGISTER_EVENT.call(new RegisterEventData(manager, serverResources, registryAccess));
         }
 
-        for (var addon : NeoAddonManager.instance().addons()) {
-            addon.afterRegisterEvent(instance, serverResources, registryAccess);
+        // Build dependency graph
+        var dependencyGraph = new ImplicitDependencyGraph();
+        SERVER_BUILD_DEPENDENCY_GRAPH_EVENT.call(new ServerBuildDependencyGraphEvent(manager, dependencyGraph, serverResources, registryAccess));
+        var compiledGraph = dependencyGraph.compile();
+        manager.get(CompiledImplicitDependencyGraph.Holder.ATTRIBUTE).graph = compiledGraph;
+        for (var entry : compiledGraph.compiledMap().entrySet()) {
+            Objects.requireNonNull(entry);
+            var content = entry.getKey();
+            var compiled = entry.getValue();
+            var predicate = compiled.predicate();
         }
-        instance.disallowMutation();
 
-        for (var addon : NeoAddonManager.instance().addons()) {
-            addon.reloadPost(instance);
-            addon.postReloadServer(instance, serverResources, registryAccess);
-        }
+        PRE_COMPILE_SERVER_PREPARE_EVENT.call(new PreCompileServerPrepareEvent(manager, serverResources, registryAccess));
+        manager.preparePrecompileRestrictions();
+        manager.precompileRestrictions();
 
-        instance.precompileRestrictions();
+        RELOAD_POST_EVENT.call(new ReloadPostEvent(manager));
+        RELOAD_POST_SERVER_EVENT.call(new ReloadPostServerEvent(manager, serverResources, registryAccess));
+
+        manager.disallowMutation();
 
         if (ServerGameStageManager.INSTANCE != null) {
             pushFullUpdate(ServerGameStageManager.INSTANCE);

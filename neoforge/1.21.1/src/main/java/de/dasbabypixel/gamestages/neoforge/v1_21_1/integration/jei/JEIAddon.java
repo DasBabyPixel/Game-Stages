@@ -3,7 +3,6 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.jei;
 import de.dasbabypixel.gamestages.common.client.ClientGameStageManager;
 import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
-import de.dasbabypixel.gamestages.common.data.RecompilationTask;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
 import org.jspecify.annotations.NullMarked;
 
@@ -12,10 +11,11 @@ public class JEIAddon implements NeoAddon {
     public static final JEIAddon ADDON = new JEIAddon();
 
     private JEIAddon() {
+        COMPILE_ALL_POST_EVENT.addListener(this::handle);
     }
 
-    @Override
-    public void compileAllPost(RecompilationTask recompilationTask) {
+    private void handle(CompileAllPostEvent event) {
+        var recompilationTask = event.recompilationTask();
         var instance = recompilationTask.instance();
         var stages = recompilationTask.stages();
         if (instance instanceof ClientGameStageManager) {

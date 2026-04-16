@@ -2,6 +2,7 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1;
 
 import de.dasbabypixel.gamestages.common.BuildConstants;
 import de.dasbabypixel.gamestages.common.CommonInstances;
+import de.dasbabypixel.gamestages.common.addon.Addon.RegisterCustomContentEvent;
 import de.dasbabypixel.gamestages.common.addon.ContentRegistry;
 import de.dasbabypixel.gamestages.common.addon.ContentRegistryImpl;
 import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolverFactories;
@@ -66,20 +67,18 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
+import static de.dasbabypixel.gamestages.common.addon.Addon.REGISTER_CUSTOM_CONTENT_EVENT;
 import static de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod.location;
 
 @Mod(BuildConstants.MOD_ID)
 @NullMarked
 public class NeoForgeEntrypoint {
     public static final Logger LOGGER = LoggerFactory.getLogger(NeoForgeEntrypoint.class);
-    public static final Registry<CommonGameContentType<?>> GAME_CONTENT_TYPE_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonGameContentType.REGISTRY_KEY)
-            .sync(true)
+    public static final Registry<CommonGameContentType<?>> GAME_CONTENT_TYPE_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonGameContentType.REGISTRY_KEY).sync(true)
             .create();
-    public static final Registry<RestrictionPredicateSerializer<?>> RESTRICTION_PREDICATE_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonCodecs.RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY)
-            .sync(true)
+    public static final Registry<RestrictionPredicateSerializer<?>> RESTRICTION_PREDICATE_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonCodecs.RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY).sync(true)
             .create();
-    public static final Registry<PreparedRestrictionPredicateSerializer<?>> PREPARED_RESTRICTION_PREDICATE_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonCodecs.PREPARED_RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY)
-            .sync(true)
+    public static final Registry<PreparedRestrictionPredicateSerializer<?>> PREPARED_RESTRICTION_PREDICATE_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonCodecs.PREPARED_RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY).sync(true)
             .create();
     private boolean addonsFrozen = false;
     private @Nullable ContentRegistryImpl contentRegistry;
@@ -128,9 +127,8 @@ public class NeoForgeEntrypoint {
 
         NeoAddonManager.init();
         InterModComms.getMessages(BuildConstants.MOD_ID, "register_addon"::equals).forEach(msg -> {
-            var r = (NeoAddonManager.Registration) Objects.requireNonNull(Objects
-                    .requireNonNull(Objects.requireNonNull(msg).messageSupplier())
-                    .get());
+            var r = (NeoAddonManager.Registration) Objects.requireNonNull(Objects.requireNonNull(Objects.requireNonNull(msg)
+                    .messageSupplier()).get());
             NeoAddonManager.instance().addAddon(Objects.requireNonNull(r.id()), Objects.requireNonNull(r.addon()));
         });
         NeoAddonManager.done();
@@ -145,9 +143,7 @@ public class NeoForgeEntrypoint {
             loadAndFreezeAddons();
             contentRegistry = new ContentRegistryImpl();
 
-            for (var addon : NeoAddonManager.instance().addons()) {
-                addon.registerCustomContent(contentRegistry);
-            }
+            REGISTER_CUSTOM_CONTENT_EVENT.call(new RegisterCustomContentEvent(contentRegistry));
         }
         return contentRegistry;
     }
@@ -316,8 +312,7 @@ public class NeoForgeEntrypoint {
 
     private void handleServerAboutToStart(ServerAboutToStartEvent event) {
         Objects.requireNonNull(event);
-        var dataDirectory = Objects.requireNonNull(event.getServer().storageSource
-                .getLevelDirectory()
+        var dataDirectory = Objects.requireNonNull(event.getServer().storageSource.getLevelDirectory()
                 .path()
                 .resolve("gamestages"));
         ServerGameStageManager.init(dataDirectory);

@@ -17,15 +17,17 @@ import net.minecraft.world.item.crafting.RecipeManager;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @NullMarked
 public final class RecipeIndex {
     private final AbstractGameStageManager<?> manager;
     private final Map<ResourceLocation, Entry> recipeEntries = new HashMap<>();
-    //    protected final Map<Item, Set<RecipeHolder>> recipesForInput = new HashMap<>();
-//    protected final Map<Item, Set<RecipeHolder>> recipesForOutput = new HashMap<>();
-//    protected final Map<Item, Set<RecipeHolder>> related = new HashMap<>();
+    private final Map<PreparedRestrictionPredicate, List<Entry>> entriesByPredicate = new HashMap<>();
     private final HolderLookup.Provider lookup;
     private final VRecipeAddon recipeAddon;
 
@@ -44,28 +46,14 @@ public final class RecipeIndex {
     }
 
     private void index(RecipeHolder holder, Entry entry) {
-        recipeEntries.put(holder.id, entry);
+        recipeEntries.put(entry.id, entry);
+        entriesByPredicate.computeIfAbsent(entry.implicitPredicate, ignored -> new ArrayList<>()).add(entry);
     }
 
-    //    public Set<RecipeHolder> findRelated(Item item) {
-//        var s1 = recipesForInput.get(item);
-//        var s2 = recipesForOutput.get(item);
-//        if (s1 == null && s2 == null) return Set.of();
-//        if (s1 == null) return s2;
-//        if (s2 == null) return s1;
-//        var s = new HashSet<>(s1);
-//        s.addAll(s2);
-//        return Set.copyOf(s);
-//    }
-//
     private void indexRecipe(ResourceLocation id, Recipe<?> recipe) {
         var recipeHolder = new RecipeHolder(id, recipe, Objects.hash(id, recipe));
+//        recipe.getResultItem()
         indexRecipe(recipeHolder);
-//        var ingredients = recipe.getIngredients();
-//        for (var ingredient : ingredients) {
-//            indexIngredient(ingredient, recipeHolder);
-//        }
-//        indexResult(recipeHolder);
     }
 
     private void indexRecipe(RecipeHolder holder) {
@@ -74,6 +62,7 @@ public final class RecipeIndex {
             Objects.requireNonNull(ingredient);
             if (holder.id.equals(ResourceLocation.parse("minecraft:oak_planks"))) {
                 for (var item : ingredient.getItems()) {
+                    Objects.requireNonNull(item);
                     System.out.println(item + " -> " + resolveItemStackPredicate(item, ingredient));
                 }
             }
@@ -86,16 +75,13 @@ public final class RecipeIndex {
 
         var implicitPredicate = And.INSTANCE.prepare(List.of(ingredientPredicate, resultPredicate));
 
-        var entry = new Entry(implicitPredicate);
+        var entry = new Entry(holder.id, implicitPredicate);
         index(holder, entry);
     }
 
-    // Ingredient -> Predicate
-
     @SuppressWarnings("DataFlowIssue")
     private PreparedRestrictionPredicate resolveItemStackPredicate(ItemStack itemStack, @Nullable Ingredient ingredient) {
-        var msg = AddonManager
-                .instance()
+        var msg = AddonManager.instance()
                 .sendMessage(recipeAddon, RecipeMessages.ORIGIN_ID, ResolveItemStackPredicate.ID, ResolveItemStackPredicate::new, itemStack, ingredient);
         return msg == null ? True.INSTANCE.prepare() : msg.predicate;
     }
@@ -108,30 +94,8 @@ public final class RecipeIndex {
         }
         return Or.INSTANCE.prepare(orList);
     }
-//
-//    protected void indexResult(RecipeHolder recipeHolder) {
-//        var itemStack = recipeHolder.recipe.getResultItem(lookup);
-//        var item = itemStack.getItem();
-//        recipesForOutput.computeIfAbsent(item, unused -> new HashSet<>()).add(recipeHolder);
-//    }
-//
-//    protected void indexRelated(Item item, RecipeHolder recipeHolder) {
-//
-//    }
-//
-//    protected void indexIngredient(Ingredient ingredient, RecipeHolder recipeHolder) {
-//        var itemStacks = ingredient.getItems();
-//        for (var itemStack : itemStacks) {
-//            var item = itemStack.getItem();
-//            indexItem(item, recipeHolder);
-//        }
-//    }
-//
-//    protected void indexItem(Item item, RecipeHolder recipeHolder) {
-//        recipesForInput.computeIfAbsent(item, unused -> new HashSet<>()).add(recipeHolder);
-//    }
 
-    protected record Entry(PreparedRestrictionPredicate implicitPredicate) {
+    protected record Entry(ResourceLocation id, PreparedRestrictionPredicate implicitPredicate) {
     }
 
     public record RecipeHolder(ResourceLocation id, Recipe<?> recipe, int hash) {

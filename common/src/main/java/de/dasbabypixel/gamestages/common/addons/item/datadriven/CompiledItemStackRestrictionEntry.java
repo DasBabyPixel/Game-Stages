@@ -5,5 +5,7 @@ import org.jspecify.annotations.NullMarked;
 
 @NullMarked
 public interface CompiledItemStackRestrictionEntry {
+    ItemStackRestrictionEntry entry();
+
     CompiledRestrictionPredicate predicate();
 }
