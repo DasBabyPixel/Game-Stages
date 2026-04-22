@@ -2,6 +2,7 @@ package de.dasbabypixel.gamestages.common.data;
 
 import de.dasbabypixel.gamestages.common.data.attribute.AbstractAttributeHolder;
 import de.dasbabypixel.gamestages.common.data.attribute.Attribute;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
 import org.jspecify.annotations.NullMarked;
@@ -17,16 +18,10 @@ import java.util.Set;
 
 @NullMarked
 public class BaseStages extends AbstractAttributeHolder<BaseStages> {
-    private final AbstractGameStageManager<?> manager;
     private final Set<GameStage> unlockedStages;
 
-    public BaseStages(AbstractGameStageManager<?> manager, Collection<GameStage> stages) {
-        this.manager = manager;
+    public BaseStages(Collection<GameStage> stages) {
         unlockedStages = new HashSet<>(stages);
-    }
-
-    public AbstractGameStageManager<?> manager() {
-        return manager;
     }
 
     /**
@@ -76,9 +71,9 @@ public class BaseStages extends AbstractAttributeHolder<BaseStages> {
         return true;
     }
 
-    public void recompileAll(AbstractGameStageManager<?> instance) {
-        var recompilationTask = new RecompilationTask(this, instance);
-        recompilationTask.recompile();
+    public void recompileAll(AbstractGameStageManager<?> manager) {
+        var recompilationTask = new PlayerCompilationTask(this, manager);
+        recompilationTask.compile();
     }
 
     protected void onAdd(GameStage gameStage, boolean silent) {

@@ -2,13 +2,14 @@ package de.dasbabypixel.gamestages.common.addons.item.datadriven;
 
 import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolver;
 import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolverFactory;
-import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.ItemStack;
-import de.dasbabypixel.gamestages.common.data.RecompilationTask;
+import de.dasbabypixel.gamestages.common.data.PlayerCompilationTask;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.AbstractMutableGameStageManager;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 @NullMarked
 public class DataDrivenResolverFactory extends ItemStackRestrictionResolverFactory<DataDrivenResolverFactory.Context> {
@@ -17,7 +18,7 @@ public class DataDrivenResolverFactory extends ItemStackRestrictionResolverFacto
     }
 
     @Override
-    public Context createContext(AbstractGameStageManager<?> instance) {
+    public Context createContext(AbstractMutableGameStageManager<?> instance) {
         return new Context(instance);
     }
 
@@ -31,7 +32,7 @@ public class DataDrivenResolverFactory extends ItemStackRestrictionResolverFacto
             DataDrivenData.PreCompiled<?, Compiled> preCompiled,
             List<ItemStackRestrictionEntry> entries) implements ItemStackRestrictionResolverFactory.PreCompiled {
         public PreCompiled {
-            entries = List.copyOf(entries);
+            entries = Objects.requireNonNull(List.copyOf(entries));
         }
 
         @Override
@@ -40,7 +41,7 @@ public class DataDrivenResolverFactory extends ItemStackRestrictionResolverFacto
         }
 
         @Override
-        public ItemStackRestrictionResolver compile(RecompilationTask task) {
+        public ItemStackRestrictionResolver compile(PlayerCompilationTask task) {
             return new ItemStackRestrictionResolver() {
                 private final ResolverAlgorithmData<?, CompiledItemStackRestrictionEntry> data = preCompiled.compile(task);
 
@@ -52,6 +53,6 @@ public class DataDrivenResolverFactory extends ItemStackRestrictionResolverFacto
         }
     }
 
-    public record Context(AbstractGameStageManager<?> instance) {
+    public record Context(AbstractMutableGameStageManager<?> instance) {
     }
 }

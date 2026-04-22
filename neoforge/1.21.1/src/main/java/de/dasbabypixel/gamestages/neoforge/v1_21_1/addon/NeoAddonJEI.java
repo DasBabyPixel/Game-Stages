@@ -1,8 +1,8 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addon;
 
-import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.TypedGameContent;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContentType;
 import mezz.jei.api.runtime.IJeiRuntime;
@@ -34,9 +34,9 @@ public interface NeoAddonJEI {
     default void onRuntimeUnavailable() {
     }
 
-    default void postCompileAll(AbstractGameStageManager<?> instance, BaseStages stages) {
+    default void postCompileAll(AbstractGameStageManager<?> manager, BaseStages stages) {
     }
 
-    default void singleRefreshAll(AbstractGameStageManager<?> instance, BaseStages stages) {
+    default void singleRefreshAll(AbstractGameStageManager<?> manager, BaseStages stages) {
     }
 }

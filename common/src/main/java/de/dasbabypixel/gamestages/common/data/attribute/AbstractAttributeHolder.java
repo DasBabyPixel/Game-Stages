@@ -3,7 +3,12 @@ package de.dasbabypixel.gamestages.common.data.attribute;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.NullMarked;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @NullMarked
 public class AbstractAttributeHolder<H extends AbstractAttributeHolder<H>> implements AttributeHolder<H> {
@@ -14,9 +19,15 @@ public class AbstractAttributeHolder<H extends AbstractAttributeHolder<H>> imple
     public <T> T get(Attribute<? super H, T> attribute) {
         var val = (T) attributeMap.get(attribute);
         if (val != null) return val;
-        val = Objects.requireNonNull(attribute.get((H) this));
+        val = Objects.requireNonNull(attribute.supply((H) this));
         attributeMap.put(attribute, val);
         return val;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> T get(AttributeQuery<? super H, T> attribute) {
+        return attribute.get((H) this);
     }
 
     @SuppressWarnings("unchecked")
@@ -28,6 +39,6 @@ public class AbstractAttributeHolder<H extends AbstractAttributeHolder<H>> imple
             var key = e.getKey();
             list.add(new AttributeEntry<>((Attribute<H, @NonNull Object>) key, e.getValue()));
         }
-        return List.copyOf(list);
+        return Objects.requireNonNull(List.copyOf(list));
     }
 }

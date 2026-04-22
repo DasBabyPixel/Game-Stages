@@ -1,7 +1,7 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.fluid;
 
-import de.dasbabypixel.gamestages.common.client.ClientGameStageManager;
 import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.ClientMutableGameStageManager;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.fluid.CommonFluidRestrictionPacket;
@@ -25,7 +25,7 @@ public class NeoFluidAddon extends VFluidAddon implements NeoAddon {
     public void handle(CommonFluidRestrictionPacket packet) {
         var entry = new NeoFluidRestrictionEntry(packet.predicate(), RestrictionEntryOrigin.string(packet.origin()), packet.targetCollection());
         entry.setHideInJEI(packet.hideInJEI());
-        ClientGameStageManager.instance().addRestriction(entry);
+        ClientMutableGameStageManager.buildingInstance().addRestriction(entry);
     }
 
     @Override

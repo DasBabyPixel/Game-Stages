@@ -7,7 +7,8 @@ import de.dasbabypixel.gamestages.common.addon.ContentRegistry;
 import de.dasbabypixel.gamestages.common.addon.ContentRegistryImpl;
 import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolverFactories;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenResolverFactory;
-import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
+import de.dasbabypixel.gamestages.common.data.GameContentType;
+import de.dasbabypixel.gamestages.common.data.server.GlobalServerState;
 import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
 import de.dasbabypixel.gamestages.common.listener.PlayerJoinListener;
 import de.dasbabypixel.gamestages.common.listener.PlayerQuitListener;
@@ -21,11 +22,13 @@ import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContent;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContentSerializer;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContentType;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.flattener.CommonGameContentFlattener;
+import de.dasbabypixel.gamestages.common.v1_21_1.data.graph.IngredientContent;
 import de.dasbabypixel.gamestages.neoforge.NeoForgeInstances;
 import de.dasbabypixel.gamestages.neoforge.integration.Mods;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.EventRegistryImpl;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.item.datadriven.NeoDataDrivenTypes;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.RecipeJEI;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.commands.StageArgumentType;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.commands.StagesCommand;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.Attachments;
@@ -41,6 +44,7 @@ import dev.ftb.mods.ftbteams.api.event.TeamEvent;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.InterModComms;
@@ -48,6 +52,8 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.neoforged.fml.event.lifecycle.InterModProcessEvent;
+import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.neoforge.client.event.RecipesUpdatedEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -55,6 +61,7 @@ import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import net.neoforged.neoforge.registries.RegistryBuilder;
@@ -63,6 +70,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -109,10 +117,26 @@ public class NeoForgeEntrypoint {
         NeoForge.EVENT_BUS.addListener(this::handleChunkLoad);
         NeoForge.EVENT_BUS.addListener(this::handleChunkUnload);
         NeoForge.EVENT_BUS.addListener(this::handleBlockPlace);
+        if (FMLEnvironment.dist.isClient()) {
+            NeoForge.EVENT_BUS.addListener(this::handleRecipes);
+        }
 
         ReloadHandler.registerListeners();
 
         ItemStackRestrictionResolverFactories.instance().register(new DataDrivenResolverFactory());
+
+        IngredientContent.platformIngredientHelper = new IngredientContent.PlatformIngredientHelper() {
+            @Override
+            public String toString(Ingredient ingredient) {
+                if (ingredient.isCustom()) {
+                    var c = Objects.requireNonNull(ingredient.getCustomIngredient());
+                    return Objects.requireNonNull(NeoForgeRegistries.INGREDIENT_TYPES)
+                            .getKey(c.getType()) + "[" + c.getItems().toList() + "]";
+                } else {
+                    return Arrays.toString(ingredient.getValues());
+                }
+            }
+        };
 
         if (Mods.FTB_TEAMS.isLoaded()) {
             Objects.requireNonNull(TeamEvent.DELETED).register(this::onTeamDelete);
@@ -144,6 +168,10 @@ public class NeoForgeEntrypoint {
             contentRegistry = new ContentRegistryImpl();
 
             REGISTER_CUSTOM_CONTENT_EVENT.call(new RegisterCustomContentEvent(contentRegistry));
+
+            for (var entry : contentRegistry.entries()) {
+                GameContentType.TYPES.add(entry.type());
+            }
         }
         return contentRegistry;
     }
@@ -202,6 +230,9 @@ public class NeoForgeEntrypoint {
             registry.register(location("game_stage"), RestrictionPredicateSerializer.GAME_STAGE);
             registry.register(location("and"), RestrictionPredicateSerializer.AND);
             registry.register(location("or"), RestrictionPredicateSerializer.OR);
+            registry.register(location("true"), RestrictionPredicateSerializer.TRUE);
+            registry.register(location("false"), RestrictionPredicateSerializer.FALSE);
+            registry.register(location("not"), RestrictionPredicateSerializer.NOT);
         });
         event.register(CommonCodecs.PREPARED_RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY, registry -> {
             assert registry != null;
@@ -220,6 +251,12 @@ public class NeoForgeEntrypoint {
         });
     }
 
+    private void handleRecipes(RecipesUpdatedEvent event) {
+        RecipeJEI.recipeManager = event.getRecipeManager();
+        System.out.println("Received recipes on client");
+        System.out.println("Received recipes on client");
+    }
+
     private void handleRegisterCommands(RegisterCommandsEvent event) {
         StagesCommand.register(event.getDispatcher());
     }
@@ -234,7 +271,7 @@ public class NeoForgeEntrypoint {
         Objects.requireNonNull(event);
         var team = Objects.requireNonNull(event.getTeam());
         if (event.getPlayer() == null) {
-            var cache = Objects.requireNonNull(ServerGameStageManager.INSTANCE).playerStagesCache();
+            var cache = GlobalServerState.state().stagesCache();
             var stages = cache.requirePlayer(Objects.requireNonNull(event.getPlayerId()));
             stages.setTeam(null);
             cache.release(stages);
@@ -253,9 +290,6 @@ public class NeoForgeEntrypoint {
         Objects.requireNonNull(event);
         var chunk = event.getChunk();
         var level = chunk.getLevel();
-        if (level == null) return;
-        if (level.getServer() == null) {
-        }
         // TODO
     }
 
@@ -263,9 +297,6 @@ public class NeoForgeEntrypoint {
         Objects.requireNonNull(event);
         var chunk = event.getChunk();
         var level = chunk.getLevel();
-        if (level == null) return;
-        if (level.getServer() == null) {
-        }
         // TODO
     }
 
@@ -315,12 +346,12 @@ public class NeoForgeEntrypoint {
         var dataDirectory = Objects.requireNonNull(event.getServer().storageSource.getLevelDirectory()
                 .path()
                 .resolve("gamestages"));
-        ServerGameStageManager.init(dataDirectory);
-        ReloadHandler.pushFullUpdate(Objects.requireNonNull(ServerGameStageManager.INSTANCE));
+        GlobalServerState.init(dataDirectory);
+        ReloadHandler.pushFullUpdate(GlobalServerState.currentManager());
     }
 
     private void handleServerStopped(ServerStoppedEvent event) {
         Objects.requireNonNull(event);
-        ServerGameStageManager.stop();
+        GlobalServerState.stop();
     }
 }

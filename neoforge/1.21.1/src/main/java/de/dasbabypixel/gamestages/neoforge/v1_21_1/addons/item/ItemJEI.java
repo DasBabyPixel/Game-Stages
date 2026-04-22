@@ -2,8 +2,8 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.item;
 
 import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolver;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.CompiledItemStackRestrictionEntry;
-import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemCollection;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemRestrictionEntry;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonJEI;
@@ -18,7 +18,12 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @NullMarked
 public class ItemJEI implements NeoAddonJEI {
@@ -47,7 +52,7 @@ public class ItemJEI implements NeoAddonJEI {
         }
         itemCache.entrySet().forEach(e -> {
             assert e != null;
-            e.setValue(List.copyOf(Objects.requireNonNull(e.getValue())));
+            e.setValue(Objects.requireNonNull(List.copyOf(Objects.requireNonNull(e.getValue()))));
         });
     }
 
@@ -108,8 +113,7 @@ public class ItemJEI implements NeoAddonJEI {
 
     private List<ItemStack> getItems(HolderSet<Item> itemSet) {
         var itemCache = getItemCache();
-        return itemSet
-                .stream()
+        return itemSet.stream()
                 .map(Objects::requireNonNull)
                 .map(Holder::value)
                 .map(itemCache::get)

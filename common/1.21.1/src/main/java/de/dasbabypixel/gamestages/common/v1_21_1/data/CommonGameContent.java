@@ -20,8 +20,7 @@ import java.util.List;
 @NullMarked
 public interface CommonGameContent extends GameContent {
     ResourceKey<Registry<CommonGameContentSerializer<?>>> REGISTRY_KEY = ResourceKey.createRegistryKey(CommonVGameStageMod.location("game_content_serializer"));
-    StreamCodec<RegistryFriendlyByteBuf, CommonGameContent> STREAM_CODEC = ByteBufCodecs
-            .registry(REGISTRY_KEY)
+    StreamCodec<RegistryFriendlyByteBuf, CommonGameContent> STREAM_CODEC = ByteBufCodecs.registry(REGISTRY_KEY)
             .dispatch(CommonGameContent::serializer, CommonGameContentSerializer::streamCodec);
 
     @HideFromJS
@@ -81,6 +80,7 @@ public interface CommonGameContent extends GameContent {
         }
     }
 
+    @SuppressWarnings("DataFlowIssue")
     record Except(CommonGameContent base, List<CommonGameContent> exclusion) implements CommonGameContent {
         public static final StreamCodec<RegistryFriendlyByteBuf, Except> STREAM_CODEC = StreamCodec.composite(CommonGameContent.STREAM_CODEC, Except::base, CommonGameContent.STREAM_CODEC.apply(ByteBufCodecs.list()), Except::exclusion, Except::new);
 
@@ -94,6 +94,7 @@ public interface CommonGameContent extends GameContent {
         }
     }
 
+    @SuppressWarnings("DataFlowIssue")
     record Only(CommonGameContent base, List<CommonGameContent> inclusion) implements CommonGameContent {
         public static final StreamCodec<RegistryFriendlyByteBuf, Only> STREAM_CODEC = StreamCodec.composite(CommonGameContent.STREAM_CODEC, Only::base, CommonGameContent.STREAM_CODEC.apply(ByteBufCodecs.list()), Only::inclusion, Only::new);
 
@@ -107,6 +108,7 @@ public interface CommonGameContent extends GameContent {
         }
     }
 
+    @SuppressWarnings("DataFlowIssue")
     record Union(List<CommonGameContent> content) implements Composite {
         public static final StreamCodec<RegistryFriendlyByteBuf, Union> STREAM_CODEC = StreamCodec.composite(CommonGameContent.STREAM_CODEC.apply(ByteBufCodecs.list()), Union::content, Union::new);
 

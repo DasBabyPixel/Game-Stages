@@ -17,13 +17,15 @@ import java.util.logging.Logger;
 @NullMarked
 public class StagesCache {
     private static final Logger LOGGER = Logger.getLogger(StagesCache.class.getName());
-    private final ServerGameStageManager manager;
+    private final GlobalServerState globalServerState;
+    private final StagesFileProvider fileProvider;
     private final ReentrantLock lock = new ReentrantLock();
     private final HashMap<StagesFileProvider.Key, Entry> entryMap = new HashMap<>();
     private final Map<Set<UUID>, CompositeEntry> compositeMap = new HashMap<>();
 
-    public StagesCache(ServerGameStageManager manager) {
-        this.manager = manager;
+    public StagesCache(GlobalServerState globalServerState) {
+        this.globalServerState = globalServerState;
+        this.fileProvider = globalServerState.stagesFileProvider();
     }
 
     public void release(CompositeStages stages) {
@@ -70,7 +72,7 @@ public class StagesCache {
                 var player = requirePlayer(uuid);
                 players.add(player);
             }
-            var stages = new CompositeStages(Objects.requireNonNull(ServerGameStageManager.INSTANCE), players);
+            var stages = new CompositeStages(GlobalServerState.currentManager(), players);
             var entry = new CompositeEntry(stages);
             compositeMap.put(uuids, entry);
             return stages;
@@ -139,13 +141,13 @@ public class StagesCache {
 
     private ServerStages load(StagesFileProvider.Key key) throws IOException {
         LOGGER.log(Level.INFO, "Loading {0}", key);
-        var file = manager.stagesFileProvider().readStages(key);
+        var file = globalServerState.stagesFileProvider().readStages(key);
         switch (key.type()) {
             case "player" -> {
-                return new PlayerStages(manager, key, (StagesFileProvider.PlayerStagesFile) file);
+                return new PlayerStages(fileProvider, this, key, (StagesFileProvider.PlayerStagesFile) file);
             }
             case "team" -> {
-                return new TeamStages(manager, key, (StagesFileProvider.TeamStagesFile) file);
+                return new TeamStages(fileProvider, key, (StagesFileProvider.TeamStagesFile) file);
             }
             default -> throw new UnsupportedOperationException();
         }

@@ -7,18 +7,23 @@ import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.type.ArrayTypeInfo;
 import dev.latvian.mods.rhino.type.TypeInfo;
 import dev.latvian.mods.rhino.util.HideFromJS;
+import net.minecraft.util.Unit;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @NullMarked
 public final class EventType<Event extends EventJSBase<Event>> {
     private final Class<? extends Event> cls;
     private final TypeInfo type;
-    private final java.util.function.Function<Event, Void> NUL = ignore -> null;
+    private final java.util.function.Function<Event, Unit> NUL = ignore -> Unit.INSTANCE;
     private List<PreEventExecutor<Event>> preExecutors = new ArrayList<>();
     private List<PreEventExecutor<Event>> postExecutors = new ArrayList<>();
     private Map<String, Function<Event, ?>> functions = new HashMap<>();
@@ -106,7 +111,7 @@ public final class EventType<Event extends EventJSBase<Event>> {
                 if (varArgs) {
                     var newArgs = new Object[parameters.length];
                     for (var i = 0; i < parameters.length - 1; i++) {
-                        newArgs[i] = cx.jsToJava(args[i], parameters[i].jsType());
+                        newArgs[i] = cx.jsToJava(args[i], Objects.requireNonNull(parameters[i]).jsType());
                     }
                     var mergedLength = args.length - parameters.length + 1;
                     var merged = Objects.requireNonNull(varArgArrayType.componentType()).newArray(mergedLength);
@@ -120,7 +125,8 @@ public final class EventType<Event extends EventJSBase<Event>> {
                     args = newArgs;
                 } else {
                     for (var i = 0; i < args.length; i++) {
-                        args[i] = Objects.requireNonNull(cx.jsToJava(args[i], parameters[i].jsType()));
+                        args[i] = Objects.requireNonNull(cx.jsToJava(args[i], Objects.requireNonNull(parameters[i])
+                                .jsType()));
                     }
                 }
                 var event = Objects.requireNonNull(cls.cast(cx.jsToJava(thisObj, type)));
@@ -134,9 +140,9 @@ public final class EventType<Event extends EventJSBase<Event>> {
 
     @HideFromJS
     public void freeze() {
-        functions = Map.copyOf(functions);
-        preExecutors = List.copyOf(preExecutors);
-        postExecutors = List.copyOf(postExecutors);
+        functions = Objects.requireNonNull(Map.copyOf(functions));
+        preExecutors = Objects.requireNonNull(List.copyOf(preExecutors));
+        postExecutors = Objects.requireNonNull(List.copyOf(postExecutors));
     }
 
     @HideFromJS
@@ -153,15 +159,11 @@ public final class EventType<Event extends EventJSBase<Event>> {
         return postExecutors;
     }
 
-    private static <E extends EventJSBase<E>> EventJSBase.ContextFunction<E, Void> wrap(EventJSBase.Function<E> function) {
+    private static <E extends EventJSBase<E>> EventJSBase.ContextFunction<E, Unit> wrap(EventJSBase.Function<E> function) {
         return (event, cx, unused, args) -> function.invoke(event, cx, args);
     }
 
     public interface PreEventExecutor<Event extends EventJSBase<Event>> {
-        void execute(Event event);
-    }
-
-    public interface PostEventExecutor<Event extends EventJSBase<Event>> {
         void execute(Event event);
     }
 

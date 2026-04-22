@@ -5,7 +5,11 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @NullMarked
 public abstract class AddonManager<Addon extends de.dasbabypixel.gamestages.common.addon.Addon> {
@@ -33,8 +37,7 @@ public abstract class AddonManager<Addon extends de.dasbabypixel.gamestages.comm
     }
 
     public void addMessageListener(String targetAddonId, String messageId, MessageListener<? super Addon> listener) {
-        messageListeners
-                .computeIfAbsent(targetAddonId, s -> new HashMap<>())
+        messageListeners.computeIfAbsent(targetAddonId, s -> new HashMap<>())
                 .computeIfAbsent(messageId, s -> new ArrayList<>())
                 .add(listener);
     }
@@ -51,13 +54,19 @@ public abstract class AddonManager<Addon extends de.dasbabypixel.gamestages.comm
         return this.<@NonNull Send1Args<A1, M>, @Nullable A1, M>sendMessage(origin, originId, messageId, Send1Args::create, message, a1);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"DataFlowIssue"})
     @NullUnmarked
     public <A1, A2, M> @Nullable M sendMessage(de.dasbabypixel.gamestages.common.addon.@NonNull Addon origin, @NonNull String originId, @NonNull String messageId, @NonNull Send2Args<A1, A2, M> message, @Nullable A1 a1, @Nullable A2 a2) {
+        return this.sendMessage(origin, originId, messageId, Send2Args::create, message, a1, a2);
+    }
+
+    @SuppressWarnings("unchecked")
+    @NullUnmarked
+    public <A1, A2, A3, M> @Nullable M sendMessage(de.dasbabypixel.gamestages.common.addon.@NonNull Addon origin, @NonNull String originId, @NonNull String messageId, @NonNull Send3Args<A1, A2, A3, M> message, @Nullable A1 a1, @Nullable A2 a2, @Nullable A3 a3) {
         var byMsg = messageListeners.get(originId);
         if (byMsg == null) return null;
         var l = Objects.requireNonNull(byMsg.get(messageId));
-        var msg = message.create(a1, a2);
+        var msg = message.create(a1, a2, a3);
         for (var messageListener : l) {
             messageListener.handle((Addon) origin, msg);
         }
@@ -81,6 +90,11 @@ public abstract class AddonManager<Addon extends de.dasbabypixel.gamestages.comm
     @NullUnmarked
     public interface Send2Args<A1, A2, R> {
         @Nullable R create(@Nullable A1 arg1, @Nullable A2 arg2);
+    }
+
+    @NullUnmarked
+    public interface Send3Args<A1, A2, A3, R> {
+        @Nullable R create(@Nullable A1 arg1, @Nullable A2 arg2, @Nullable A3 arg3);
     }
 
     public record AddonEntry<A extends de.dasbabypixel.gamestages.common.addon.Addon>(String id, A addon) {

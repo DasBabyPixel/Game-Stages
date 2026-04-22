@@ -9,6 +9,7 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -21,7 +22,9 @@ public class PlatformPlayerProviderImpl implements PlatformPlayerProvider {
 
     @Override
     public Collection<? extends ServerPlayer> allPlayers() {
-        return Objects.requireNonNull(ServerLifecycleHooks.getCurrentServer()).getPlayerList().getPlayers();
+        var currentServer = ServerLifecycleHooks.getCurrentServer();
+        if (currentServer == null) return List.of();
+        return currentServer.getPlayerList().getPlayers();
     }
 
     @Override

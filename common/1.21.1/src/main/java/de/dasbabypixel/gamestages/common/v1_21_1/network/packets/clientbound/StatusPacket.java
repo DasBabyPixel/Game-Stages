@@ -3,9 +3,9 @@ package de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound;
 import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.addon.Addon.ReloadPostEvent;
 import de.dasbabypixel.gamestages.common.addon.Addon.ReloadPreEvent;
-import de.dasbabypixel.gamestages.common.client.ClientGameStageManager;
-import de.dasbabypixel.gamestages.common.client.network.ClientNetworkHandlers;
 import de.dasbabypixel.gamestages.common.data.DuplicatesException;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.ClientGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.ClientMutableGameStageManager;
 import de.dasbabypixel.gamestages.common.network.Status;
 import de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.GameStagesPacket;
@@ -36,20 +36,19 @@ public record StatusPacket(Status status) implements GameStagesPacket {
 
     @Override
     public void handle() {
-        ClientNetworkHandlers.status(status);
         switch (status) {
             case BEGIN_SYNC -> {
-                var instance = ClientGameStageManager.instance();
-                RELOAD_PRE_EVENT.call(new ReloadPreEvent(instance));
+                var manager = ClientMutableGameStageManager.beginBuildingInstance();
+                RELOAD_PRE_EVENT.call(new ReloadPreEvent(manager));
             }
             case END_SYNC -> {
-                var instance = ClientGameStageManager.instance();
-                instance.preparePrecompileRestrictions();
-                instance.precompileRestrictions();
-                RELOAD_POST_EVENT.call(new ReloadPostEvent(instance));
+                var buildingManager = ClientMutableGameStageManager.buildingInstance();
+                RELOAD_POST_EVENT.call(new ReloadPostEvent(buildingManager));
+                var compiledManager = buildingManager.finishBuildingInstance();
+                ClientGameStageManager.update(compiledManager);
                 var player = Objects.requireNonNull(CommonInstances.platformPlayerProvider.clientSelfPlayer());
                 try {
-                    player.getGameStages().recompileAll(instance);
+                    player.getGameStages().recompileAll(compiledManager);
                 } catch (DuplicatesException d) {
                     var p = (LocalPlayer) player;
                     d.print(s -> {

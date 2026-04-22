@@ -1,7 +1,6 @@
 package de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound;
 
 import de.dasbabypixel.gamestages.common.CommonInstances;
-import de.dasbabypixel.gamestages.common.client.network.ClientNetworkHandlers;
 import de.dasbabypixel.gamestages.common.data.GameStage;
 import de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.GameStagesPacket;
@@ -22,7 +21,6 @@ public record SyncUnlockedGameStagesPacket(List<GameStage> gameStages) implement
 
     @Override
     public void handle() {
-        ClientNetworkHandlers.syncUnlockedGameStages(gameStages);
         var player = Objects.requireNonNull(CommonInstances.platformPlayerProvider.clientSelfPlayer());
         player.getGameStages().syncUnlockedStages(gameStages);
     }

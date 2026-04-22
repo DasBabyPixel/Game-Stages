@@ -1,6 +1,6 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.mixins;
 
-import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
+import de.dasbabypixel.gamestages.common.data.server.GlobalServerState;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.Attachments;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.entity.IBlockEntity;
 import net.minecraft.world.level.Level;
@@ -8,12 +8,15 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.attachment.AttachmentHolder;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
-import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.Implements;
+import org.spongepowered.asm.mixin.Interface;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -38,7 +41,7 @@ public abstract class MCBlockEntityMixin implements IBlockEntity {
         var source = ah.getData(Attachments.SOURCE);
         stages$owners = Set.copyOf(source.owners());
         if (!stages$owners.isEmpty()) {
-            Objects.requireNonNull(ServerGameStageManager.INSTANCE).playerStagesCache().requireComposite(stages$owners);
+            GlobalServerState.state().stagesCache().requireComposite(stages$owners);
         }
 
         stages$registered = true;
@@ -51,11 +54,11 @@ public abstract class MCBlockEntityMixin implements IBlockEntity {
         var newOwners = Set.copyOf(source.owners());
         if (newOwners.equals(stages$owners)) return;
         if (!stages$owners.isEmpty()) {
-            Objects.requireNonNull(ServerGameStageManager.INSTANCE).playerStagesCache().releaseComposite(stages$owners);
+            GlobalServerState.state().stagesCache().releaseComposite(stages$owners);
         }
         stages$owners = newOwners;
         if (!stages$owners.isEmpty()) {
-            Objects.requireNonNull(ServerGameStageManager.INSTANCE).playerStagesCache().requireComposite(stages$owners);
+            GlobalServerState.state().stagesCache().requireComposite(stages$owners);
         }
     }
 
@@ -65,21 +68,9 @@ public abstract class MCBlockEntityMixin implements IBlockEntity {
         if (!stages$registered) return;
 
         if (!stages$owners.isEmpty()) {
-            Objects.requireNonNull(ServerGameStageManager.INSTANCE).playerStagesCache().releaseComposite(stages$owners);
+            GlobalServerState.state().stagesCache().releaseComposite(stages$owners);
         }
 
         stages$registered = false;
     }
-
-//    @Inject(method = "onChunkUnloaded", at = @At("HEAD"))
-//    private void teammod$onChunkUnload(CallbackInfo ci) {
-//        if (level == null || level.isClientSide) return;
-//        if (!registered) return;
-//
-//        UUID teamId = getTeamId();
-//        if (teamId == null) return;
-//
-//        TeamManager.release(teamId);
-//        registered = false;
-//    }
 }

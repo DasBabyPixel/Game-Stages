@@ -64,7 +64,7 @@ public final class And implements RestrictionPredicate {
 
     @Override
     public boolean equals(List<PreparedRestrictionPredicate> dependencies1, List<PreparedRestrictionPredicate> dependencies2) {
-        return Set.copyOf(dependencies1).equals(Set.copyOf(dependencies2));
+        return Objects.equals(Set.copyOf(dependencies1), Set.copyOf(dependencies2));
     }
 
     @Override

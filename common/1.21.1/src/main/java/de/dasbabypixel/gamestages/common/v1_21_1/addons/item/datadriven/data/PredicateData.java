@@ -7,9 +7,9 @@ import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestric
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestrictionEntryReference;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ResolverAlgorithm;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ResolverAlgorithmData;
-import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.ItemStack;
-import de.dasbabypixel.gamestages.common.data.RecompilationTask;
+import de.dasbabypixel.gamestages.common.data.PlayerCompilationTask;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.AbstractMutableGameStageManager;
 import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.advancements.critereon.ItemPredicate;
 import org.jspecify.annotations.NullMarked;
@@ -24,8 +24,8 @@ public record PredicateData(ItemPredicate predicate,
     public static final String TYPE = "predicate";
 
     @Override
-    public PreCompiled precompile(AbstractGameStageManager<?> manager) {
-        var entry = manager.get(ItemAddon.STAGE_MANAGER_CONTEXT).getEntry(resultReference);
+    public PreCompiled precompile(AbstractMutableGameStageManager<?> manager) {
+        var entry = manager.get(ItemAddon.MutableStageManagerContext.ATTRIBUTE).getEntry(resultReference);
         return new PreCompiled(Pair.of(entry, predicate), resultReference);
     }
 
@@ -34,7 +34,7 @@ public record PredicateData(ItemPredicate predicate,
         private static final Algorithm<ItemStackRestrictionEntry> ALGORITHM = new Algorithm<>();
 
         @Override
-        public Compiled compile(RecompilationTask task) {
+        public Compiled compile(PlayerCompilationTask task) {
             var ctx = task.get(ItemAddon.CompilationContext.ATTRIBUTE);
             var entry = Objects.requireNonNull(ctx.compiledMap.get(resultReference), "Missing compiled predicate for key " + resultReference.referenceId());
             return new Compiled(Pair.of(entry, customData.second()));

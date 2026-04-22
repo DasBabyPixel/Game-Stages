@@ -9,6 +9,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -16,14 +17,16 @@ import java.util.logging.Logger;
 
 @NullMarked
 public class PlayerStages extends ServerStages {
-    private static final Logger LOGGER = Logger.getLogger(PlayerStages.class.getName());
+    private static final Logger LOGGER = Objects.requireNonNull(Logger.getLogger(PlayerStages.class.getName()));
     private final List<ServerPlayer> playerList = new ArrayList<>(1);
+    private final StagesCache stagesCache;
     private boolean valid = true;
     private @Nullable UUID teamId;
     private @Nullable TeamStages team;
 
-    public PlayerStages(ServerGameStageManager manager, StagesFileProvider.Key key, StagesFileProvider.PlayerStagesFile stagesFile) {
-        super(manager, key, stagesFile);
+    public PlayerStages(StagesFileProvider stagesFileProvider, StagesCache stagesCache, StagesFileProvider.Key key, StagesFileProvider.PlayerStagesFile stagesFile) {
+        super(stagesFileProvider, key, stagesFile);
+        this.stagesCache = stagesCache;
         this.teamId = stagesFile.teamId();
     }
 
@@ -67,17 +70,17 @@ public class PlayerStages extends ServerStages {
         this.teamId = teamId;
         if (teamId == null) {
             if (team != null) {
-                manager.playerStagesCache().release(team);
+                stagesCache.release(team);
                 team = null;
                 writeFile();
             }
         } else {
             if (team == null) {
-                team = manager.playerStagesCache().requireTeam(teamId);
+                team = stagesCache.requireTeam(teamId);
                 writeFile();
             } else if (!team.key().uuid().equals(teamId)) {
-                manager.playerStagesCache().release(team);
-                team = manager.playerStagesCache().requireTeam(teamId);
+                stagesCache.release(team);
+                team = stagesCache.requireTeam(teamId);
                 writeFile();
             }
         }
@@ -87,7 +90,7 @@ public class PlayerStages extends ServerStages {
     public void unload() {
         super.unload();
         if (team != null) {
-            manager.playerStagesCache().release(team);
+            stagesCache.release(team);
             team = null;
         }
         valid = false;

@@ -2,10 +2,10 @@ package de.dasbabypixel.gamestages.common.addons.item;
 
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenTypedData;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestrictionEntry;
-import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.ItemStack;
-import de.dasbabypixel.gamestages.common.data.RecompilationTask;
+import de.dasbabypixel.gamestages.common.data.PlayerCompilationTask;
 import de.dasbabypixel.gamestages.common.data.compilation.CompilableResource;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.AbstractMutableGameStageManager;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -27,16 +27,16 @@ public abstract class ItemStackRestrictionResolverFactory<CompilationContext> {
         return precompileInternal(data, context);
     }
 
-    public abstract CompilationContext createContext(AbstractGameStageManager<?> instance);
+    public abstract CompilationContext createContext(AbstractMutableGameStageManager<?> instance);
 
     protected abstract PreCompiled precompileInternal(DataDrivenTypedData<?> data, CompilationContext context);
 
-    public interface PreCompiled extends CompilableResource.PreCompiled<RecompilationTask, ItemStackRestrictionResolver> {
+    public interface PreCompiled extends CompilableResource.PreCompiled<PlayerCompilationTask, ItemStackRestrictionResolver> {
         @Nullable ItemStackRestrictionEntry resolve(ItemStack itemStack);
 
         List<ItemStackRestrictionEntry> entries();
 
         @Override
-        ItemStackRestrictionResolver compile(RecompilationTask task);
+        ItemStackRestrictionResolver compile(PlayerCompilationTask task);
     }
 }

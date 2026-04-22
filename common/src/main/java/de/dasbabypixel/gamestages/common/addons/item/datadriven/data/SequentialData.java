@@ -1,9 +1,14 @@
 package de.dasbabypixel.gamestages.common.addons.item.datadriven.data;
 
-import de.dasbabypixel.gamestages.common.addons.item.datadriven.*;
-import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
+import de.dasbabypixel.gamestages.common.addons.item.datadriven.CompiledItemStackRestrictionEntry;
+import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenData;
+import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenTypedData;
+import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestrictionEntry;
+import de.dasbabypixel.gamestages.common.addons.item.datadriven.ResolverAlgorithm;
+import de.dasbabypixel.gamestages.common.addons.item.datadriven.ResolverAlgorithmData;
 import de.dasbabypixel.gamestages.common.data.ItemStack;
-import de.dasbabypixel.gamestages.common.data.RecompilationTask;
+import de.dasbabypixel.gamestages.common.data.PlayerCompilationTask;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.AbstractMutableGameStageManager;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -20,31 +25,36 @@ public record SequentialData(
     }
 
     @Override
-    public PreCompiled precompile(AbstractGameStageManager<?> manager) {
+    public PreCompiled precompile(AbstractMutableGameStageManager<?> manager) {
         var subAlgorithms = new ArrayList<DataDrivenData.PreCompiled<?, ?>>();
+        var entries = new ArrayList<ItemStackRestrictionEntry>();
         for (var value : values) {
             var subAlgorithm = value.data().precompile(manager);
             subAlgorithms.add(subAlgorithm);
+            entries.addAll(subAlgorithm.entries());
         }
-        return new PreCompiled(subAlgorithms);
+        return new PreCompiled(subAlgorithms, entries);
     }
 
-    public record PreCompiled(
-            List<DataDrivenData.PreCompiled<?, ?>> subAlgorithms) implements DataDrivenData.PreCompiled<List<DataDrivenData.PreCompiled<?, ?>>, Compiled> {
+    public record PreCompiled(List<DataDrivenData.PreCompiled<?, ?>> subAlgorithms,
+                              List<ItemStackRestrictionEntry> entries) implements DataDrivenData.PreCompiled<List<DataDrivenData.PreCompiled<?, ?>>, Compiled> {
         private static final Algorithm<DataDrivenData.PreCompiled<?, ?>, ItemStackRestrictionEntry> ALGORITHM = new Algorithm<>();
 
         public PreCompiled {
             subAlgorithms = List.copyOf(subAlgorithms);
+            entries = List.copyOf(entries);
         }
 
         @Override
-        public Compiled compile(RecompilationTask task) {
+        public Compiled compile(PlayerCompilationTask task) {
             var subAlgorithms = new ArrayList<DataDrivenData.Compiled<?>>();
+            var entries = new ArrayList<CompiledItemStackRestrictionEntry>();
             for (var entry : this.subAlgorithms) {
                 var compiled = entry.compile(task);
                 subAlgorithms.add(compiled);
+                entries.addAll(compiled.entries());
             }
-            return new Compiled(subAlgorithms);
+            return new Compiled(subAlgorithms, entries);
         }
 
         @Override
@@ -58,12 +68,13 @@ public record SequentialData(
         }
     }
 
-    public record Compiled(
-            List<DataDrivenData.Compiled<?>> customData) implements DataDrivenData.Compiled<List<DataDrivenData.Compiled<?>>> {
+    public record Compiled(List<DataDrivenData.Compiled<?>> customData,
+                           List<CompiledItemStackRestrictionEntry> entries) implements DataDrivenData.Compiled<List<DataDrivenData.Compiled<?>>> {
         private static final Algorithm<DataDrivenData.Compiled<?>, CompiledItemStackRestrictionEntry> ALGORITHM = new Algorithm<>();
 
         public Compiled {
             customData = List.copyOf(customData);
+            entries = List.copyOf(entries);
         }
 
         @Override

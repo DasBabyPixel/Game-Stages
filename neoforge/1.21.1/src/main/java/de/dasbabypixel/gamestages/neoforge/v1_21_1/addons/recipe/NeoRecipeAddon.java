@@ -1,10 +1,11 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe;
 
-import de.dasbabypixel.gamestages.common.client.ClientGameStageManager;
 import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.ClientMutableGameStageManager;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeCollection;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeRestrictionEntry;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeRestrictionPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.VRecipeAddon;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.EventRegistry;
@@ -27,27 +28,19 @@ public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
     }
 
     @Override
+    protected CommonRecipeRestrictionEntry<?, ?, ?> createDefaultEntry(PreparedRestrictionPredicate predicate, CommonRecipeCollection recipes) {
+        return new NeoRecipeRestrictionEntry(predicate, RestrictionEntryOrigin.SERVER, recipes);
+    }
+
+    @Override
     public void handle(CommonRecipeRestrictionPacket packet) {
         var entry = new NeoRecipeRestrictionEntry(packet.predicate(), RestrictionEntryOrigin.string(packet.origin()), packet.targetCollection());
-        ClientGameStageManager.instance().addRestriction(entry);
+        ClientMutableGameStageManager.buildingInstance().addRestriction(entry);
     }
 
     private void handle(InitResourcesEvent event) {
         CommonRecipeCollection.recipeManager = event.serverResources().getRecipeManager();
     }
-
-//    private void handle(PreCompileServerPrepareEvent event) {
-//        var manager = event.manager();
-//        var serverResources = event.serverResources();
-//        var registryAccess = event.registryAccess();
-//        var recipeIndex = new RecipeIndex(serverResources.getRecipeManager(), this, manager, registryAccess);
-//        manager.get(RECIPE_INDEX).recipeIndex = recipeIndex;
-//        var deps = recipeIndex.getImplicitDependencies(ResourceLocation.parse("minecraft:oak_planks"));
-//        System.out.println("Deps: " + deps);
-//        System.out.println("Deps: " + deps);
-//        System.out.println("Deps: " + deps);
-//        System.out.println("Deps: " + deps);
-//    }
 
     @Override
     public NeoAddonKJS createKubeJSSupport() {

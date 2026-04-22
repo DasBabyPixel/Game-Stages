@@ -7,12 +7,12 @@ import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolve
 import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolverFactories;
 import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolverFactory;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenTypedData;
-import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
-import de.dasbabypixel.gamestages.common.data.RecompilationTask;
+import de.dasbabypixel.gamestages.common.data.PlayerCompilationTask;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.ServerGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.AbstractMutableGameStageManager;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
-import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
 import de.dasbabypixel.gamestages.common.network.CustomPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.CommonItemRestrictionPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenNetwork;
@@ -31,23 +31,18 @@ public final class CommonItemRestrictionEntry extends AbstractItemRestrictionEnt
         this.dataDrivenNetworkData = dataDrivenNetworkData;
     }
 
-    @Override
-    public CustomPacket createPacket(ServerGameStageManager instance) {
-        var items = (CommonItemCollection) targetItems();
-        return new CommonItemRestrictionPacket(items, origin().toString(), dataDrivenNetworkData());
-    }
-
     public DataDrivenNetwork.NetworkData<?> dataDrivenNetworkData() {
         return dataDrivenNetworkData;
     }
 
     @Override
-    public PreCompiled precompile(AbstractGameStageManager<?> instance) {
+    public PreCompiled precompile(AbstractMutableGameStageManager<?> manager) {
         var items = (CommonItemCollection) targetItems();
+        precompileItemStackResolver(manager);
         return new PreCompiled(this, items, Objects.requireNonNull(preCompiledItemStackResolver));
     }
 
-    public ItemStackRestrictionResolverFactory.PreCompiled precompileItemStackResolver(AbstractGameStageManager<?> manager) {
+    public ItemStackRestrictionResolverFactory.PreCompiled precompileItemStackResolver(AbstractMutableGameStageManager<?> manager) {
         if (preCompiledItemStackResolver != null) throw new IllegalStateException();
         var networkData = dataDrivenNetworkData();
         var factoryId = networkData.factoryId();
@@ -57,7 +52,7 @@ public final class CommonItemRestrictionEntry extends AbstractItemRestrictionEnt
         return preCompiledItemStackResolver;
     }
 
-    private <T> ItemStackRestrictionResolverFactory.PreCompiled precompile(AbstractGameStageManager<?> instance, ItemStackRestrictionResolverFactory<T> factory, DataDrivenTypedData<?> data) {
+    private <T> ItemStackRestrictionResolverFactory.PreCompiled precompile(AbstractMutableGameStageManager<?> instance, ItemStackRestrictionResolverFactory<T> factory, DataDrivenTypedData<?> data) {
         var context = instance.get(ItemAddon.PreCompileContext.ATTRIBUTE).get(factory);
         return factory.precompile(data, context);
     }
@@ -73,9 +68,14 @@ public final class CommonItemRestrictionEntry extends AbstractItemRestrictionEnt
     public record PreCompiled(CommonItemRestrictionEntry entry, CommonItemCollection gameContent,
                               ItemStackRestrictionResolverFactory.PreCompiled preCompiledItemStack) implements RestrictionEntry.PreCompiled<PreCompiled, Compiled> {
         @Override
-        public Compiled compile(RecompilationTask task) {
+        public Compiled compile(PlayerCompilationTask task) {
             var resolver = preCompiledItemStack.compile(task);
             return new Compiled(this, resolver);
+        }
+
+        @Override
+        public CustomPacket createPacket(ServerGameStageManager instance) {
+            return new CommonItemRestrictionPacket(gameContent(), origin().toString(), entry.dataDrivenNetworkData());
         }
     }
 }

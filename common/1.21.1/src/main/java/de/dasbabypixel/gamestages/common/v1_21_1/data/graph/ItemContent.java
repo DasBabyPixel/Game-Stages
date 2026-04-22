@@ -17,6 +17,16 @@ public record ItemContent(Item item) implements DependencyContent {
     }
 
     @Override
+    public String toString() {
+        return "Item[" + item + "]";
+    }
+
+    @Override
+    public int hashCode() {
+        return item.hashCode();
+    }
+
+    @Override
     public DependencyContentType type() {
         return TYPE;
     }

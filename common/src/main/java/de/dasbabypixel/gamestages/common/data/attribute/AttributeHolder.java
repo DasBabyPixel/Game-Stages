@@ -8,5 +8,7 @@ import java.util.Collection;
 public interface AttributeHolder<H extends AttributeHolder<H>> {
     <T> T get(Attribute<? super H, T> attribute);
 
+    <T> T get(AttributeQuery<? super H, T> attribute);
+
     Collection<AttributeEntry<? super H, ?>> attributes();
 }

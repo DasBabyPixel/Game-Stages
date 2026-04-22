@@ -40,7 +40,7 @@ public record CommonRecipeCollection(List<ResourceLocation> recipes) implements 
     };
 
     public CommonRecipeCollection {
-        recipes = List.copyOf(recipes);
+        recipes = Objects.requireNonNull(List.copyOf(recipes));
     }
 
     @Override

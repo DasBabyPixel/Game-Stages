@@ -9,6 +9,8 @@ import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
+import java.util.Objects;
+
 @Mixin(AbstractClientPlayer.class)
 @Implements(@Interface(iface = ClientPlayer.class, prefix = "stages$"))
 @NullMarked
@@ -17,6 +19,6 @@ public abstract class MCAbstractClientPlayerMixin implements ClientPlayer {
     private final ClientPlayerStages game_Stages$playerStages = new ClientPlayerStages();
 
     public ClientPlayerStages stages$getGameStages() {
-        return game_Stages$playerStages;
+        return Objects.requireNonNull(game_Stages$playerStages);
     }
 }

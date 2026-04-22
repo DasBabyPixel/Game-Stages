@@ -9,6 +9,8 @@ import java.util.function.Consumer;
 
 @NullMarked
 public class EventType<Event> {
+    public static final int ORDER_DEFAULT = 0;
+    public static final int ORDER_MONITOR = 1000;
     private final Set<EventListener<Event>> listeners = new HashSet<>();
     private Consumer<Event> executor = ignored -> {
     };
@@ -19,7 +21,7 @@ public class EventType<Event> {
     }
 
     public void addListener(Consumer<Event> listener) {
-        addListener(0, listener);
+        addListener(ORDER_DEFAULT, listener);
     }
 
     public void addListener(int order, Consumer<Event> listener) {

@@ -1,9 +1,9 @@
 package de.dasbabypixel.gamestages.common.data.flattening;
 
-import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.GameContentType;
 import de.dasbabypixel.gamestages.common.data.TypedGameContent;
+import de.dasbabypixel.gamestages.common.data.attribute.AttributeHolder;
 import org.jspecify.annotations.NullMarked;
 
 @NullMarked
@@ -30,6 +30,6 @@ public interface GameContentFlattener {
 
     @SuppressWarnings("NotNullFieldNotInitialized")
     class Attribute {
-        public static de.dasbabypixel.gamestages.common.data.attribute.Attribute<AbstractGameStageManager<?>, GameContentFlattener> INSTANCE;
+        public static de.dasbabypixel.gamestages.common.data.attribute.Attribute<AttributeHolder<?>, GameContentFlattener> INSTANCE;
     }
 }

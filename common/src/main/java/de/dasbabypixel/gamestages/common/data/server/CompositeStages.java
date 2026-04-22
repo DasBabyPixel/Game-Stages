@@ -1,8 +1,8 @@
 package de.dasbabypixel.gamestages.common.data.server;
 
-import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.GameStage;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.ServerGameStageManager;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.HashSet;
@@ -13,8 +13,8 @@ public class CompositeStages extends BaseStages {
     private final Set<PlayerStages> dependencies;
     private boolean valid = false;
 
-    public CompositeStages(AbstractGameStageManager<?> manager, Set<PlayerStages> dependencies) {
-        super(manager, Set.of());
+    public CompositeStages(ServerGameStageManager manager, Set<PlayerStages> dependencies) {
+        super(Set.of());
         this.dependencies = dependencies;
     }
 

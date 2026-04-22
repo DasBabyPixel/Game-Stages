@@ -6,7 +6,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 @NullMarked
-public class Attribute<H extends AttributeHolder<? extends H>, T> {
+public class Attribute<H extends AttributeHolder<? extends H>, T> implements AttributeQuery<H, T> {
     private final Function<H, T> defaultValue;
 
     public Attribute(Function<H, T> defaultValue) {
@@ -17,7 +17,12 @@ public class Attribute<H extends AttributeHolder<? extends H>, T> {
         this(ignore -> defaultValue.get());
     }
 
+    @Override
     public T get(H holder) {
+        return holder.get(this);
+    }
+
+    public T supply(H holder) {
         return defaultValue.apply(holder);
     }
 }

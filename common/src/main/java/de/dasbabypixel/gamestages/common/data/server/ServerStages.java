@@ -15,13 +15,13 @@ import java.util.Set;
 
 @NullMarked
 public abstract class ServerStages extends BaseStages {
-    protected final ServerGameStageManager manager;
+    protected final StagesFileProvider stagesFileProvider;
     protected final Key key;
     protected final Set<CompositeStages> compositeDependencies = new HashSet<>();
 
-    public ServerStages(ServerGameStageManager manager, Key key, StagesFileProvider.StagesFile stagesFile) {
-        super(manager, stagesFile.stages());
-        this.manager = manager;
+    public ServerStages(StagesFileProvider stagesFileProvider, Key key, StagesFileProvider.StagesFile stagesFile) {
+        super(stagesFile.stages());
+        this.stagesFileProvider = stagesFileProvider;
         this.key = key;
     }
 
@@ -56,7 +56,7 @@ public abstract class ServerStages extends BaseStages {
     }
 
     protected void writeFile() {
-        manager.stagesFileProvider().writeStages(key, createFile());
+        stagesFileProvider.writeStages(key, createFile());
     }
 
     protected abstract StagesFileProvider.StagesFile createFile();

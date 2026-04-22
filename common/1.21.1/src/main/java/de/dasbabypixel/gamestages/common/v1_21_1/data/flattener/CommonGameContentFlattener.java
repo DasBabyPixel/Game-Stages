@@ -10,7 +10,11 @@ import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContentType;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 @NullMarked
@@ -40,8 +44,7 @@ public class CommonGameContentFlattener implements GameContentFlattener {
     @SuppressWarnings("unchecked")
     @Override
     public <T extends TypedGameContent> T flatten(GameContent gameContent, GameContentType<T> requestType) {
-        if (typeCache.containsKey(requestType) && Objects
-                .requireNonNull(typeCache.get(requestType))
+        if (typeCache.containsKey(requestType) && Objects.requireNonNull(typeCache.get(requestType))
                 .containsKey(gameContent)) {
             return (T) Objects.requireNonNull(Objects.requireNonNull(typeCache.get(requestType)).get(gameContent));
         }
@@ -61,7 +64,7 @@ public class CommonGameContentFlattener implements GameContentFlattener {
                 fill(flatteners, requestType, Flattener0::union);
                 var content = composite.content();
                 for (var c : content) {
-                    accept(flatteners, requestType, flatten0(c, requestType));
+                    accept(flatteners, requestType, flatten0(Objects.requireNonNull(c), requestType));
                 }
                 return completeFlattening(flatteners, requestType);
             }
@@ -101,8 +104,7 @@ public class CommonGameContentFlattener implements GameContentFlattener {
             case TypedGameContent typed -> {
                 return flattenTyped(typed, requestType);
             }
-            default -> throw new IllegalArgumentException("GameContent has illegal type: " + gameContent
-                    .getClass()
+            default -> throw new IllegalArgumentException("GameContent has illegal type: " + gameContent.getClass()
                     .getName());
         }
     }

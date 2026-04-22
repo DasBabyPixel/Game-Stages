@@ -1,6 +1,6 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addon;
 
-import de.dasbabypixel.gamestages.common.data.server.MutableGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.ServerMutableGameStageManager;
 import de.dasbabypixel.gamestages.common.event.EventType;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon;
 import net.minecraft.core.RegistryAccess;
@@ -31,7 +31,6 @@ public interface NeoAddon extends VAddon {
     record InitResourcesEvent(ReloadableServerResources serverResources, RegistryAccess registryAccess) {
     }
 
-    record RegisterEventData(MutableGameStageManager manager, ReloadableServerResources serverResources,
-                             RegistryAccess registryAccess) {
+    record RegisterEventData(ServerMutableGameStageManager manager) {
     }
 }

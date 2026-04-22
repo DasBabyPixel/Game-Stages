@@ -1,7 +1,7 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.jei;
 
 import de.dasbabypixel.gamestages.common.CommonInstances;
-import de.dasbabypixel.gamestages.common.client.ClientGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.ClientGameStageManager;
 import de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonJEI;
@@ -32,8 +32,8 @@ public class StagesJEIPlugin implements IModPlugin {
             addon.onRuntimeAvailable(jeiRuntime);
         }
         var player = CommonInstances.platformPlayerProvider.clientSelfPlayer();
-        if (player != null) {
-            JEIAddon.ADDON.singleRefreshAll(ClientGameStageManager.instance(), player.getGameStages());
+        if (player != null && ClientGameStageManager.initialized()) {
+            JEIAddon.ADDON.singleRefreshAll(ClientGameStageManager.currentManager(), player.getGameStages());
         }
     }
 

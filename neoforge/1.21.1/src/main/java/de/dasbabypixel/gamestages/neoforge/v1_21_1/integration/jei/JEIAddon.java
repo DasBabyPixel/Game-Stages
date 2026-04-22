@@ -1,8 +1,8 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.jei;
 
-import de.dasbabypixel.gamestages.common.client.ClientGameStageManager;
-import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.ClientGameStageManager;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
 import org.jspecify.annotations.NullMarked;
 
@@ -15,8 +15,8 @@ public class JEIAddon implements NeoAddon {
     }
 
     private void handle(CompileAllPostEvent event) {
-        var recompilationTask = event.recompilationTask();
-        var instance = recompilationTask.instance();
+        var recompilationTask = event.playerCompilationTask();
+        var instance = recompilationTask.manager();
         var stages = recompilationTask.stages();
         if (instance instanceof ClientGameStageManager) {
             // Only execute JEI logic when the manager is for the client

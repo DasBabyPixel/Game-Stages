@@ -1,8 +1,8 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.mixins;
 
 import com.mojang.authlib.GameProfile;
+import de.dasbabypixel.gamestages.common.data.server.GlobalServerState;
 import de.dasbabypixel.gamestages.common.data.server.PlayerStages;
-import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
 import de.dasbabypixel.gamestages.neoforge.integration.Mods;
 import dev.ftb.mods.ftbteams.api.FTBTeamsAPI;
 import net.minecraft.server.MinecraftServer;
@@ -20,13 +20,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Objects;
 
+@SuppressWarnings("DataFlowIssue")
 @Mixin(ServerPlayer.class)
 @Implements(@Interface(iface = de.dasbabypixel.gamestages.common.entity.ServerPlayer.class, prefix = "stages$"))
 @NullMarked
 public abstract class MCServerPlayerMixin implements de.dasbabypixel.gamestages.common.entity.ServerPlayer {
     @Unique
-    private final PlayerStages game_Stages$playerStages = ((ServerGameStageManager) ServerGameStageManager.instance())
-            .playerStagesCache()
+    private final PlayerStages game_Stages$playerStages = GlobalServerState.state()
+            .stagesCache()
             .requirePlayer(getUniqueId());
 
     @Inject(method = "<init>", at = @At("TAIL"))

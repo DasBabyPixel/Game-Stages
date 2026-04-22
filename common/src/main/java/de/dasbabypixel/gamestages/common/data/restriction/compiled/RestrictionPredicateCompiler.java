@@ -2,6 +2,7 @@ package de.dasbabypixel.gamestages.common.data.restriction.compiled;
 
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.logicng.LogicNG;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.restriction.CompositePreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import org.jspecify.annotations.NullMarked;
@@ -17,9 +18,9 @@ public class RestrictionPredicateCompiler {
     private final Map<PreparedRestrictionPredicate, CachedCompiledRestrictionPredicate> cache = new HashMap<>();
     private final LogicNG logicNG;
 
-    public RestrictionPredicateCompiler(BaseStages stages) {
+    public RestrictionPredicateCompiler(BaseStages stages, AbstractGameStageManager<?> manager) {
         this.stages = stages;
-        this.logicNG = stages.manager().get(LogicNG.ATTRIBUTE);
+        this.logicNG = manager.get(LogicNG.ATTRIBUTE);
     }
 
     public CompiledRestrictionPredicate compile(PreparedRestrictionPredicate predicate) {
@@ -32,7 +33,7 @@ public class RestrictionPredicateCompiler {
                                                                                                   .stream()
                                                                                                   .map(this::compile0)
                                                                                                   .toList() : List.<CachedCompiledRestrictionPredicate>of();
-        var compiled = new CachedCompiledRestrictionPredicate(logicNG, stages, predicate, dependencies);
+        var compiled = new CachedCompiledRestrictionPredicate(logicNG, stages, predicate);
         dependencies.forEach(dep -> dep.addNotifier(ignored -> compiled.invalidate()));
         cache.put(predicate, compiled);
         return compiled;

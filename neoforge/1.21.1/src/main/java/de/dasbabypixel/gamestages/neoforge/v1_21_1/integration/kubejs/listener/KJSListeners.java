@@ -1,6 +1,6 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.listener;
 
-import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.AbstractMutableGameStageManager;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.KJSStagesWrapper;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.StageEvents;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.RegisterEventJS;
@@ -17,7 +17,7 @@ public class KJSListeners {
         NeoForge.EVENT_BUS.addListener(KJSListeners::handleStageCreation);
     }
 
-    public static void postRegisterEvent(AbstractGameStageManager<?> instance) {
+    public static void postRegisterEvent(AbstractMutableGameStageManager<?> instance) {
         StageEvents.REGISTER.post(ScriptType.SERVER, new RegisterEventJS(instance));
     }
 

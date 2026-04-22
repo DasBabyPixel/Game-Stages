@@ -8,10 +8,10 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import de.dasbabypixel.gamestages.common.client.ClientGameStageManager;
-import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.GameStage;
-import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.ClientGameStageManager;
+import de.dasbabypixel.gamestages.common.data.server.GlobalServerState;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -35,16 +35,7 @@ public class StageArgumentType implements ArgumentType<StageArgumentType.Provide
 
     @Override
     public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
-        AbstractGameStageManager<?> manager;
-        if (FMLEnvironment.dist.isClient()) {
-            if (context.getSource() instanceof ClientSuggestionProvider) {
-                manager = ClientGameStageManager.instance();
-            } else {
-                manager = ServerGameStageManager.instance();
-            }
-        } else {
-            manager = ServerGameStageManager.instance();
-        }
+        var manager = manager(context);
 
         if (enforceExistence) {
             return SharedSuggestionProvider.suggest(manager.gameStages().stream().map(GameStage::name), builder);
@@ -60,24 +51,24 @@ public class StageArgumentType implements ArgumentType<StageArgumentType.Provide
         return context -> {
             var stage = new GameStage(stageName);
             if (!enforceExistence) return stage;
-
-            AbstractGameStageManager<?> manager;
-
-            if (FMLEnvironment.dist.isClient()) {
-                if (context.getSource() instanceof ClientSuggestionProvider) {
-                    manager = ClientGameStageManager.instance();
-                } else {
-                    manager = ServerGameStageManager.instance();
-                }
-            } else {
-                manager = ServerGameStageManager.instance();
-            }
-
+            var manager = manager(context);
             if (manager.gameStages().contains(stage)) {
                 return stage;
             }
             throw UNKNOWN_STAGE.createWithContext(reader, stageName);
         };
+    }
+
+    private static AbstractGameStageManager<?> manager(CommandContext<?> context) {
+        if (FMLEnvironment.dist.isClient()) {
+            if (context.getSource() instanceof ClientSuggestionProvider) {
+                return ClientGameStageManager.currentManager();
+            } else {
+                return GlobalServerState.currentManager();
+            }
+        } else {
+            return GlobalServerState.currentManager();
+        }
     }
 
     public static GameStage getStage(CommandContext<?> ctx, String name) throws CommandSyntaxException {

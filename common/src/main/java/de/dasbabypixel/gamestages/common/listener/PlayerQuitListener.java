@@ -1,12 +1,12 @@
 package de.dasbabypixel.gamestages.common.listener;
 
-import de.dasbabypixel.gamestages.common.data.server.ServerGameStageManager;
+import de.dasbabypixel.gamestages.common.data.server.GlobalServerState;
 import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public class PlayerQuitListener {
     public static void handleQuit(ServerPlayer player) {
-        ((ServerGameStageManager) ServerGameStageManager.instance())
-                .playerStagesCache()
-                .release(player.getGameStages());
+        GlobalServerState.state().stagesCache().release(player.getGameStages());
     }
 }

@@ -17,16 +17,14 @@ final class CachedCompiledRestrictionPredicate implements CompiledRestrictionPre
     private final PreparedRestrictionPredicate original;
     private final LogicNG logicNG;
     private final Formula formula;
-    private final List<CachedCompiledRestrictionPredicate> dependencies;
     private final List<UpdateNotifier> updateNotifiers = new ArrayList<>(0);
     private boolean cached = false;
     private boolean cachedOldValue = false;
     private boolean cachedValue;
 
-    CachedCompiledRestrictionPredicate(LogicNG logicNG, BaseStages stages, PreparedRestrictionPredicate original, List<CachedCompiledRestrictionPredicate> dependencies) {
+    CachedCompiledRestrictionPredicate(LogicNG logicNG, BaseStages stages, PreparedRestrictionPredicate original) {
         this.stages = stages;
         this.original = original;
-        this.dependencies = dependencies;
         this.logicNG = logicNG;
         this.formula = Objects.requireNonNull(logicNG.simplifier()
                 .apply(original.convertToLogicNG(logicNG.formulaFactory()), true));

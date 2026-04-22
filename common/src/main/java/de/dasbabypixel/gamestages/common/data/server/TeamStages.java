@@ -13,8 +13,8 @@ import java.util.UUID;
 public class TeamStages extends ServerStages {
     private final Set<UUID> players = new HashSet<>();
 
-    public TeamStages(ServerGameStageManager manager, StagesFileProvider.Key key, StagesFileProvider.TeamStagesFile stagesFile) {
-        super(manager, key, stagesFile);
+    public TeamStages(StagesFileProvider stagesFileProvider, StagesFileProvider.Key key, StagesFileProvider.TeamStagesFile stagesFile) {
+        super(stagesFileProvider, key, stagesFile);
         this.players.addAll(stagesFile.players());
     }
 

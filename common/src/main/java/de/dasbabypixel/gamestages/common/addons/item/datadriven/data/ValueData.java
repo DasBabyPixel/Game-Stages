@@ -7,9 +7,9 @@ import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestric
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestrictionEntryReference;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ResolverAlgorithm;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ResolverAlgorithmData;
-import de.dasbabypixel.gamestages.common.data.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.ItemStack;
-import de.dasbabypixel.gamestages.common.data.RecompilationTask;
+import de.dasbabypixel.gamestages.common.data.PlayerCompilationTask;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.AbstractMutableGameStageManager;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
@@ -21,8 +21,8 @@ public record ValueData(
     public static final String TYPE = "value";
 
     @Override
-    public PreCompiled precompile(AbstractGameStageManager<?> manager) {
-        var context = manager.get(ItemAddon.STAGE_MANAGER_CONTEXT);
+    public PreCompiled precompile(AbstractMutableGameStageManager<?> manager) {
+        var context = manager.get(ItemAddon.MutableStageManagerContext.ATTRIBUTE);
         var entry = context.getEntry(restrictionEntryReference);
         return new PreCompiled(restrictionEntryReference, entry);
     }
@@ -32,7 +32,7 @@ public record ValueData(
         private static final Algorithm<ItemStackRestrictionEntry> ALGORITHM = new Algorithm<>();
 
         @Override
-        public Compiled compile(RecompilationTask task) {
+        public Compiled compile(PlayerCompilationTask task) {
             var ctx = task.get(ItemAddon.CompilationContext.ATTRIBUTE);
             var entry = Objects.requireNonNull(ctx.compiledMap.get(reference));
 
