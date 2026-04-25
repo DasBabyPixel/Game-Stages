@@ -21,8 +21,7 @@ public interface NeoAddonJEI {
     }
 
     default <T extends TypedGameContent> void iterate(BaseStages stages, CommonGameContentType<T> type, Consumer<CompiledRestrictionEntry<?, ?>> consumer) {
-        var typeIndex = stages.get(BaseStages.CompileIndex.ATTRIBUTE).typeIndexMap().get(type);
-        if (typeIndex == null) return;
+        var typeIndex = stages.get(BaseStages.CompileIndex.ATTRIBUTE).typeIndex(type);
         for (var entry : typeIndex.contentListByEntry().keySet()) {
             consumer.accept(entry);
         }

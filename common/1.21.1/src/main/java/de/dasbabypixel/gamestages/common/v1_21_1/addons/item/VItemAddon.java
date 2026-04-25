@@ -11,7 +11,6 @@ import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestric
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.attribute.Attribute;
 import de.dasbabypixel.gamestages.common.data.attribute.AttributeQuery;
-import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.ServerGameStageManager;
 import de.dasbabypixel.gamestages.common.data.manager.mutable.ClientMutableGameStageManager;
 import de.dasbabypixel.gamestages.common.data.manager.mutable.compiler.ManagerCompilerTask;
@@ -76,12 +75,12 @@ public abstract class VItemAddon extends ItemAddon implements VAddon {
     private void handle(CompileAllPostEvent event) {
         var recompilationTask = event.playerCompilationTask();
         var itemMap = new HashMap<Holder<Item>, CommonItemRestrictionEntry.Compiled>();
-        var flattener = recompilationTask.manager().get(GameContentFlattener.Attribute.INSTANCE);
         var compileIndex = recompilationTask.stages().get(BaseStages.CompileIndex.ATTRIBUTE);
-        for (var value : compileIndex.compiledRestrictionEntries()) {
-            var items = flattener.flatten(value.gameContent(), CommonItemCollection.TYPE);
-            for (var item : items.content()) {
-                itemMap.put(item, (CommonItemRestrictionEntry.Compiled) value);
+        var typeIndex = compileIndex.typeIndex(CommonItemCollection.TYPE);
+        for (var entry_ : typeIndex.entryByContent().values()) {
+            var entry = (CommonItemRestrictionEntry.Compiled) entry_;
+            for (var item : entry.gameContent().content()) {
+                itemMap.put(item, entry);
             }
         }
 

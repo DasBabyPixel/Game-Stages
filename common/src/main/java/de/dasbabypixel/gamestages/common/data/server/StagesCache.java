@@ -73,6 +73,7 @@ public class StagesCache {
                 players.add(player);
             }
             var stages = new CompositeStages(GlobalServerState.currentManager(), players);
+            stages.recompileAll(GlobalServerState.currentManager());
             var entry = new CompositeEntry(stages);
             compositeMap.put(uuids, entry);
             return stages;

@@ -3,6 +3,7 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeCollection;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeRestrictionEntry;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonJEI;
 import mezz.jei.api.recipe.IRecipeManager;
 import mezz.jei.api.runtime.IJeiRuntime;
@@ -29,7 +30,7 @@ public class RecipeJEI implements NeoAddonJEI {
     public void singleRefreshAll(AbstractGameStageManager<?> instance, BaseStages stages) {
         var collected = new Collected();
         iterate(stages, CommonRecipeCollection.TYPE, entry -> {
-            if (entry instanceof NeoRecipeRestrictionEntry.Compiled(
+            if (entry instanceof CommonRecipeRestrictionEntry.Compiled(
                     var preCompiled, var predicate, var hideInJEI
             )) {
                 if (!hideInJEI) return;
@@ -46,7 +47,7 @@ public class RecipeJEI implements NeoAddonJEI {
     @Override
     public void postCompileAll(AbstractGameStageManager<?> instance, BaseStages stages) {
         iterate(stages, CommonRecipeCollection.TYPE, entry -> {
-            if (entry instanceof NeoRecipeRestrictionEntry.Compiled(
+            if (entry instanceof CommonRecipeRestrictionEntry.Compiled(
                     var preCompiled, var predicate, var hideInJEI
             )) {
                 if (!hideInJEI) return;

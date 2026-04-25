@@ -29,7 +29,7 @@ public class BaseStages extends AbstractAttributeHolder<BaseStages> {
      */
     protected void update(GameStage gameStage) {
         var compileIndex = get(CompileIndex.ATTRIBUTE);
-        var compiled = compileIndex.compiledGameStages().get(gameStage);
+        var compiled = compileIndex.compiledGameStages.get(gameStage);
         if (compiled != null) {
             compiled.invalidate();
         }
@@ -102,16 +102,23 @@ public class BaseStages extends AbstractAttributeHolder<BaseStages> {
         private final List<CompiledRestrictionEntry<?, ?>> compiledRestrictionEntries = new ArrayList<>();
         private final Map<GameStage, CompiledRestrictionPredicate> compiledGameStages = new HashMap<>();
 
-        public Map<GameContentType<?>, TypeIndex> typeIndexMap() {
-            return typeIndexMap;
+        public TypeIndex typeIndex(GameContentType<?> type) {
+            return Objects.requireNonNull(typeIndexMap.get(type));
         }
 
-        public List<CompiledRestrictionEntry<?, ?>> compiledRestrictionEntries() {
-            return compiledRestrictionEntries;
+        public void initTypeIndex(TypeIndex typeIndex) {
+            if (typeIndexMap.containsKey(typeIndex.type)) throw new IllegalStateException();
+            typeIndexMap.put(typeIndex.type, typeIndex);
         }
 
-        public Map<GameStage, CompiledRestrictionPredicate> compiledGameStages() {
-            return compiledGameStages;
+        public void initGameStages(Map<GameStage, CompiledRestrictionPredicate> gameStageMap) {
+            if (!compiledGameStages.isEmpty()) throw new IllegalStateException();
+            compiledGameStages.putAll(gameStageMap);
+        }
+
+        public void initCompiledRestrictionEntries(List<CompiledRestrictionEntry<?, ?>> entries) {
+            if (!compiledRestrictionEntries.isEmpty()) throw new IllegalStateException();
+            compiledRestrictionEntries.addAll(entries);
         }
 
         public void clear() {
@@ -121,11 +128,34 @@ public class BaseStages extends AbstractAttributeHolder<BaseStages> {
         }
     }
 
-    public static final class TypeIndex {
+    public record TypeIndex(GameContentType<?> type,
+                            Map<CompiledRestrictionEntry<?, ?>, List<Object>> contentListByEntry,
+                            Map<Object, CompiledRestrictionEntry<?, ?>> entryByContent) {
+        public TypeIndex {
+            contentListByEntry = Map.copyOf(contentListByEntry);
+            entryByContent = Map.copyOf(entryByContent);
+        }
+    }
+
+    public static final class MutableTypeIndex {
+        private final GameContentType<?> type;
         private final Map<CompiledRestrictionEntry<?, ?>, List<Object>> contentListByEntry = new HashMap<>();
+        private final Map<Object, CompiledRestrictionEntry<?, ?>> entryByContent = new HashMap<>();
+
+        public MutableTypeIndex(GameContentType<?> type) {
+            this.type = type;
+        }
 
         public Map<CompiledRestrictionEntry<?, ?>, List<Object>> contentListByEntry() {
             return contentListByEntry;
+        }
+
+        public Map<Object, CompiledRestrictionEntry<?, ?>> entryByContent() {
+            return entryByContent;
+        }
+
+        public TypeIndex compile() {
+            return new TypeIndex(type, contentListByEntry, entryByContent);
         }
     }
 }

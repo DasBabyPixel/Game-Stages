@@ -1,5 +1,6 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.mixins;
 
+import de.dasbabypixel.gamestages.common.data.server.CompositeStages;
 import de.dasbabypixel.gamestages.common.data.server.GlobalServerState;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.Attachments;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.entity.IBlockEntity;
@@ -31,6 +32,8 @@ public abstract class MCBlockEntityMixin implements IBlockEntity {
     private boolean stages$registered = false;
     @Unique
     private @Nullable Set<UUID> stages$owners = null;
+    @Unique
+    private @Nullable CompositeStages stages$stages;
 
     @Inject(method = "clearRemoved", at = @At("TAIL"))
     private void onLoad(CallbackInfo ci) {
@@ -41,10 +44,14 @@ public abstract class MCBlockEntityMixin implements IBlockEntity {
         var source = ah.getData(Attachments.SOURCE);
         stages$owners = Set.copyOf(source.owners());
         if (!stages$owners.isEmpty()) {
-            GlobalServerState.state().stagesCache().requireComposite(stages$owners);
+            stages$stages = GlobalServerState.state().stagesCache().requireComposite(stages$owners);
         }
 
         stages$registered = true;
+    }
+
+    public @Nullable CompositeStages stages$stages() {
+        return stages$stages;
     }
 
     public void stages$reloadOwners() {
@@ -55,10 +62,11 @@ public abstract class MCBlockEntityMixin implements IBlockEntity {
         if (newOwners.equals(stages$owners)) return;
         if (!stages$owners.isEmpty()) {
             GlobalServerState.state().stagesCache().releaseComposite(stages$owners);
+            stages$stages = null;
         }
         stages$owners = newOwners;
         if (!stages$owners.isEmpty()) {
-            GlobalServerState.state().stagesCache().requireComposite(stages$owners);
+            stages$stages = GlobalServerState.state().stagesCache().requireComposite(stages$owners);
         }
     }
 
@@ -69,6 +77,7 @@ public abstract class MCBlockEntityMixin implements IBlockEntity {
 
         if (!stages$owners.isEmpty()) {
             GlobalServerState.state().stagesCache().releaseComposite(stages$owners);
+            stages$stages = null;
         }
 
         stages$registered = false;

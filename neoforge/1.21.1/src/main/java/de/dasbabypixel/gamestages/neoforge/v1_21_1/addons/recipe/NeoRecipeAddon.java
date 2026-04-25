@@ -28,13 +28,13 @@ public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
     }
 
     @Override
-    protected CommonRecipeRestrictionEntry<?, ?, ?> createDefaultEntry(PreparedRestrictionPredicate predicate, CommonRecipeCollection recipes) {
-        return new NeoRecipeRestrictionEntry(predicate, RestrictionEntryOrigin.SERVER, recipes);
+    protected CommonRecipeRestrictionEntry createDefaultEntry(PreparedRestrictionPredicate predicate, CommonRecipeCollection recipes) {
+        return new CommonRecipeRestrictionEntry(predicate, RestrictionEntryOrigin.SERVER, recipes);
     }
 
     @Override
     public void handle(CommonRecipeRestrictionPacket packet) {
-        var entry = new NeoRecipeRestrictionEntry(packet.predicate(), RestrictionEntryOrigin.string(packet.origin()), packet.targetCollection());
+        var entry = new CommonRecipeRestrictionEntry(packet.predicate(), RestrictionEntryOrigin.string(packet.origin()), packet.targetCollection());
         ClientMutableGameStageManager.buildingInstance().addRestriction(entry);
     }
 
@@ -70,8 +70,8 @@ public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
                 var predicate = (PreparedRestrictionPredicate) args[0];
                 var source = Objects.requireNonNull(SourceLine.of(cx)).toString();
                 return event.stageManager()
-                        .addRestriction(new NeoRecipeRestrictionEntry(predicate, RestrictionEntryOrigin.string(source), recipesContent));
-            }, RecipeCollectionWrapper.class, NeoRecipeRestrictionEntry.class, PreparedRestrictionPredicate.class, RecipeCollectionWrapper[].class);
+                        .addRestriction(new CommonRecipeRestrictionEntry(predicate, RestrictionEntryOrigin.string(source), recipesContent));
+            }, RecipeCollectionWrapper.class, CommonRecipeRestrictionEntry.class, PreparedRestrictionPredicate.class, RecipeCollectionWrapper[].class);
         }
 
         @Override
