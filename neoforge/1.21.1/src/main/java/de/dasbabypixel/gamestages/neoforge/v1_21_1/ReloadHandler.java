@@ -62,7 +62,7 @@ public class ReloadHandler {
 
         RELOAD_POST_EVENT.call(new ReloadPostEvent(manager));
 
-        var immutableManager = compile(manager, serverResources, registryAccess);
+        var immutableManager = compile(manager);
         GlobalServerState.updateManager(immutableManager);
         pushFullUpdate(immutableManager);
     }
@@ -74,7 +74,7 @@ public class ReloadHandler {
         return "\"" + cs + "\"";
     }
 
-    private static ServerGameStageManager compile(ServerMutableGameStageManager manager, ReloadableServerResources serverResources, RegistryAccess registryAccess) {
+    private static ServerGameStageManager compile(ServerMutableGameStageManager manager) {
         var compilerTask = new ManagerCompilerTask(manager);
         compilerTask.precompileRestrictions();
         var restrictions = compilerTask.preCompileIndex().preCompiledRestrictions();
@@ -100,10 +100,13 @@ public class ReloadHandler {
         player.getGameStages().fullSync();
     }
 
-    public static void pushFullUpdate(ServerGameStageManager instance) {
-        instance.sync(CommonInstances.platformPacketDistributor::sendToAllPlayers);
+    public static void pushFullUpdate(ServerGameStageManager manager) {
+        manager.sync(CommonInstances.platformPacketDistributor::sendToAllPlayers);
         for (var player : CommonInstances.platformPlayerProvider.allPlayers()) {
-            playerUpdate(instance, player);
+            playerUpdate(manager, player);
+        }
+        if (GlobalServerState.initialized()) {
+            GlobalServerState.state().stagesCache().recompileComposite(manager);
         }
     }
 }

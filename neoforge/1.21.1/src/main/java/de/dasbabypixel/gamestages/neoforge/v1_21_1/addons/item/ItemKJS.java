@@ -1,5 +1,6 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.item;
 
+import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
@@ -45,6 +46,8 @@ public class ItemKJS implements NeoAddonKJS {
 
     @Override
     public void registerEventExtensions(EventRegistry registry) {
+        var dataDrivenTypedDataType = new TypeToken<DataDrivenTypedData<?>>() {
+        }.getType();
         var type = registry.get(RegisterEventJS.class);
         type.addFunctionVarArgs("items", (event, cx, args) -> args[0], ItemCollectionWrapper.class, ItemCollectionWrapper.class, ItemCollectionWrapper[].class);
         type.addFunctionVarArgs("restrictItems", this::restrictItems, ItemCollectionWrapper.class, CommonItemRestrictionEntry.class, PreparedRestrictionPredicate.class, ItemCollectionWrapper[].class);
@@ -71,7 +74,7 @@ public class ItemKJS implements NeoAddonKJS {
             var networkData = new DataDrivenNetwork.NetworkData<>(dataDrivenType, Objects.requireNonNull(data.data()), factoryId);
             var entry = new CommonItemRestrictionEntry(origin, items, networkData);
             return event.stageManager().addRestriction(entry);
-        }, ItemCollectionWrapper.class, void.class, DataDrivenTypedData.class, ItemCollectionWrapper[].class);
+        }, ItemCollectionWrapper.class, void.class, dataDrivenTypedDataType, ItemCollectionWrapper[].class);
     }
 
     private CommonItemRestrictionEntry restrictItems(RegisterEventJS event, KubeJSContext cx, Object[] args) {

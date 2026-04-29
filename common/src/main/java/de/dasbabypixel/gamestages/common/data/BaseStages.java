@@ -20,7 +20,7 @@ import java.util.Set;
 public class BaseStages extends AbstractAttributeHolder<BaseStages> {
     private final Set<GameStage> unlockedStages;
 
-    public BaseStages(Collection<GameStage> stages) {
+    public BaseStages(Collection<? extends GameStage> stages) {
         unlockedStages = new HashSet<>(stages);
     }
 

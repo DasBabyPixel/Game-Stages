@@ -1,5 +1,6 @@
 package de.dasbabypixel.gamestages.common.data.server;
 
+import de.dasbabypixel.gamestages.common.data.manager.immutable.ServerGameStageManager;
 import org.jspecify.annotations.NullMarked;
 
 import java.io.IOException;
@@ -42,6 +43,7 @@ public class StagesCache {
                 LOGGER.log(Level.INFO, "Delete composite");
                 compositeMap.remove(uuids);
                 for (var dependency : stages.dependencies()) {
+                    dependency.removeCompositeDependant(stages);
                     release(dependency);
                 }
             }
@@ -54,6 +56,17 @@ public class StagesCache {
         uuids = Set.copyOf(uuids);
         var stages = Objects.requireNonNull(compositeMap.get(uuids));
         release(stages.stages);
+    }
+
+    public void recompileComposite(ServerGameStageManager manager) {
+        lock.lock();
+        try {
+            for (var value : compositeMap.values()) {
+                value.stages.recompileAll(manager);
+            }
+        } finally {
+            lock.unlock();
+        }
     }
 
     public CompositeStages requireComposite(Set<UUID> uuids) {
@@ -74,6 +87,9 @@ public class StagesCache {
             }
             var stages = new CompositeStages(GlobalServerState.currentManager(), players);
             stages.recompileAll(GlobalServerState.currentManager());
+            for (var player : players) {
+                player.addCompositeDependant(stages);
+            }
             var entry = new CompositeEntry(stages);
             compositeMap.put(uuids, entry);
             return stages;

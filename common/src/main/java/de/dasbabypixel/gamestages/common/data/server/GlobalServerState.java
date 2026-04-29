@@ -40,6 +40,10 @@ public class GlobalServerState {
         return Objects.requireNonNull(state);
     }
 
+    public static boolean initialized() {
+        return state != null;
+    }
+
     public static void init(Path dataDirectory) {
         if (state != null) throw new IllegalStateException();
         if (currentManager == null) throw new IllegalStateException();

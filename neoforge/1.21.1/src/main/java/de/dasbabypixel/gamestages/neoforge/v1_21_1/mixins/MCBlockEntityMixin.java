@@ -1,5 +1,6 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.mixins;
 
+import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.server.CompositeStages;
 import de.dasbabypixel.gamestages.common.data.server.GlobalServerState;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.Attachments;
@@ -50,7 +51,9 @@ public abstract class MCBlockEntityMixin implements IBlockEntity {
         stages$registered = true;
     }
 
-    public @Nullable CompositeStages stages$stages() {
+    public @Nullable BaseStages stages$stages() {
+        if (level.isClientSide)
+            throw new UnsupportedOperationException("Accessing BlockEntity stages from the client not supported");
         return stages$stages;
     }
 

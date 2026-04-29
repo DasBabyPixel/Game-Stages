@@ -8,6 +8,7 @@
     "MCItemStackMixin",
     "MCPlayerMixin",
     "MCServerPlayerMixin",
+    "recipe.MCAbstractFurnaceBlockEntityMixin",
     "recipe.MCCrafterBlockMixin",
     "recipe.MCCrafterMenuMixin",
     "recipe.MCCraftingMenuMixin"

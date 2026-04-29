@@ -152,7 +152,8 @@ public abstract class VRecipeAddon implements VAddon {
 
     public abstract void handle(CommonRecipeRestrictionPacket packet);
 
-    public static CommonRecipeRestrictionEntry.@Nullable Compiled getEntry(BaseStages stages, RecipeHolder<?> holder) {
+    public static CommonRecipeRestrictionEntry.@Nullable Compiled getEntry(@Nullable BaseStages stages, RecipeHolder<?> holder) {
+        if (stages == null) return null;
         var compileIndex = stages.get(BaseStages.CompileIndex.ATTRIBUTE);
         var typeIndex = compileIndex.typeIndex(CommonRecipeCollection.TYPE);
         var entry = typeIndex.entryByContent().get(holder.id());

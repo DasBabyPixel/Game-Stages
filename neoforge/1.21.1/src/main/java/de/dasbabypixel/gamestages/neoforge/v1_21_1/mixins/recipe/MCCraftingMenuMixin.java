@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(CraftingMenu.class)
 public class MCCraftingMenuMixin {
     @Inject(method = "slotChangedCraftingGrid", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/crafting/RecipeHolder;value()Lnet/minecraft/world/item/crafting/Recipe;"), cancellable = true)
-    private static void stages$slotChanged(AbstractContainerMenu menu, Level level, Player player, CraftingContainer craftSlots, ResultContainer resultSlots, RecipeHolder<CraftingRecipe> recipe, CallbackInfo ci, @Local ServerPlayer serverPlayer, @Local(name = "recipeholder") RecipeHolder<CraftingRecipe> recipeholder) {
+    private static void stages$slotChanged(AbstractContainerMenu menu, Level level, Player player, CraftingContainer craftSlots, ResultContainer resultSlots, RecipeHolder<CraftingRecipe> recipe, CallbackInfo ci, @Local ServerPlayer serverPlayer, @Local(ordinal = 1) RecipeHolder<CraftingRecipe> recipeholder) {
         var entry = VRecipeAddon.getEntry(serverPlayer.getGameStages(), recipeholder);
         if (entry != null) {
             if (!entry.predicate().test()) {

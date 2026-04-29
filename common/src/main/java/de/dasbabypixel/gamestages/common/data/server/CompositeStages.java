@@ -23,9 +23,31 @@ public class CompositeStages extends BaseStages {
     }
 
     @Override
+    public boolean add(GameStage gameStage) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean addSilent(GameStage gameStage) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean remove(GameStage gameStage) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean removeSilent(GameStage gameStage) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public Set<GameStage> getUnlockedStages() {
         var set = super.getUnlockedStages();
-        if (valid) return set;
+        if (valid) {
+            return set;
+        }
 
         var old = Set.copyOf(set);
         set.clear();
@@ -35,6 +57,7 @@ public class CompositeStages extends BaseStages {
         var overlap = new HashSet<>(set);
         overlap.retainAll(old);
         var difference = new HashSet<>(set);
+        difference.addAll(old);
         difference.removeAll(overlap);
         valid = true;
 
@@ -47,5 +70,7 @@ public class CompositeStages extends BaseStages {
 
     public void invalidate() {
         valid = false;
+        // Query and revalidate
+        getUnlockedStages();
     }
 }

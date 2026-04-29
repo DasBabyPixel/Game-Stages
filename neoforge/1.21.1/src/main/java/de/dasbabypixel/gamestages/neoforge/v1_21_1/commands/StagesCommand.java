@@ -3,26 +3,30 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
-import de.dasbabypixel.gamestages.common.data.GameStage;
-import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.VItemAddon;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.VRecipeAddon;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.entity.IBlockEntity;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.commands.synchronization.SuggestionProviders;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @NullMarked
 public class StagesCommand {
+    private static final DynamicCommandExceptionType UNSUPPORTED_SOURCE = new DynamicCommandExceptionType(o -> Component.literal("Unsupported source: " + o));
+
     @SuppressWarnings("DataFlowIssue")
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         var cmd = Commands.literal("stages");
@@ -31,6 +35,7 @@ public class StagesCommand {
         cmd.then(Commands.literal("add")
                 .then(Commands.argument("target", EntityArgument.players())
                         .then(Commands.argument("stage", new StageArgumentType(true))
+                                .suggests(StageArgumentType.suggestMissingPlayers("target"))
                                 .executes(StagesCommand::addTargetStage)
                         )
                 )
@@ -38,17 +43,7 @@ public class StagesCommand {
         cmd.then(Commands.literal("remove")
                 .then(Commands.argument("target", EntityArgument.players())
                         .then(Commands.argument("stage", new StageArgumentType(false))
-                                .suggests((context, builder) -> {
-                                    // @formatter:on
-                                    Collection<net.minecraft.server.level.ServerPlayer> targets = EntityArgument.getPlayers(context, "target");
-                                    return SharedSuggestionProvider.suggest(targets.stream()
-                                            .map(ServerPlayer::getGameStages)
-                                            .map(BaseStages::getAll)
-                                            .flatMap(Set::stream)
-                                            .map(GameStage::name)
-                                            .distinct(), builder);
-                                    // @formatter:off
-                                })
+                                .suggests(StageArgumentType.suggestExistingPlayers("target"))
                                 .executes(StagesCommand::removeTargetStage)
                         )
                 )
@@ -60,11 +55,34 @@ public class StagesCommand {
         );
         // TODO move to item addon
         cmd.then(Commands.literal("hand")
+                .requires(CommandSourceStack::isPlayer)
                 .executes(StagesCommand::hand)
+        );
+        cmd.then(Commands.literal("recipe")
+                .then(Commands.argument("recipe", ResourceLocationArgument.id())
+                        .suggests(SuggestionProviders.ALL_RECIPES)
+                        .executes(ctx -> {
+                            var stages = stagesOf(ctx.getSource());
+                            var recipe = ResourceLocationArgument.getRecipe(ctx, "recipe");
+                            var entry = VRecipeAddon.getEntry(stages, recipe);
+                            var msg = entry == null ? "No restriction" : (entry.predicate().predicate() + " -> " + entry.predicate().test());
+                            ctx.getSource().sendSuccess(() -> Component.literal(msg), true);
+                            return 0;
+                        })
+                )
         );
         // @formatter:on
 
         dispatcher.register(cmd);
+    }
+
+    private static @Nullable BaseStages stagesOf(CommandSourceStack source) throws CommandSyntaxException {
+        if (source.source instanceof Player player) {
+            return player.getGameStages();
+        } else if (source.source instanceof IBlockEntity blockEntity) {
+            return blockEntity.stages();
+        }
+        throw Objects.requireNonNull(UNSUPPORTED_SOURCE.create(source.source.getClass().getName()));
     }
 
     // TODO move to item addon
@@ -74,7 +92,7 @@ public class StagesCommand {
         var entry = VItemAddon.getEntry(player.getGameStages(), stack, stack);
         var msg = entry == null ? "No restriction" : (entry.predicate().predicate() + " -> " + entry.predicate()
                                                                                                .test());
-        player.sendSystemMessage(Component.literal(msg));
+        context.getSource().sendSuccess(() -> Component.literal(msg), true);
         return 0;
     }
 

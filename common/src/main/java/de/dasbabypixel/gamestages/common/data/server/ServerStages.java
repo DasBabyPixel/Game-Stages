@@ -25,6 +25,14 @@ public abstract class ServerStages extends BaseStages {
         this.key = key;
     }
 
+    public void addCompositeDependant(CompositeStages stages) {
+        this.compositeDependencies.add(stages);
+    }
+
+    public void removeCompositeDependant(CompositeStages stages) {
+        this.compositeDependencies.remove(stages);
+    }
+
     public void load() {
     }
 

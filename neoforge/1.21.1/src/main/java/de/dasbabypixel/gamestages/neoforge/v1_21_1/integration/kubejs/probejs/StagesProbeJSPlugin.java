@@ -7,6 +7,7 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonProbeJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.ModContentWrapper;
 import dev.latvian.mods.kubejs.event.KubeEvent;
 import moe.wolfgirl.probejs.lang.java.clazz.ClassPath;
+import moe.wolfgirl.probejs.lang.transpiler.Transpiler;
 import moe.wolfgirl.probejs.lang.typescript.ScriptDump;
 import moe.wolfgirl.probejs.lang.typescript.TypeScriptFile;
 import moe.wolfgirl.probejs.lang.typescript.code.Code;
@@ -20,7 +21,13 @@ import net.minecraft.commands.synchronization.SingletonArgumentInfo;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import static moe.wolfgirl.probejs.lang.typescript.code.type.Types.primitive;
 
@@ -70,8 +77,7 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
                             var last = i == descriptor.parameters().length - 1;
                             var varArg = last && descriptor.varArgs();
                             var paramName = "arg" + (nameId++);
-                            var paramType = varArg ? typeConverter.convertType(param
-                                                                               .probeType()
+                            var paramType = varArg ? typeConverter.convertType(param.probeType()
                                                                                .componentType()) : typeConverter.convertType(param.probeType());
                             params.add(new ParamDecl(paramName, paramType, varArg, false));
                         }
@@ -107,6 +113,10 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
             }
         }
         return eventClasses;
+    }
+
+    @Override
+    public void denyTypes(Transpiler transpiler) {
     }
 
     @Override

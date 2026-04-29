@@ -4,6 +4,7 @@ import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenData;
 import io.netty.buffer.ByteBuf;
 import org.jspecify.annotations.NullMarked;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -19,6 +20,10 @@ public class DataDrivenTypes {
     public <B extends ByteBuf, T extends DataDrivenData<?, ?>> DataDrivenType<B, T> register(DataDrivenType<B, T> type) {
         this.types.put(type.type(), type);
         return type;
+    }
+
+    public Collection<DataDrivenType<?, ?>> types() {
+        return types.values();
     }
 
     public DataDrivenType<?, ?> get(String type) {

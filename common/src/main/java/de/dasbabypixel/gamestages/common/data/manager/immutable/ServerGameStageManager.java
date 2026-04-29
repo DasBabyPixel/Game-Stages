@@ -21,7 +21,6 @@ public final class ServerGameStageManager extends AbstractGameStageManager<Serve
     }
 
     public void sync(PacketConsumer packetConsumer) {
-//        if (GlobalServerState.state == null) return;
         packetConsumer.send(platformPacketCreator.createStatusPacket(Status.BEGIN_SYNC));
         var gameStages = List.copyOf(this.gameStages());
         packetConsumer.send(platformPacketCreator.createSyncRegisteredGameStages(gameStages));

@@ -54,4 +54,5 @@ dependencies {
     implementation("curse.maven:architectury-api-419699:5786327")
     implementation("curse.maven:ftb-xmod-compat-889915:6979171")
     implementation("curse.maven:ftb-teams-forge-404468:6930910")
+    implementation("curse.maven:ex-deorum-901420:7160864")
 }

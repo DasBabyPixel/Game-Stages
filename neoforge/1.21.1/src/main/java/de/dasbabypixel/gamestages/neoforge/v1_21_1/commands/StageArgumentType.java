@@ -6,42 +6,36 @@ import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import de.dasbabypixel.gamestages.common.data.GameStage;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.ClientGameStageManager;
 import de.dasbabypixel.gamestages.common.data.server.GlobalServerState;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.neoforged.fml.loading.FMLEnvironment;
 import org.jspecify.annotations.NullMarked;
 
+import java.util.HashSet;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 @NullMarked
 public class StageArgumentType implements ArgumentType<StageArgumentType.Provider> {
+    public static final SuggestionProvider<CommandSourceStack> SUGGEST_ALL = (context, builder) -> {
+        var manager = manager(context);
+        return SharedSuggestionProvider.suggest(manager.gameStages().stream().map(GameStage::name), builder);
+    };
     private static final DynamicCommandExceptionType UNKNOWN_STAGE = new DynamicCommandExceptionType(arg1 -> Component.literal("Unknown stage: " + arg1));
     private final boolean enforceExistence;
 
     public StageArgumentType(boolean enforceExistence) {
         this.enforceExistence = enforceExistence;
-    }
-
-    @Override
-    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
-        var manager = manager(context);
-
-        if (enforceExistence) {
-            return SharedSuggestionProvider.suggest(manager.gameStages().stream().map(GameStage::name), builder);
-        }
-
-        return Objects.requireNonNull(builder.buildFuture());
     }
 
     @Override
@@ -56,6 +50,32 @@ public class StageArgumentType implements ArgumentType<StageArgumentType.Provide
                 return stage;
             }
             throw UNKNOWN_STAGE.createWithContext(reader, stageName);
+        };
+    }
+
+    public static SuggestionProvider<CommandSourceStack> suggestMissingPlayers(String playersArgumentName) {
+        return (context, builder) -> {
+            var players = EntityArgument.getPlayers(context, playersArgumentName);
+            var stages = new HashSet<>(manager(context).gameStages());
+            var removeStages = new HashSet<>(manager(context).gameStages());
+            for (var player : players) {
+                Objects.requireNonNull(player);
+                removeStages.retainAll(player.getGameStages().getAll());
+            }
+            stages.removeAll(removeStages);
+            return SharedSuggestionProvider.suggest(stages.stream().map(GameStage::name), builder);
+        };
+    }
+
+    public static SuggestionProvider<CommandSourceStack> suggestExistingPlayers(String playersArgumentName) {
+        return (context, builder) -> {
+            var players = EntityArgument.getPlayers(context, playersArgumentName);
+            var stages = new HashSet<GameStage>();
+            for (var player : players) {
+                Objects.requireNonNull(player);
+                stages.addAll(player.getGameStages().getAll());
+            }
+            return SharedSuggestionProvider.suggest(stages.stream().map(GameStage::name), builder);
         };
     }
 
