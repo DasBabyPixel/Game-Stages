@@ -12,7 +12,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -24,7 +29,7 @@ import java.util.zip.Checksum;
 
 @NullMarked
 public class StagesFileProvider {
-    private static final Logger LOGGER = Logger.getLogger(StagesFileProvider.class.getName());
+    private static final Logger LOGGER = Objects.requireNonNull(Logger.getLogger(StagesFileProvider.class.getName()));
     private final ExecutorService writeExecutor = Executors.newSingleThreadExecutor();
     private final ReentrantLock lock = new ReentrantLock();
     /**
@@ -35,6 +40,15 @@ public class StagesFileProvider {
 
     public StagesFileProvider(Path directory) {
         this.directory = directory;
+    }
+
+    public boolean knowsStages(Key key) {
+        lock.lock();
+        try {
+            return Files.exists(stageFile(key, "txt"));
+        } finally {
+            lock.unlock();
+        }
     }
 
     public StagesFile readStages(Key key) throws IOException {
@@ -124,8 +138,7 @@ public class StagesFileProvider {
     }
 
     private Path stageFile(Key key, String suffix) {
-        return Objects.requireNonNull(Objects
-                .requireNonNull(directory.resolve(key.type()))
+        return Objects.requireNonNull(Objects.requireNonNull(directory.resolve(key.type()))
                 .resolve(key.uuid() + "." + suffix));
     }
 
@@ -308,8 +321,7 @@ public class StagesFileProvider {
             for (var player : players) {
                 writer.write(Objects.requireNonNull(player.toString()));
                 writer.newLine();
-                checksum.update(Objects
-                        .requireNonNull(player.toString())
+                checksum.update(Objects.requireNonNull(player.toString())
                         .getBytes(Objects.requireNonNull(StandardCharsets.UTF_8)));
                 checksum.update(0);
             }

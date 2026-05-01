@@ -100,7 +100,7 @@ public class RecipeJEI implements NeoAddonJEI {
                         .getRecipeType(Objects.requireNonNull(BuiltInRegistries.RECIPE_TYPE.getKey(type)))
                         .orElse(null);
                 if (jeiType == null) {
-                    System.out.println("Skipping type " + BuiltInRegistries.RECIPE_TYPE.getKey(type));
+                    LOGGER.error("Skipping unknown type {}", BuiltInRegistries.RECIPE_TYPE.getKey(type));
                     return;
                 }
                 var recipeClass = jeiType.getRecipeClass();

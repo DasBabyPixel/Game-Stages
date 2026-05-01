@@ -3,6 +3,7 @@ package de.dasbabypixel.gamestages.common.client;
 import de.dasbabypixel.gamestages.common.addon.Addon.ClientPostSyncUnlockedStagesEvent;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.GameStage;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.ClientGameStageManager;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.HashSet;
@@ -20,6 +21,9 @@ public class ClientPlayerStages extends BaseStages {
 
     public ClientPlayerStages() {
         super(Set.of());
+        if (ClientGameStageManager.initialized()) {
+            recompileAll(ClientGameStageManager.currentManager());
+        }
     }
 
     public void syncUnlockedStages(List<GameStage> gameStages) {

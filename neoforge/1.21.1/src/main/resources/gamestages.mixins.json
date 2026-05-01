@@ -3,15 +3,17 @@
   "package": "de.dasbabypixel.gamestages.neoforge.v1_21_1.mixins",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "MCAbstractClientPlayerMixin",
+    "KJSPlayerEventHandlerMixin",
     "MCBlockEntityMixin",
     "MCItemStackMixin",
+    "MCLocalPlayerMixin",
     "MCPlayerMixin",
     "MCServerPlayerMixin",
     "recipe.MCAbstractFurnaceBlockEntityMixin",
     "recipe.MCCrafterBlockMixin",
     "recipe.MCCrafterMenuMixin",
-    "recipe.MCCraftingMenuMixin"
+    "recipe.MCCraftingMenuMixin",
+    "sourcetracking.MCEntityTypeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

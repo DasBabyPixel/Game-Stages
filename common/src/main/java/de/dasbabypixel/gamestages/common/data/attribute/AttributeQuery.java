@@ -6,7 +6,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.Objects;
 
 @NullMarked
-public interface AttributeQuery<H extends AttributeHolder<? extends H>, T> {
+public interface AttributeQuery<H extends IAttributeHolder<? extends H>, T> {
     T get(H holder);
 
     static <H extends AttributeHolder<? extends H>, T> Holder<H, T> holder() {

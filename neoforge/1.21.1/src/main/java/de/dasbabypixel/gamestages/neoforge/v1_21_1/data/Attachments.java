@@ -1,6 +1,8 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.data;
 
 import de.dasbabypixel.gamestages.common.BuildConstants;
+import de.dasbabypixel.gamestages.common.data.server.GlobalServerState;
+import de.dasbabypixel.gamestages.common.data.server.StagesFileProvider;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -9,20 +11,24 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.attachment.IAttachmentHolder;
+import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.INBTSerializable;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 @NullMarked
 public class Attachments {
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES = DeferredRegister.create(Objects.requireNonNull(NeoForgeRegistries.ATTACHMENT_TYPES), BuildConstants.MOD_ID);
-    public static final Supplier<AttachmentType<Source>> SOURCE = ATTACHMENT_TYPES.register("source", () -> AttachmentType
-            .serializable(Source::new)
+    public static final Supplier<AttachmentType<Source>> SOURCE = ATTACHMENT_TYPES.register("source", () -> AttachmentType.serializable(Source::new)
             .build());
 
     public static class Source implements INBTSerializable<CompoundTag> {
@@ -30,6 +36,16 @@ public class Attachments {
 
         public Source(@Nullable IAttachmentHolder h) {
             if (h instanceof Player player) {
+                var server = player.getServer();
+                if (server != null && player instanceof FakePlayer) {
+                    if (!GlobalServerState.state()
+                            .stagesFileProvider()
+                            .knowsStages(StagesFileProvider.player(player.getUUID()))) {
+                        // We are a fake player with a random UUID, we don't associate with any owner by default.
+                        // Otherwise, the machine using the fake player wouldn't be able to interact with some content.
+                        return;
+                    }
+                }
                 owners.add(player.getUUID());
             }
         }

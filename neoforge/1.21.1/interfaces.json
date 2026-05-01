@@ -5,13 +5,16 @@
   "net/minecraft/server/level/ServerPlayer": [
     "de/dasbabypixel/gamestages/common/entity/ServerPlayer"
   ],
-  "net/minecraft/client/player/AbstractClientPlayer": [
+  "net/minecraft/client/player/LocalPlayer": [
     "de/dasbabypixel/gamestages/common/entity/ClientPlayer"
   ],
   "net/minecraft/world/item/ItemStack": [
     "de/dasbabypixel/gamestages/common/data/ItemStack"
   ],
   "net/minecraft/world/level/block/entity/BlockEntity": [
+    "de/dasbabypixel/gamestages/neoforge/v1_21_1/entity/IBlockEntity"
+  ],
+  "net/minecraft/world/level/block/entity/CommandBlockEntity": [
     "de/dasbabypixel/gamestages/neoforge/v1_21_1/entity/IBlockEntity"
   ]
 }

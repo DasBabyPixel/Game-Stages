@@ -29,6 +29,7 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.EventRegistryImpl;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.item.datadriven.NeoDataDrivenTypes;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.RecipeJEI;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.client.ClientReloadHandler;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.commands.StageArgumentType;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.commands.StagesCommand;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.Attachments;
@@ -119,6 +120,7 @@ public class NeoForgeEntrypoint {
         NeoForge.EVENT_BUS.addListener(this::handleBlockPlace);
         if (FMLEnvironment.dist.isClient()) {
             NeoForge.EVENT_BUS.addListener(this::handleRecipes);
+            ClientReloadHandler.registerListeners();
         }
 
         ReloadHandler.registerListeners();

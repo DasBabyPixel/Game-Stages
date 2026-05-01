@@ -13,9 +13,13 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.commands.synchronization.SuggestionProviders;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.vehicle.MinecartCommandBlock;
+import net.minecraft.world.level.BaseCommandBlock;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -81,6 +85,20 @@ public class StagesCommand {
             return player.getGameStages();
         } else if (source.source instanceof IBlockEntity blockEntity) {
             return blockEntity.stages();
+        } else if (source.source instanceof BaseCommandBlock baseCommandBlock) {
+            if (baseCommandBlock instanceof MinecartCommandBlock.MinecartCommandBase minecartBase) {
+            } else {
+                var pos = baseCommandBlock.getPosition();
+                var level = baseCommandBlock.getLevel();
+                var optional = level.getBlockEntity(BlockPos.containing(pos), BlockEntityType.COMMAND_BLOCK);
+                if (optional.isPresent()) {
+                    var blockEntity = optional.get();
+                    if (blockEntity.getCommandBlock() == baseCommandBlock) {
+                        //noinspection RedundantCast
+                        return ((IBlockEntity) blockEntity).stages();
+                    }
+                }
+            }
         }
         throw Objects.requireNonNull(UNSUPPORTED_SOURCE.create(source.source.getClass().getName()));
     }
