@@ -10,20 +10,20 @@ import de.dasbabypixel.gamestages.common.network.CustomPacket;
 import org.jspecify.annotations.NullMarked;
 
 @NullMarked
-public interface RestrictionEntry<T extends RestrictionEntry<T, P, C>, P extends RestrictionEntry.PreCompiled<P, C>, C extends CompiledRestrictionEntry<C, P>> extends CompilableResource<AbstractMutableGameStageManager<?>, P, PlayerCompilationTask, C> {
+public interface RestrictionEntry<T extends RestrictionEntry<T, P, C>, P extends RestrictionEntry.PreCompiled<P, C>, C extends CompiledRestrictionEntry<C, P>> extends CompilableResource<AbstractMutableGameStageManager<?>, P> {
     TypedGameContent gameContent();
 
     RestrictionEntryOrigin origin();
 
     @Override
-    P precompile(AbstractMutableGameStageManager<?> manager);
+    P compile(AbstractMutableGameStageManager<?> manager);
 
     @SuppressWarnings("unchecked")
     default T self() {
         return (T) this;
     }
 
-    interface PreCompiled<P extends RestrictionEntry.PreCompiled<P, C>, C extends CompiledRestrictionEntry<C, P>> extends CompilableResource.PreCompiled<PlayerCompilationTask, C> {
+    interface PreCompiled<P extends RestrictionEntry.PreCompiled<P, C>, C extends CompiledRestrictionEntry<C, P>> extends CompilableResource<PlayerCompilationTask, C> {
         RestrictionEntry<?, P, C> entry();
 
         TypedGameContent gameContent();

@@ -14,7 +14,7 @@ public interface AttributeQuery<H extends IAttributeHolder<? extends H>, T> {
     }
 
     final class Holder<H extends AttributeHolder<? extends H>, T> implements AttributeQuery<H, T> {
-        private final Attribute<H, HolderInstance<T>> attribute = new Attribute<>(HolderInstance::new);
+        private final AttributeQuery<H, HolderInstance<T>> attribute = new Attribute<>(HolderInstance::new);
 
         public void init(H holder, T value) {
             holder.get(attribute).value = Objects.requireNonNull(value);

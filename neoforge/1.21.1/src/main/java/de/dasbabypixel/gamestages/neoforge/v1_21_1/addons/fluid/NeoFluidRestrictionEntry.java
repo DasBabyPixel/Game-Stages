@@ -23,7 +23,7 @@ public class NeoFluidRestrictionEntry extends CommonFluidRestrictionEntry<NeoFlu
     }
 
     @Override
-    public PreCompiled precompile(AbstractMutableGameStageManager<?> instance) {
+    public PreCompiled compile(AbstractMutableGameStageManager<?> instance) {
         var fluids = instance.get(GameContentFlattener.Attribute.INSTANCE)
                 .flatten(targetFluids(), CommonFluidCollection.TYPE);
         return new PreCompiled(this, predicate(), fluids, hideInJEI());

@@ -8,11 +8,11 @@ import org.jspecify.annotations.NullMarked;
 import java.util.List;
 
 @NullMarked
-public interface DataDrivenData<P extends DataDrivenData.PreCompiled<?, C>, C extends DataDrivenData.Compiled<?>> extends CompilableResource<AbstractMutableGameStageManager<?>, P, PlayerCompilationTask, C> {
+public interface DataDrivenData<P extends DataDrivenData.PreCompiled<?, C>, C extends DataDrivenData.Compiled<?>> extends CompilableResource<AbstractMutableGameStageManager<?>, P> {
     @Override
-    P precompile(AbstractMutableGameStageManager<?> manager);
+    P compile(AbstractMutableGameStageManager<?> manager);
 
-    interface PreCompiled<CustomData, C extends Compiled<?>> extends CompilableResource.PreCompiled<PlayerCompilationTask, C>, ResolverAlgorithmData<CustomData, ItemStackRestrictionEntry> {
+    interface PreCompiled<CustomData, C extends Compiled<?>> extends CompilableResource<PlayerCompilationTask, C>, ResolverAlgorithmData<CustomData, ItemStackRestrictionEntry> {
         @Override
         C compile(PlayerCompilationTask playerCompilationTask);
 

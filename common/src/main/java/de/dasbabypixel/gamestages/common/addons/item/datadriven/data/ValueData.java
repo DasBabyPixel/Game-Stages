@@ -21,7 +21,7 @@ public record ValueData(
     public static final String TYPE = "value";
 
     @Override
-    public PreCompiled precompile(AbstractMutableGameStageManager<?> manager) {
+    public PreCompiled compile(AbstractMutableGameStageManager<?> manager) {
         var context = manager.get(ItemAddon.MutableStageManagerContext.ATTRIBUTE);
         var entry = context.getEntry(restrictionEntryReference);
         return new PreCompiled(restrictionEntryReference, entry);

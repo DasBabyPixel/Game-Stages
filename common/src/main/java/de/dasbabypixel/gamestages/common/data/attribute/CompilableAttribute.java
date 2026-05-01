@@ -6,20 +6,24 @@ import org.jspecify.annotations.NullMarked;
 import java.util.function.Function;
 
 @NullMarked
-public record CompilableAttribute<SharedH extends CompilableAttributeHolder<SharedH, ?, ?>, SingleH, PC extends CompilableResource.PreCompiled<SingleH, C>, C, T>(
-        Function<SharedH, T> defaultValue,
-        Function<AttributeCompiler, PC> precompiler) implements CompilableResource<AttributeCompiler, PC, SingleH, C>, AttributeQuery<SharedH, T> {
-    @Override
-    public PC precompile(AttributeCompiler sharedH) {
-        return precompiler.apply(sharedH);
-    }
+public record CompilableAttribute<H extends CompilableAttributeHolder<H, ?>, C, CAttribute extends AttributeQuery<?, C>, T>(
+        Function<H, T> defaultValue, Function<AttributeCompiler, C> compiler,
+        CAttribute compiledAttribute) implements CompilableResource<AttributeCompiler, CompilableAttribute.Compiled<C, CAttribute>>, AttributeQuery<H, T> {
 
     @Override
-    public T get(SharedH holder) {
+    public T get(H holder) {
         return holder.get(this);
     }
 
-    public T supply(SharedH holder) {
+    public T supply(H holder) {
         return defaultValue.apply(holder);
+    }
+
+    @Override
+    public Compiled<C, CAttribute> compile(AttributeCompiler attributeCompiler) {
+        return new Compiled<>(compiler.apply(attributeCompiler), compiledAttribute);
+    }
+
+    public record Compiled<C, CA>(C compiled, CA attribute) {
     }
 }

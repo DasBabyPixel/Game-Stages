@@ -24,7 +24,7 @@ public record PredicateData(ItemPredicate predicate,
     public static final String TYPE = "predicate";
 
     @Override
-    public PreCompiled precompile(AbstractMutableGameStageManager<?> manager) {
+    public PreCompiled compile(AbstractMutableGameStageManager<?> manager) {
         var entry = manager.get(ItemAddon.MutableStageManagerContext.ATTRIBUTE).getEntry(resultReference);
         return new PreCompiled(Pair.of(entry, predicate), resultReference);
     }

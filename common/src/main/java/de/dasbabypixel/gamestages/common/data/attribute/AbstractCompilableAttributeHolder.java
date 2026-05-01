@@ -2,49 +2,32 @@ package de.dasbabypixel.gamestages.common.data.attribute;
 
 import org.jspecify.annotations.NullMarked;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 @NullMarked
-public class AbstractCompilableAttributeHolder<H extends AbstractCompilableAttributeHolder<H, PC, C>, PC extends AbstractCompilableAttributeHolder.PreCompiled<?, C>, C> implements CompilableAttributeHolder<H, PC, C> {
-    protected final Map<CompilableAttribute<? super H, ?, ?, ?, ?>, Object> attributeMap = new HashMap<>();
+public class AbstractCompilableAttributeHolder<Self extends AbstractCompilableAttributeHolder<Self, C>, C> implements CompilableAttributeHolder<Self, C> {
+    private final Map<CompilableAttribute<? super Self, ?, ?, ?>, Object> attributeMap = new HashMap<>();
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> T get(CompilableAttribute<? super H, ?, ?, ?, T> attribute) {
+    public <T> T get(CompilableAttribute<? super Self, ?, ?, T> attribute) {
         var val = (T) attributeMap.get(attribute);
         if (val != null) return val;
-        val = Objects.requireNonNull(attribute.supply((H) this));
+        val = attribute.supply(self());
         attributeMap.put(attribute, val);
         return val;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public <T> T get(AttributeQuery<? super H, T> attribute) {
-        return attribute.get((H) this);
-    }
-
-    @Override
-    public PreCompiled<H> precompile(H h) {
-        return new PreCompiled<>();
-    }
-
-    public static abstract class PreCompiled<H extends PreCompiled<H, C>, C extends Compiled<C>> extends ImmutableAttributeHolder<H> implements CompilableAttributeHolder.PreCompiled<H, C> {
-        public PreCompiled(Map<ImmutableAttribute<? super H, ?>, Object> attributeMap) {
-            super(attributeMap);
+    public C compile(Self self) {
+        var compiledList = new ArrayList<CompilableAttribute.Compiled<?, ?>>();
+        for (var entry : attributeMap.entrySet()) {
+            Objects.requireNonNull(entry);
+            var attribute = entry.getKey();
         }
-
-        @Override
-        public C compile(H h) {
-            return new Compiled();
-        }
-    }
-
-    public static class Compiled<H extends Compiled<H>> extends ImmutableAttributeHolder<H> {
-        public Compiled(Map<ImmutableAttribute<? super H, ?>, Object> attributeMap) {
-            super(attributeMap);
-        }
+        return null;
     }
 }

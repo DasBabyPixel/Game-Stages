@@ -26,12 +26,6 @@ public class AbstractAttributeHolder<H extends AbstractAttributeHolder<H>> imple
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> T get(AttributeQuery<? super H, T> attribute) {
-        return attribute.get((H) this);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
     public Collection<AttributeEntry<? super H, ?>> attributes() {
         var list = new ArrayList<AttributeEntry<? super H, ?>>();
         for (var e : attributeMap.entrySet()) {

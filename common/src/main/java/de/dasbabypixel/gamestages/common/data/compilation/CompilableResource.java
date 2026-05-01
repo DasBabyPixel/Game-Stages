@@ -9,10 +9,6 @@ import org.jspecify.annotations.NullMarked;
  * @param <PreCompiled>
  */
 @NullMarked
-public interface CompilableResource<SharedDataHolder, PreCompiled extends CompilableResource.PreCompiled<SingleDataHolder, Compiled>, SingleDataHolder, Compiled> {
-    PreCompiled precompile(SharedDataHolder dataHolder);
-
-    interface PreCompiled<SingleDataHolder, Compiled> {
-        Compiled compile(SingleDataHolder dataHolder);
-    }
+public interface CompilableResource<DataHolder, Compiled> {
+    Compiled compile(DataHolder dataHolder);
 }

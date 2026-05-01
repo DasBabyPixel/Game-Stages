@@ -104,7 +104,7 @@ public final class ManagerCompilerTask extends AbstractAttributeHolder<ManagerCo
             var typeIndex = preCompileIndex.typeIndex(type);
             var restrictions = restrictionsByType(type);
             for (var restriction : restrictions) {
-                var preCompiled = restriction.precompile(manager);
+                var preCompiled = restriction.compile(manager);
                 var typed = restriction.gameContent();
                 preCompileIndex.preCompiledRestrictions().add(preCompiled);
 

@@ -25,11 +25,11 @@ public record SequentialData(
     }
 
     @Override
-    public PreCompiled precompile(AbstractMutableGameStageManager<?> manager) {
+    public PreCompiled compile(AbstractMutableGameStageManager<?> manager) {
         var subAlgorithms = new ArrayList<DataDrivenData.PreCompiled<?, ?>>();
         var entries = new ArrayList<ItemStackRestrictionEntry>();
         for (var value : values) {
-            var subAlgorithm = value.data().precompile(manager);
+            var subAlgorithm = value.data().compile(manager);
             subAlgorithms.add(subAlgorithm);
             entries.addAll(subAlgorithm.entries());
         }

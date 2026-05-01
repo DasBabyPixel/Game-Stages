@@ -36,7 +36,7 @@ public final class CommonItemRestrictionEntry extends AbstractItemRestrictionEnt
     }
 
     @Override
-    public PreCompiled precompile(AbstractMutableGameStageManager<?> manager) {
+    public PreCompiled compile(AbstractMutableGameStageManager<?> manager) {
         var items = (CommonItemCollection) targetItems();
         precompileItemStackResolver(manager);
         return new PreCompiled(this, items, Objects.requireNonNull(preCompiledItemStackResolver));

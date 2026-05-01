@@ -24,7 +24,7 @@ public class DataDrivenResolverFactory extends ItemStackRestrictionResolverFacto
 
     @Override
     protected PreCompiled<?> precompileInternal(DataDrivenTypedData<?> data, Context context) {
-        var pc = data.data().precompile(context.instance());
+        var pc = data.data().compile(context.instance());
         return new PreCompiled<>(pc, pc.entries());
     }
 

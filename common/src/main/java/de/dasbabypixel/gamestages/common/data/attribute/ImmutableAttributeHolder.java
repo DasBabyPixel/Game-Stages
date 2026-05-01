@@ -13,12 +13,6 @@ public class ImmutableAttributeHolder<H extends ImmutableAttributeHolder<H>> imp
     }
 
     @SuppressWarnings("unchecked")
-    @Override
-    public <T> T get(AttributeQuery<? super H, T> attribute) {
-        return attribute.get((H) this);
-    }
-
-    @SuppressWarnings("unchecked")
     public <T> T get(ImmutableAttribute<H, T> attribute) {
         var val = (T) attributeMap.get(attribute);
         if (val == null) throw new IllegalStateException("Attribute not stored on this immutable holder");

@@ -25,7 +25,7 @@ public final class CommonRecipeRestrictionEntry extends AbstractRecipeRestrictio
     }
 
     @Override
-    public PreCompiled precompile(AbstractMutableGameStageManager<?> instance) {
+    public PreCompiled compile(AbstractMutableGameStageManager<?> instance) {
         var recipes = instance.get(GameContentFlattener.Attribute.INSTANCE)
                 .flatten(targetRecipes(), CommonRecipeCollection.TYPE);
         return new PreCompiled(this, predicate(), recipes, hideInJEI());

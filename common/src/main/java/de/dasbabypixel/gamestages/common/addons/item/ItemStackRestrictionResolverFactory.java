@@ -31,7 +31,7 @@ public abstract class ItemStackRestrictionResolverFactory<CompilationContext> {
 
     protected abstract PreCompiled precompileInternal(DataDrivenTypedData<?> data, CompilationContext context);
 
-    public interface PreCompiled extends CompilableResource.PreCompiled<PlayerCompilationTask, ItemStackRestrictionResolver> {
+    public interface PreCompiled extends CompilableResource<PlayerCompilationTask, ItemStackRestrictionResolver> {
         @Nullable ItemStackRestrictionEntry resolve(ItemStack itemStack);
 
         List<ItemStackRestrictionEntry> entries();
