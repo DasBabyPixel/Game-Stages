@@ -3,6 +3,7 @@ package de.dasbabypixel.gamestages.common.data.server;
 import de.dasbabypixel.gamestages.common.data.GameStage;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -22,14 +23,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.CRC32C;
 import java.util.zip.Checksum;
 
 @NullMarked
 public class StagesFileProvider {
-    private static final Logger LOGGER = Objects.requireNonNull(Logger.getLogger(StagesFileProvider.class.getName()));
+    private static final org.slf4j.Logger LOGGER = Objects.requireNonNull(LoggerFactory.getLogger(StagesFileProvider.class));
     private final ExecutorService writeExecutor = Executors.newSingleThreadExecutor();
     private final ReentrantLock lock = new ReentrantLock();
     /**
@@ -129,7 +128,7 @@ public class StagesFileProvider {
                 } catch (IOException e) {
                     // We could crash here, but likely there will be another write task, which might succeed
                     // We could also implement a retry strategy?
-                    LOGGER.log(Level.SEVERE, "Failed to write stages file", e);
+                    LOGGER.error("Failed to write stages file", e);
                 }
             } finally {
                 lock.unlock();

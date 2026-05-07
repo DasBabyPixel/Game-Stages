@@ -22,6 +22,7 @@ sourceSets {
 
 dependencies {
     compileOnly(projects.compileHacks)
+    compileOnly("org.slf4j:slf4j-api:2.0.17")
     api("org.jspecify:jspecify:1.0.0")
     api("org.logicng:logicng:2.6.0")
 }

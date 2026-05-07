@@ -2,6 +2,8 @@ package de.dasbabypixel.gamestages.common.data.server;
 
 import de.dasbabypixel.gamestages.common.data.manager.immutable.ServerGameStageManager;
 import org.jspecify.annotations.NullMarked;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -12,12 +14,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @NullMarked
 public class StagesCache {
-    private static final Logger LOGGER = Logger.getLogger(StagesCache.class.getName());
+    private static final Logger LOGGER = Objects.requireNonNull(LoggerFactory.getLogger(StagesCache.class));
     private final GlobalServerState globalServerState;
     private final StagesFileProvider fileProvider;
     private final ReentrantLock lock = new ReentrantLock();
@@ -37,10 +37,10 @@ public class StagesCache {
                 uuids.add(dependency.key().uuid());
             }
             uuids = Set.copyOf(uuids);
-            LOGGER.log(Level.INFO, "Release {0}", uuids);
+            LOGGER.info("Release {}", uuids);
             var entry = Objects.requireNonNull(compositeMap.get(uuids));
             if (entry.referenceCount.decrementAndGet() == 0) {
-                LOGGER.log(Level.INFO, "Delete composite");
+                LOGGER.info("Delete composite");
                 compositeMap.remove(uuids);
                 for (var dependency : stages.dependencies()) {
                     dependency.removeCompositeDependant(stages);
@@ -72,14 +72,14 @@ public class StagesCache {
     public CompositeStages requireComposite(Set<UUID> uuids) {
         uuids = Objects.requireNonNull(Set.copyOf(uuids));
         lock.lock();
-        LOGGER.log(Level.INFO, "Require {0}", uuids);
+        LOGGER.info("Require {}", uuids);
         try {
             if (compositeMap.containsKey(uuids)) {
                 var entry = Objects.requireNonNull(compositeMap.get(uuids));
                 entry.referenceCount.incrementAndGet();
                 return entry.stages;
             }
-            LOGGER.log(Level.INFO, "Creating new composite");
+            LOGGER.info("Creating new composite");
             var players = new HashSet<PlayerStages>();
             for (var uuid : uuids) {
                 var player = requirePlayer(uuid);
@@ -132,10 +132,10 @@ public class StagesCache {
         lock.lock();
         try {
             if (!entryMap.isEmpty()) {
-                LOGGER.log(Level.WARNING, "Dangling player/team references", new RuntimeException());
+                LOGGER.warn("Dangling player/team references", new RuntimeException());
             }
             if (!compositeMap.isEmpty()) {
-                LOGGER.log(Level.WARNING, "Dangling composite references", new RuntimeException());
+                LOGGER.warn("Dangling composite references", new RuntimeException());
             }
         } finally {
             lock.unlock();
@@ -149,7 +149,7 @@ public class StagesCache {
             if (entry.referenceCount.decrementAndGet() == 0) {
                 entryMap.remove(stages.key());
                 stages.unload();
-                LOGGER.log(Level.INFO, "Unload {0}", stages.key());
+                LOGGER.info("Unload {}", stages.key());
             }
         } finally {
             lock.unlock();
@@ -157,7 +157,7 @@ public class StagesCache {
     }
 
     private ServerStages load(StagesFileProvider.Key key) throws IOException {
-        LOGGER.log(Level.INFO, "Loading {0}", key);
+        LOGGER.info("Loading {}", key);
         var file = globalServerState.stagesFileProvider().readStages(key);
         switch (key.type()) {
             case "player" -> {

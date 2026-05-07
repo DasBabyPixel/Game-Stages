@@ -5,19 +5,20 @@ import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.GameStage;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.ClientGameStageManager;
 import org.jspecify.annotations.NullMarked;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 import static de.dasbabypixel.gamestages.common.addon.Addon.CLIENT_POST_SYNC_UNLOCKED_STAGES_EVENT;
 
 @NullMarked
 public class ClientPlayerStages extends BaseStages {
-    private static final Logger LOGGER = Objects.requireNonNull(Logger.getLogger(ClientPlayerStages.class.getName()));
+    private static final Logger LOGGER = Objects.requireNonNull(LoggerFactory.getLogger(ClientPlayerStages.class.getName()));
 
     public ClientPlayerStages() {
         super(Set.of());

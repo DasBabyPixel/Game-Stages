@@ -255,8 +255,6 @@ public class NeoForgeEntrypoint {
 
     private void handleRecipes(RecipesUpdatedEvent event) {
         RecipeJEI.recipeManager = event.getRecipeManager();
-        System.out.println("Received recipes on client");
-        System.out.println("Received recipes on client");
     }
 
     private void handleRegisterCommands(RegisterCommandsEvent event) {

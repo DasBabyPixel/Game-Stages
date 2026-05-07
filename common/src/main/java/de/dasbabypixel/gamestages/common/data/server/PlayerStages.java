@@ -5,6 +5,8 @@ import de.dasbabypixel.gamestages.common.data.GameStage;
 import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,12 +14,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @NullMarked
 public class PlayerStages extends ServerStages {
-    private static final Logger LOGGER = Objects.requireNonNull(Logger.getLogger(PlayerStages.class.getName()));
+    private static final Logger LOGGER = Objects.requireNonNull(LoggerFactory.getLogger(PlayerStages.class));
     private final List<ServerPlayer> playerList = new ArrayList<>(1);
     private final StagesCache stagesCache;
     private boolean valid = true;
@@ -45,7 +45,7 @@ public class PlayerStages extends ServerStages {
     public void updateTeamByExternalAPI(@Nullable UUID newTeam) {
         if (team == null && newTeam == null) return;
         if (team != null && team.key().uuid().equals(newTeam)) return;
-        LOGGER.log(Level.WARNING, "Updating wrongly saved team by external API");
+        LOGGER.warn("Updating wrongly saved team by external API");
         setTeam(newTeam);
     }
 

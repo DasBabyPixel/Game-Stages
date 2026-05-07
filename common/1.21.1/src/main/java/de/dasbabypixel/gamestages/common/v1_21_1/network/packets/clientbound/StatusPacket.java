@@ -18,6 +18,8 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.util.ByIdMap;
 import org.jspecify.annotations.NullMarked;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.function.IntFunction;
@@ -33,6 +35,7 @@ public record StatusPacket(Status status) implements GameStagesPacket {
     public static final StreamCodec<ByteBuf, Status> STATUS_STREAM_CODEC = ByteBufCodecs.idMapper(STATUS_BY_ID, Enum::ordinal);
     @SuppressWarnings("DataFlowIssue")
     public static final StreamCodec<ByteBuf, StatusPacket> STREAM_CODEC = StreamCodec.composite(STATUS_STREAM_CODEC, StatusPacket::status, StatusPacket::new);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StatusPacket.class);
 
     @Override
     public void handle() {
@@ -52,7 +55,7 @@ public record StatusPacket(Status status) implements GameStagesPacket {
                 } catch (DuplicatesException d) {
                     var p = (LocalPlayer) player;
                     d.print(s -> {
-                        System.err.println(s);
+                        LOGGER.error(s);
                         p.sendSystemMessage(Component.literal(s).withStyle(ChatFormatting.RED));
                     });
                 }
