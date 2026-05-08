@@ -13,4 +13,6 @@ public interface PlatformPlayerProvider {
     Collection<? extends ServerPlayer> allPlayers();
 
     @Nullable ServerPlayer getPlayer(UUID uuid);
+
+    void refreshMenu(ServerPlayer player);
 }

@@ -54,7 +54,8 @@ public class ItemKJS implements NeoAddonKJS {
         type.addFunction("registerItemStackEntry", e -> new RegisteredItemStackEntries(), (event, cx, s, args) -> {
             Objects.requireNonNull(s);
             var predicate = (PreparedRestrictionPredicate) Objects.requireNonNull(args[0]);
-            var compilationContext = event.stageManager().get(ItemAddon.MutableStageManagerContext.ATTRIBUTE);
+            var compilationContext = event.stageManager()
+                    .get(ItemAddon.MutableStageManagerContext.MUTABLE_MANAGER_ATTRIBUTE);
             var settings = VItemStackRestrictionEntrySettings.instance();
             var restrictionEntry = new ItemStackRestrictionEntry(predicate, settings);
             var reference = compilationContext.addRestrictionEntry(restrictionEntry);
@@ -66,7 +67,7 @@ public class ItemKJS implements NeoAddonKJS {
         type.addFunctionVarArgs("restrictItemStacks", RestrictContext::new, (event, cx, restrictContext, args) -> {
             var origin = origin(cx);
             var data = (DataDrivenTypedData<?>) Objects.requireNonNull(args[0]);
-            var flattener = event.stageManager().get(GameContentFlattener.Attribute.INSTANCE);
+            var flattener = event.stageManager().get(GameContentFlattener.Attribute.MUTABLE_MANAGER_ATTRIBUTE);
             var items = flattener.flatten(((ItemCollectionWrapper) Objects.requireNonNull(args[1])).content(), CommonItemCollection.TYPE);
             var dataDrivenType = DataDrivenTypes.instance().get(data.type()).unsafeCast();
             var factoryId = "data_driven";
@@ -78,7 +79,7 @@ public class ItemKJS implements NeoAddonKJS {
     }
 
     private CommonItemRestrictionEntry restrictItems(RegisterEventJS event, KubeJSContext cx, Object[] args) {
-        var flattener = event.stageManager().get(GameContentFlattener.Attribute.INSTANCE);
+        var flattener = event.stageManager().get(GameContentFlattener.Attribute.MUTABLE_MANAGER_ATTRIBUTE);
         return restrictItems(event, cx, (PreparedRestrictionPredicate) args[0], flattener.flatten(((ItemCollectionWrapper) Objects.requireNonNull(args[1])).content(), CommonItemCollection.TYPE));
     }
 
@@ -89,7 +90,7 @@ public class ItemKJS implements NeoAddonKJS {
         var itemStackSettings = VItemStackRestrictionEntrySettings.instance();
         var itemStackRestrictionEntry = new ItemStackRestrictionEntry(predicate, itemStackSettings);
         var reference = event.stageManager()
-                .get(ItemAddon.MutableStageManagerContext.ATTRIBUTE)
+                .get(ItemAddon.MutableStageManagerContext.MUTABLE_MANAGER_ATTRIBUTE)
                 .addRestrictionEntry(itemStackRestrictionEntry);
         var data = new ValueData(reference);
 

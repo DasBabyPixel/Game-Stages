@@ -4,7 +4,7 @@ import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolve
 import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolverFactory;
 import de.dasbabypixel.gamestages.common.data.ItemStack;
 import de.dasbabypixel.gamestages.common.data.PlayerCompilationTask;
-import de.dasbabypixel.gamestages.common.data.manager.mutable.AbstractMutableGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.compiler.ManagerCompilerTask;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -18,13 +18,13 @@ public class DataDrivenResolverFactory extends ItemStackRestrictionResolverFacto
     }
 
     @Override
-    public Context createContext(AbstractMutableGameStageManager<?> instance) {
-        return new Context(instance);
+    public Context createContext(ManagerCompilerTask task) {
+        return new Context(task);
     }
 
     @Override
     protected PreCompiled<?> precompileInternal(DataDrivenTypedData<?> data, Context context) {
-        var pc = data.data().compile(context.instance());
+        var pc = data.data().compile(context.task());
         return new PreCompiled<>(pc, pc.entries());
     }
 
@@ -53,6 +53,6 @@ public class DataDrivenResolverFactory extends ItemStackRestrictionResolverFacto
         }
     }
 
-    public record Context(AbstractMutableGameStageManager<?> instance) {
+    public record Context(ManagerCompilerTask task) {
     }
 }

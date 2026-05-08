@@ -20,7 +20,7 @@ public class RestrictionPredicateCompiler {
 
     public RestrictionPredicateCompiler(BaseStages stages, AbstractGameStageManager<?> manager) {
         this.stages = stages;
-        this.logicNG = manager.get(LogicNG.ATTRIBUTE);
+        this.logicNG = manager.get(LogicNG.MANAGER_ATTRIBUTE);
     }
 
     public CompiledRestrictionPredicate compile(PreparedRestrictionPredicate predicate) {

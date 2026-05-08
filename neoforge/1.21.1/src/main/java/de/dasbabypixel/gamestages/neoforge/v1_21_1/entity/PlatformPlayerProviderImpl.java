@@ -3,6 +3,7 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.entity;
 import de.dasbabypixel.gamestages.common.entity.ClientPlayer;
 import de.dasbabypixel.gamestages.common.entity.PlatformPlayerProvider;
 import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
+import de.dasbabypixel.gamestages.common.v1_21_1.data.StageRefreshableMenu;
 import net.minecraft.client.Minecraft;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.jspecify.annotations.NullMarked;
@@ -30,5 +31,13 @@ public class PlatformPlayerProviderImpl implements PlatformPlayerProvider {
     @Override
     public @Nullable ServerPlayer getPlayer(UUID uuid) {
         return Objects.requireNonNull(ServerLifecycleHooks.getCurrentServer()).getPlayerList().getPlayer(uuid);
+    }
+
+    @Override
+    public void refreshMenu(ServerPlayer player) {
+        var menu = ((net.minecraft.server.level.ServerPlayer) player).containerMenu;
+        if (menu instanceof StageRefreshableMenu r) {
+            r.refresh();
+        }
     }
 }

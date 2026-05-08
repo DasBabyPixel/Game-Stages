@@ -3,9 +3,8 @@ package de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe;
 import de.dasbabypixel.gamestages.common.addons.recipe.AbstractRecipeRestrictionEntry;
 import de.dasbabypixel.gamestages.common.addons.recipe.RecipeCollection;
 import de.dasbabypixel.gamestages.common.data.PlayerCompilationTask;
-import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.ServerGameStageManager;
-import de.dasbabypixel.gamestages.common.data.manager.mutable.AbstractMutableGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.compiler.ManagerCompilerTask;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
@@ -25,10 +24,8 @@ public final class CommonRecipeRestrictionEntry extends AbstractRecipeRestrictio
     }
 
     @Override
-    public PreCompiled compile(AbstractMutableGameStageManager<?> instance) {
-        var recipes = instance.get(GameContentFlattener.Attribute.INSTANCE)
-                .flatten(targetRecipes(), CommonRecipeCollection.TYPE);
-        return new PreCompiled(this, predicate(), recipes, hideInJEI());
+    public PreCompiled compile(ManagerCompilerTask task) {
+        return new PreCompiled(this, predicate(), (CommonRecipeCollection) targetRecipes(), hideInJEI());
     }
 
     public record Compiled(PreCompiled preCompiled, CompiledRestrictionPredicate predicate,

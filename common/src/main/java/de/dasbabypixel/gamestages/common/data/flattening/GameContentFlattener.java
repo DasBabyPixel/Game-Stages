@@ -3,8 +3,13 @@ package de.dasbabypixel.gamestages.common.data.flattening;
 import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.GameContentType;
 import de.dasbabypixel.gamestages.common.data.TypedGameContent;
-import de.dasbabypixel.gamestages.common.data.attribute.AttributeHolder;
+import de.dasbabypixel.gamestages.common.data.attribute.CompilableAttribute;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.SimpleMutableGameStageManager;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 @NullMarked
 public interface GameContentFlattener {
@@ -28,8 +33,11 @@ public interface GameContentFlattener {
         T complete();
     }
 
-    @SuppressWarnings("NotNullFieldNotInitialized")
     class Attribute {
-        public static de.dasbabypixel.gamestages.common.data.attribute.Attribute<AttributeHolder<?>, GameContentFlattener> INSTANCE;
+        public static final CompilableAttribute<SimpleMutableGameStageManager<?, ?>, GameContentFlattener, AbstractGameStageManager<?>> MUTABLE_MANAGER_ATTRIBUTE = CompilableAttribute.noop();
+
+        public static class Factory {
+            public static @Nullable Supplier<GameContentFlattener> FACTORY;
+        }
     }
 }

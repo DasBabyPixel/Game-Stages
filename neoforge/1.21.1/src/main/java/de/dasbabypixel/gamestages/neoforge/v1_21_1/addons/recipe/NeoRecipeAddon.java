@@ -65,7 +65,7 @@ public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
             var type = registry.get(RegisterEventJS.class);
             type.addFunctionVarArgs("recipes", (event, cx, args) -> args[0], RecipeCollectionWrapper.class, RecipeCollectionWrapper.class, RecipeCollectionWrapper[].class);
             type.addFunctionVarArgs("restrictRecipes", (event, cx, args) -> {
-                var flattener = event.stageManager().get(GameContentFlattener.Attribute.INSTANCE);
+                var flattener = event.stageManager().get(GameContentFlattener.Attribute.MUTABLE_MANAGER_ATTRIBUTE);
                 var recipesContent = flattener.flatten(((RecipeCollectionWrapper) args[1]).content(), CommonRecipeCollection.TYPE);
                 var predicate = (PreparedRestrictionPredicate) args[0];
                 var source = Objects.requireNonNull(SourceLine.of(cx)).toString();

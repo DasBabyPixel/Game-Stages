@@ -6,10 +6,13 @@ import de.dasbabypixel.gamestages.common.addon.Addon.PreCompilePrepareEvent;
 import de.dasbabypixel.gamestages.common.addon.Addon.PreCompileTypeEvent;
 import de.dasbabypixel.gamestages.common.data.DuplicatesException;
 import de.dasbabypixel.gamestages.common.data.GameContentType;
-import de.dasbabypixel.gamestages.common.data.attribute.AbstractAttributeHolder;
+import de.dasbabypixel.gamestages.common.data.attribute.AttributeCompiler;
+import de.dasbabypixel.gamestages.common.data.attribute.CompilableAttributeHolder;
+import de.dasbabypixel.gamestages.common.data.attribute.SimpleAttribute;
+import de.dasbabypixel.gamestages.common.data.attribute.SimpleAttributeHolder;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.PreCompileIndex;
-import de.dasbabypixel.gamestages.common.data.manager.mutable.AbstractMutableGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.SimpleMutableGameStageManager;
 import de.dasbabypixel.gamestages.common.data.restriction.DuplicateReport;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
 import org.jspecify.annotations.NullMarked;
@@ -28,33 +31,33 @@ import static de.dasbabypixel.gamestages.common.addon.Addon.PRE_COMPILE_PREPARE_
 import static de.dasbabypixel.gamestages.common.addon.Addon.PRE_COMPILE_TYPE_EVENT;
 
 @NullMarked
-public final class ManagerCompilerTask extends AbstractAttributeHolder<ManagerCompilerTask> {
-    private final AbstractMutableGameStageManager<?> manager;
+public final class ManagerCompilerTask extends SimpleAttributeHolder<ManagerCompilerTask> {
+    public static final SimpleAttribute<AttributeCompiler<? extends SimpleMutableGameStageManager<?, ?>>, ManagerCompilerTask> ATTRIBUTE = new SimpleAttribute<>();
+    private final SimpleMutableGameStageManager<?, ?> manager;
     private final MutablePreCompileIndex preCompileIndex;
     private final Precompiler precompiler = new Precompiler();
     private final HashMap<GameContentType<?>, List<RestrictionEntry<?, ?, ?>>> restrictionsByType = new HashMap<>();
 
-    public ManagerCompilerTask(AbstractMutableGameStageManager<?> manager) {
+    public ManagerCompilerTask(SimpleMutableGameStageManager<?, ?> manager) {
         this.manager = manager;
-        this.preCompileIndex = get(MutablePreCompileIndex.ATTRIBUTE);
+        this.preCompileIndex = init(MutablePreCompileIndex.ATTRIBUTE, new MutablePreCompileIndex());
     }
 
     public MutablePreCompileIndex preCompileIndex() {
         return preCompileIndex;
     }
 
-    public AbstractMutableGameStageManager<?> manager() {
+    public SimpleMutableGameStageManager<?, ?> manager() {
         return manager;
     }
 
-    public <T extends AbstractGameStageManager<?>> T postCompile(T manager) {
-        COMPILE_MANAGER_EVENT.call(new CompileManagerEvent(this, manager));
-        PreCompileIndex.ATTRIBUTE.init(manager, get(MutablePreCompileIndex.ATTRIBUTE).compile());
-        return manager;
+    public void postCompile(CompilableAttributeHolder.CompiledAttributesBuilder<? extends SimpleMutableGameStageManager<?, ?>, ? extends AbstractGameStageManager<?>> builder) {
+        COMPILE_MANAGER_EVENT.call(new CompileManagerEvent(this, builder));
+
+        builder.add(PreCompileIndex.ATTRIBUTE, get(MutablePreCompileIndex.ATTRIBUTE).compile());
     }
 
     private void preparePrecompileRestrictions() {
-        var preCompileIndex = get(MutablePreCompileIndex.ATTRIBUTE);
         PRE_COMPILE_PREPARE_EVENT.call(new PreCompilePrepareEvent(this, precompiler.evaluationDependencies));
     }
 
@@ -104,7 +107,7 @@ public final class ManagerCompilerTask extends AbstractAttributeHolder<ManagerCo
             var typeIndex = preCompileIndex.typeIndex(type);
             var restrictions = restrictionsByType(type);
             for (var restriction : restrictions) {
-                var preCompiled = restriction.compile(manager);
+                var preCompiled = restriction.compile(ManagerCompilerTask.this);
                 var typed = restriction.gameContent();
                 preCompileIndex.preCompiledRestrictions().add(preCompiled);
 

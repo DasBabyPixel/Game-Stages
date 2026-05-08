@@ -1,7 +1,6 @@
 package de.dasbabypixel.gamestages.common.data.manager.immutable;
 
-import de.dasbabypixel.gamestages.common.data.GameStage;
-import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
+import de.dasbabypixel.gamestages.common.data.attribute.AttributeEntry;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -13,8 +12,8 @@ public final class ClientGameStageManager extends AbstractGameStageManager<Clien
     private static boolean active = false;
     private static @Nullable ClientGameStageManager currentManager;
 
-    public ClientGameStageManager(Collection<? extends GameStage> gameStages, Collection<? extends RestrictionEntry.PreCompiled<?, ?>> restrictions) {
-        super(gameStages, restrictions);
+    public ClientGameStageManager(Collection<AttributeEntry<? super ClientGameStageManager, ?>> attributes) {
+        super(attributes);
     }
 
     public static ClientGameStageManager currentManager() {

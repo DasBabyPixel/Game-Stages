@@ -51,7 +51,7 @@ public class NeoFluidAddon extends VFluidAddon implements NeoAddon {
             var type = registry.get(RegisterEventJS.class);
             type.addFunctionVarArgs("fluids", (event, cx, args) -> args[0], FluidCollectionWrapper.class, FluidCollectionWrapper.class, FluidCollectionWrapper[].class);
             type.addFunctionVarArgs("restrictFluids", (event, cx, args) -> {
-                var flattener = event.stageManager().get(GameContentFlattener.Attribute.INSTANCE);
+                var flattener = event.stageManager().get(GameContentFlattener.Attribute.MUTABLE_MANAGER_ATTRIBUTE);
                 var fluidsContent = flattener.flatten(((FluidCollectionWrapper) Objects.requireNonNull(args[1])).content(), CommonFluidCollection.TYPE);
                 var predicate = (PreparedRestrictionPredicate) Objects.requireNonNull(args[0]);
                 var source = Objects.requireNonNull(SourceLine.of(cx)).toString();

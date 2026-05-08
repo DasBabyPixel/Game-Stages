@@ -1,13 +1,15 @@
 package de.dasbabypixel.gamestages.common.data;
 
-import de.dasbabypixel.gamestages.common.data.attribute.AbstractAttributeHolder;
-import de.dasbabypixel.gamestages.common.data.attribute.Attribute;
+import de.dasbabypixel.gamestages.common.data.attribute.ImmutableAttribute;
+import de.dasbabypixel.gamestages.common.data.attribute.ReplaceableImmutableAttributeHolder;
+import de.dasbabypixel.gamestages.common.data.attribute.SimpleImmutableAttribute;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
 import org.jspecify.annotations.NullMarked;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,9 +17,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 @NullMarked
-public class BaseStages extends AbstractAttributeHolder<BaseStages> {
+public class BaseStages extends ReplaceableImmutableAttributeHolder<BaseStages> {
+    private static final Logger LOGGER = Objects.requireNonNull(LoggerFactory.getLogger(BaseStages.class));
     private final Set<GameStage> unlockedStages;
 
     public BaseStages(Collection<? extends GameStage> stages) {
@@ -72,8 +76,11 @@ public class BaseStages extends AbstractAttributeHolder<BaseStages> {
     }
 
     public void recompileAll(AbstractGameStageManager<?> manager) {
+        var time1 = System.nanoTime();
         var recompilationTask = new PlayerCompilationTask(this, manager);
         recompilationTask.compile();
+        var took = System.nanoTime() - time1;
+        LOGGER.info("Compiling GameStages for player took {}ms", TimeUnit.NANOSECONDS.toMillis(took));
     }
 
     protected void onAdd(GameStage gameStage, boolean silent) {
@@ -96,35 +103,19 @@ public class BaseStages extends AbstractAttributeHolder<BaseStages> {
         return Objects.requireNonNull(Set.copyOf(getUnlockedStages()));
     }
 
-    public static final class CompileIndex {
-        public static final Attribute<BaseStages, CompileIndex> ATTRIBUTE = new Attribute<>(CompileIndex::new);
-        private final Map<GameContentType<?>, TypeIndex> typeIndexMap = new HashMap<>();
-        private final List<CompiledRestrictionEntry<?, ?>> compiledRestrictionEntries = new ArrayList<>();
-        private final Map<GameStage, CompiledRestrictionPredicate> compiledGameStages = new HashMap<>();
+    public record CompileIndex(Map<GameStage, CompiledRestrictionPredicate> compiledGameStages,
+                               Map<GameContentType<?>, TypeIndex> typeIndexMap,
+                               List<CompiledRestrictionEntry<?, ?>> compiledRestrictionEntries) {
+        public static final ImmutableAttribute<BaseStages, CompileIndex> ATTRIBUTE = new SimpleImmutableAttribute<>();
+
+        public CompileIndex {
+            compiledGameStages = Objects.requireNonNull(Map.copyOf(compiledGameStages));
+            typeIndexMap = Objects.requireNonNull(Map.copyOf(typeIndexMap));
+            compiledRestrictionEntries = Objects.requireNonNull(List.copyOf(compiledRestrictionEntries));
+        }
 
         public TypeIndex typeIndex(GameContentType<?> type) {
             return Objects.requireNonNull(typeIndexMap.get(type));
-        }
-
-        public void initTypeIndex(TypeIndex typeIndex) {
-            if (typeIndexMap.containsKey(typeIndex.type)) throw new IllegalStateException();
-            typeIndexMap.put(typeIndex.type, typeIndex);
-        }
-
-        public void initGameStages(Map<GameStage, CompiledRestrictionPredicate> gameStageMap) {
-            if (!compiledGameStages.isEmpty()) throw new IllegalStateException();
-            compiledGameStages.putAll(gameStageMap);
-        }
-
-        public void initCompiledRestrictionEntries(List<CompiledRestrictionEntry<?, ?>> entries) {
-            if (!compiledRestrictionEntries.isEmpty()) throw new IllegalStateException();
-            compiledRestrictionEntries.addAll(entries);
-        }
-
-        public void clear() {
-            typeIndexMap.clear();
-            compiledRestrictionEntries.clear();
-            compiledGameStages.clear();
         }
     }
 
@@ -132,8 +123,8 @@ public class BaseStages extends AbstractAttributeHolder<BaseStages> {
                             Map<CompiledRestrictionEntry<?, ?>, List<Object>> contentListByEntry,
                             Map<Object, CompiledRestrictionEntry<?, ?>> entryByContent) {
         public TypeIndex {
-            contentListByEntry = Map.copyOf(contentListByEntry);
-            entryByContent = Map.copyOf(entryByContent);
+            contentListByEntry = Objects.requireNonNull(Map.copyOf(contentListByEntry));
+            entryByContent = Objects.requireNonNull(Map.copyOf(entryByContent));
         }
     }
 

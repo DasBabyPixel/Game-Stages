@@ -61,6 +61,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
@@ -113,6 +114,7 @@ public class NeoForgeEntrypoint {
         NeoForge.EVENT_BUS.addListener(this::handleRegisterCommands);
         NeoForge.EVENT_BUS.addListener(this::handleServerAboutToStart);
         NeoForge.EVENT_BUS.addListener(this::handleServerStopped);
+        NeoForge.EVENT_BUS.addListener(this::handleServerStarted);
         NeoForge.EVENT_BUS.addListener(this::handlePlayerJoin);
         NeoForge.EVENT_BUS.addListener(this::handlePlayerQuit);
         NeoForge.EVENT_BUS.addListener(this::handleChunkLoad);
@@ -254,6 +256,9 @@ public class NeoForgeEntrypoint {
     }
 
     private void handleRecipes(RecipesUpdatedEvent event) {
+        LOGGER.info("Received recipe update");
+        LOGGER.info("Received recipe update");
+        LOGGER.info("Received recipe update");
         RecipeJEI.recipeManager = event.getRecipeManager();
     }
 
@@ -342,7 +347,11 @@ public class NeoForgeEntrypoint {
     }
 
     private void handleServerAboutToStart(ServerAboutToStartEvent event) {
-        Objects.requireNonNull(event);
+    }
+
+    private void handleServerStarted(ServerStartedEvent event) {
+        var server = event.getServer();
+        ReloadHandler.fullReload(server.getServerResources().managers(), server.registryAccess());
         var dataDirectory = Objects.requireNonNull(event.getServer().storageSource.getLevelDirectory()
                 .path()
                 .resolve("gamestages"));

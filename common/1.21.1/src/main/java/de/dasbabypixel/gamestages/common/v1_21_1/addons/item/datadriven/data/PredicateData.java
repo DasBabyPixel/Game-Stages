@@ -9,7 +9,7 @@ import de.dasbabypixel.gamestages.common.addons.item.datadriven.ResolverAlgorith
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ResolverAlgorithmData;
 import de.dasbabypixel.gamestages.common.data.ItemStack;
 import de.dasbabypixel.gamestages.common.data.PlayerCompilationTask;
-import de.dasbabypixel.gamestages.common.data.manager.mutable.AbstractMutableGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.compiler.ManagerCompilerTask;
 import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.advancements.critereon.ItemPredicate;
 import org.jspecify.annotations.NullMarked;
@@ -24,8 +24,8 @@ public record PredicateData(ItemPredicate predicate,
     public static final String TYPE = "predicate";
 
     @Override
-    public PreCompiled compile(AbstractMutableGameStageManager<?> manager) {
-        var entry = manager.get(ItemAddon.MutableStageManagerContext.ATTRIBUTE).getEntry(resultReference);
+    public PreCompiled compile(ManagerCompilerTask task) {
+        var entry = task.get(ItemAddon.StageManagerContext.TASK_ATTRIBUTE).getEntry(resultReference);
         return new PreCompiled(Pair.of(entry, predicate), resultReference);
     }
 

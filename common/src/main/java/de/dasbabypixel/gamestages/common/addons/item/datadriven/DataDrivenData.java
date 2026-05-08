@@ -2,15 +2,15 @@ package de.dasbabypixel.gamestages.common.addons.item.datadriven;
 
 import de.dasbabypixel.gamestages.common.data.PlayerCompilationTask;
 import de.dasbabypixel.gamestages.common.data.compilation.CompilableResource;
-import de.dasbabypixel.gamestages.common.data.manager.mutable.AbstractMutableGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.compiler.ManagerCompilerTask;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
 @NullMarked
-public interface DataDrivenData<P extends DataDrivenData.PreCompiled<?, C>, C extends DataDrivenData.Compiled<?>> extends CompilableResource<AbstractMutableGameStageManager<?>, P> {
+public interface DataDrivenData<P extends DataDrivenData.PreCompiled<?, C>, C extends DataDrivenData.Compiled<?>> extends CompilableResource<ManagerCompilerTask, P> {
     @Override
-    P compile(AbstractMutableGameStageManager<?> manager);
+    P compile(ManagerCompilerTask task);
 
     interface PreCompiled<CustomData, C extends Compiled<?>> extends CompilableResource<PlayerCompilationTask, C>, ResolverAlgorithmData<CustomData, ItemStackRestrictionEntry> {
         @Override

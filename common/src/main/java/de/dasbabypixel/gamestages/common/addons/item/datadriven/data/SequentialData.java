@@ -8,12 +8,13 @@ import de.dasbabypixel.gamestages.common.addons.item.datadriven.ResolverAlgorith
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ResolverAlgorithmData;
 import de.dasbabypixel.gamestages.common.data.ItemStack;
 import de.dasbabypixel.gamestages.common.data.PlayerCompilationTask;
-import de.dasbabypixel.gamestages.common.data.manager.mutable.AbstractMutableGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.compiler.ManagerCompilerTask;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @NullMarked
 public record SequentialData(
@@ -21,15 +22,15 @@ public record SequentialData(
     public static final String TYPE = "sequential";
 
     public SequentialData {
-        values = List.copyOf(values);
+        values = Objects.requireNonNull(List.copyOf(values));
     }
 
     @Override
-    public PreCompiled compile(AbstractMutableGameStageManager<?> manager) {
+    public PreCompiled compile(ManagerCompilerTask task) {
         var subAlgorithms = new ArrayList<DataDrivenData.PreCompiled<?, ?>>();
         var entries = new ArrayList<ItemStackRestrictionEntry>();
         for (var value : values) {
-            var subAlgorithm = value.data().compile(manager);
+            var subAlgorithm = value.data().compile(task);
             subAlgorithms.add(subAlgorithm);
             entries.addAll(subAlgorithm.entries());
         }
@@ -41,8 +42,8 @@ public record SequentialData(
         private static final Algorithm<DataDrivenData.PreCompiled<?, ?>, ItemStackRestrictionEntry> ALGORITHM = new Algorithm<>();
 
         public PreCompiled {
-            subAlgorithms = List.copyOf(subAlgorithms);
-            entries = List.copyOf(entries);
+            subAlgorithms = Objects.requireNonNull(List.copyOf(subAlgorithms));
+            entries = Objects.requireNonNull(List.copyOf(entries));
         }
 
         @Override
@@ -73,8 +74,8 @@ public record SequentialData(
         private static final Algorithm<DataDrivenData.Compiled<?>, CompiledItemStackRestrictionEntry> ALGORITHM = new Algorithm<>();
 
         public Compiled {
-            customData = List.copyOf(customData);
-            entries = List.copyOf(entries);
+            customData = Objects.requireNonNull(List.copyOf(customData));
+            entries = Objects.requireNonNull(List.copyOf(entries));
         }
 
         @Override

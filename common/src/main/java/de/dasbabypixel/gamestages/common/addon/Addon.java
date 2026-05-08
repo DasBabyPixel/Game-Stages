@@ -4,9 +4,10 @@ import de.dasbabypixel.gamestages.common.client.ClientPlayerStages;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.GameContentType;
 import de.dasbabypixel.gamestages.common.data.PlayerCompilationTask;
+import de.dasbabypixel.gamestages.common.data.attribute.CompilableAttributeHolder;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.ServerGameStageManager;
-import de.dasbabypixel.gamestages.common.data.manager.mutable.AbstractMutableGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.SimpleMutableGameStageManager;
 import de.dasbabypixel.gamestages.common.data.manager.mutable.compiler.ManagerCompilerTask;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import de.dasbabypixel.gamestages.common.event.EventType;
@@ -69,13 +70,13 @@ public interface Addon {
     /**
      * Called before the manager is modified/reloaded
      */
-    record ReloadPreEvent(AbstractMutableGameStageManager<?> manager) {
+    record ReloadPreEvent(SimpleMutableGameStageManager<?, ?> manager) {
     }
 
     /**
      * Called after the manager is modified/reloaded
      */
-    record ReloadPostEvent(AbstractMutableGameStageManager<?> manager) {
+    record ReloadPostEvent(SimpleMutableGameStageManager<?, ?> manager) {
     }
 
     /**
@@ -84,7 +85,8 @@ public interface Addon {
     record ClientPostSyncUnlockedStagesEvent(ClientPlayerStages playerStages) {
     }
 
-    record CompileManagerEvent(ManagerCompilerTask task, AbstractGameStageManager<?> immutableManager) {
+    record CompileManagerEvent(ManagerCompilerTask task,
+                               CompilableAttributeHolder.CompiledAttributesBuilder<? extends SimpleMutableGameStageManager<?, ?>, ? extends AbstractGameStageManager<?>> builder) {
     }
 
     record PreCompileTypeEvent(ManagerCompilerTask task, GameContentType<?> type) {

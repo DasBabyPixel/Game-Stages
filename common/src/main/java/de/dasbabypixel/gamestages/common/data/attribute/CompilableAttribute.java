@@ -1,29 +1,31 @@
 package de.dasbabypixel.gamestages.common.data.attribute;
 
+import de.dasbabypixel.gamestages.common.Unit;
 import de.dasbabypixel.gamestages.common.data.compilation.CompilableResource;
 import org.jspecify.annotations.NullMarked;
 
-import java.util.function.Function;
-
 @NullMarked
-public record CompilableAttribute<H extends CompilableAttributeHolder<H, ?>, C, CAttribute extends AttributeQuery<?, C>, T>(
-        Function<H, T> defaultValue, Function<AttributeCompiler, C> compiler,
-        CAttribute compiledAttribute) implements CompilableResource<AttributeCompiler, CompilableAttribute.Compiled<C, CAttribute>>, AttributeQuery<H, T> {
-
+public interface CompilableAttribute<H extends CompilableAttributeHolder<? extends H, ? extends CompiledHolder>, T, CompiledHolder extends AttributeHolder<? extends CompiledHolder>> extends Attribute<H, T>, CompilableResource<CompilableAttributeHolder.CompiledAttributesBuilder<? extends H, CompiledHolder>, Unit> {
     @Override
-    public T get(H holder) {
+    default T get(H holder) {
         return holder.get(this);
     }
 
-    public T supply(H holder) {
-        return defaultValue.apply(holder);
-    }
-
     @Override
-    public Compiled<C, CAttribute> compile(AttributeCompiler attributeCompiler) {
-        return new Compiled<>(compiler.apply(attributeCompiler), compiledAttribute);
+    default Unit compile(CompilableAttributeHolder.CompiledAttributesBuilder<? extends H, CompiledHolder> builder) {
+        compile(builder, builder.holder().get(this));
+        return Unit.INSTANCE;
     }
 
-    public record Compiled<C, CA>(C compiled, CA attribute) {
+    void compile(CompilableAttributeHolder.CompiledAttributesBuilder<? extends H, CompiledHolder> builder, T value);
+
+    static <H extends CompilableAttributeHolder<? extends H, ? extends CH>, T, CH extends AttributeHolder<? extends CH>> CompilableAttribute<H, T, CH> noop() {
+        // Workaround because attributes are based on object identity.
+        class HC implements CompilableAttribute<H, T, CH> {
+            @Override
+            public void compile(CompilableAttributeHolder.CompiledAttributesBuilder<? extends H, CH> builder, T value) {
+            }
+        }
+        return new HC();
     }
 }

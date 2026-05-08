@@ -16,5 +16,11 @@
   ],
   "net/minecraft/world/level/block/entity/CommandBlockEntity": [
     "de/dasbabypixel/gamestages/neoforge/v1_21_1/entity/IBlockEntity"
+  ],
+  "net/minecraft/world/level/block/entity/CampfireBlockEntity": [
+    "de/dasbabypixel/gamestages/neoforge/v1_21_1/entity/IBlockEntity"
+  ],
+  "net/minecraft/world/level/block/entity/CrafterBlockEntity": [
+    "de/dasbabypixel/gamestages/neoforge/v1_21_1/entity/IBlockEntity"
   ]
 }

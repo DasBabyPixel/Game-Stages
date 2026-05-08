@@ -88,7 +88,11 @@ public class RecipeJEI implements NeoAddonJEI {
             var cache = new HashMap<net.minecraft.world.item.crafting.RecipeType<?>, List<RecipeHolder<?>>>();
 
             for (var recipeId : recipeIds) {
-                var recipe = recipeManager.byKey(recipeId).orElseThrow();
+                var recipeOptional = recipeManager.byKey(recipeId);
+                if (recipeOptional.isEmpty()) {
+                    LOGGER.error("No recipe for {}", recipeId, new Exception());
+                }
+                var recipe = recipeOptional.orElseThrow();
                 var type = recipe.value().getType();
                 cache.computeIfAbsent(type, ignored -> new ArrayList<>()).add(recipe);
             }

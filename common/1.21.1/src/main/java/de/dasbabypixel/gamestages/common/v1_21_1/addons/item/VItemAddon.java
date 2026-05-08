@@ -9,10 +9,12 @@ import de.dasbabypixel.gamestages.common.addons.item.datadriven.CompiledItemStac
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestrictionEntry;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestrictionEntryReference;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
-import de.dasbabypixel.gamestages.common.data.attribute.Attribute;
-import de.dasbabypixel.gamestages.common.data.attribute.AttributeQuery;
+import de.dasbabypixel.gamestages.common.data.attribute.ImmutableAttribute;
+import de.dasbabypixel.gamestages.common.data.attribute.SimpleAttribute;
+import de.dasbabypixel.gamestages.common.data.attribute.SimpleImmutableAttribute;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.ServerGameStageManager;
 import de.dasbabypixel.gamestages.common.data.manager.mutable.ClientMutableGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.ServerMutableGameStageManager;
 import de.dasbabypixel.gamestages.common.data.manager.mutable.compiler.ManagerCompilerTask;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
 import de.dasbabypixel.gamestages.common.network.CustomPacket;
@@ -43,11 +45,16 @@ public abstract class VItemAddon extends ItemAddon implements VAddon {
         REGISTER_PACKETS_EVENT.addListener(this::handle);
         COMPILE_MANAGER_EVENT.addListener(this::handle);
         POST_COMPILE_TYPE_EVENT.addListener(this::handle);
+        PRE_COMPILE_PREPARE_EVENT.addListener(this::handle);
     }
 
     @Override
     public void onRegister(AddonManager<? extends Addon> addonManager) {
         recipeIntegration.register(addonManager);
+    }
+
+    private void handle(PreCompilePrepareEvent event) {
+        event.task().init(MutablePreCompileItemIndex.ATTRIBUTE, new MutablePreCompileItemIndex());
     }
 
     private void handle(PostCompileTypeEvent event) {
@@ -65,10 +72,10 @@ public abstract class VItemAddon extends ItemAddon implements VAddon {
     }
 
     private void handle(CompileManagerEvent event) {
-        if (event.immutableManager() instanceof ServerGameStageManager manager) {
+        if (event.task().manager() instanceof ServerMutableGameStageManager manager) {
             var entryMap = event.task().get(MutablePreCompileItemIndex.ATTRIBUTE).entryMap;
             var index = new PreCompileItemIndex(entryMap);
-            PreCompileItemIndex.ATTRIBUTE.init(manager, index);
+            event.builder().cast(manager).add(PreCompileItemIndex.ATTRIBUTE, index);
         }
     }
 
@@ -85,7 +92,7 @@ public abstract class VItemAddon extends ItemAddon implements VAddon {
         }
 
         var stages = recompilationTask.stages();
-        stages.get(ItemAddonDataHolder.ATTRIBUTE).itemAddonData = new ItemAddonData(itemMap);
+        stages.init(ItemAddonData.ATTRIBUTE, new ItemAddonData(itemMap));
     }
 
     @Override
@@ -118,19 +125,19 @@ public abstract class VItemAddon extends ItemAddon implements VAddon {
 
     public void handle(CommonItemStackRestrictionEntryPacket packet) {
         ClientMutableGameStageManager.buildingInstance()
-                .get(MutableStageManagerContext.ATTRIBUTE)
+                .get(MutableStageManagerContext.MUTABLE_MANAGER_ATTRIBUTE)
                 .addRestrictionEntry(packet.reference(), packet.entry());
     }
 
-    public static @Nullable ItemStackRestrictionEntry getEntry(ManagerCompilerTask manager, ItemStack nmsItemStack, de.dasbabypixel.gamestages.common.data.ItemStack ourItemStack) {
-        var index = manager.get(MutablePreCompileItemIndex.ATTRIBUTE);
+    public static @Nullable ItemStackRestrictionEntry getEntry(ManagerCompilerTask task, ItemStack nmsItemStack, de.dasbabypixel.gamestages.common.data.ItemStack ourItemStack) {
+        var index = task.get(MutablePreCompileItemIndex.ATTRIBUTE);
         var entry = index.entryMap.get(nmsItemStack.getItemHolder());
         if (entry == null) return null;
         return entry.preCompiledItemStack().resolve(ourItemStack);
     }
 
     public static @Nullable CompiledItemStackRestrictionEntry getEntry(BaseStages stages, ItemStack nmsItemStack, de.dasbabypixel.gamestages.common.data.ItemStack ourItemStack) {
-        var data = stages.get(ItemAddonDataHolder.ATTRIBUTE).itemAddonData();
+        var data = stages.get(ItemAddonData.ATTRIBUTE);
         var entry = data.itemMap.get(nmsItemStack.getItemHolder());
         if (entry == null) return null;
         return entry.resolver().resolveRestrictionEntry(ourItemStack);
@@ -141,7 +148,7 @@ public abstract class VItemAddon extends ItemAddon implements VAddon {
     }
 
     public static class PreCompileItemIndex {
-        public static final AttributeQuery.Holder<ServerGameStageManager, PreCompileItemIndex> ATTRIBUTE = AttributeQuery.holder();
+        public static final ImmutableAttribute<ServerGameStageManager, PreCompileItemIndex> ATTRIBUTE = new SimpleImmutableAttribute<>();
         public final Map<Holder<Item>, CommonItemRestrictionEntry.PreCompiled> entryMap;
 
         public PreCompileItemIndex(Map<Holder<Item>, CommonItemRestrictionEntry.PreCompiled> entryMap) {
@@ -150,20 +157,13 @@ public abstract class VItemAddon extends ItemAddon implements VAddon {
     }
 
     public static class MutablePreCompileItemIndex {
-        public static final AttributeQuery<ManagerCompilerTask, MutablePreCompileItemIndex> ATTRIBUTE = new Attribute<>(MutablePreCompileItemIndex::new);
+        public static final SimpleAttribute<ManagerCompilerTask, MutablePreCompileItemIndex> ATTRIBUTE = new SimpleAttribute<>();
         public final Map<Holder<Item>, CommonItemRestrictionEntry.PreCompiled> entryMap = new HashMap<>();
     }
 
-    public static class ItemAddonDataHolder {
-        public static final Attribute<BaseStages, ItemAddonDataHolder> ATTRIBUTE = new Attribute<>(ItemAddonDataHolder::new);
-        private @Nullable ItemAddonData itemAddonData;
-
-        public ItemAddonData itemAddonData() {
-            return Objects.requireNonNull(itemAddonData);
-        }
-    }
-
     public record ItemAddonData(Map<Holder<Item>, CommonItemRestrictionEntry.Compiled> itemMap) {
+        public static final ImmutableAttribute<BaseStages, ItemAddonData> ATTRIBUTE = new SimpleImmutableAttribute<>();
+
         public ItemAddonData {
             itemMap = Objects.requireNonNull(Map.copyOf(itemMap));
         }

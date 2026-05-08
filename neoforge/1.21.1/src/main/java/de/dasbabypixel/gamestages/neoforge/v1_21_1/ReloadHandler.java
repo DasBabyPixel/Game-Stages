@@ -5,10 +5,8 @@ import de.dasbabypixel.gamestages.common.addon.Addon.ReloadPostEvent;
 import de.dasbabypixel.gamestages.common.addon.Addon.ReloadPreEvent;
 import de.dasbabypixel.gamestages.common.data.DuplicatesException;
 import de.dasbabypixel.gamestages.common.data.graph.DependencyContent;
-import de.dasbabypixel.gamestages.common.data.logicng.LogicNG;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.ServerGameStageManager;
 import de.dasbabypixel.gamestages.common.data.manager.mutable.ServerMutableGameStageManager;
-import de.dasbabypixel.gamestages.common.data.manager.mutable.compiler.ManagerCompilerTask;
 import de.dasbabypixel.gamestages.common.data.server.GlobalServerState;
 import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
 import de.dasbabypixel.gamestages.neoforge.integration.Mods;
@@ -17,7 +15,6 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon.RegisterEventD
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.listener.KJSListeners;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.server.ReloadableServerResources;
-import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
@@ -43,14 +40,13 @@ public class ReloadHandler {
         var serverResources = event.getServerResources();
         var registryAccess = event.getRegistryAccess();
         INIT_RESOURCES_EVENT.call(new InitResourcesEvent(serverResources, registryAccess));
-        event.addListener((ResourceManagerReloadListener) resourceManager -> fullReload(serverResources, registryAccess));
+//        event.addListener((ResourceManagerReloadListener) resourceManager -> fullReload(serverResources, registryAccess));
     }
 
     public static void fullReload(ReloadableServerResources serverResources, RegistryAccess registryAccess) {
         var manager = new ServerMutableGameStageManager();
-        SERVER_RESOURCES_ATTRIBUTE.init(manager, serverResources);
-        REGISTRY_ATTRIBUTE.init(manager, registryAccess);
-        LogicNG.ATTRIBUTE.init(manager, new LogicNG());
+        manager.init(SERVER_RESOURCES_ATTRIBUTE, serverResources);
+        manager.init(REGISTRY_ATTRIBUTE, registryAccess);
 
         RELOAD_PRE_EVENT.call(new ReloadPreEvent(manager));
 
@@ -62,7 +58,7 @@ public class ReloadHandler {
 
         RELOAD_POST_EVENT.call(new ReloadPostEvent(manager));
 
-        var immutableManager = compile(manager);
+        var immutableManager = manager.compile();
         GlobalServerState.updateManager(immutableManager);
         pushFullUpdate(immutableManager);
     }
@@ -72,16 +68,6 @@ public class ReloadHandler {
         var max = 5000;
         if (cs.length() > max) cs = cs.substring(0, max) + ".." + (cs.length() - max);
         return "\"" + cs + "\"";
-    }
-
-    private static ServerGameStageManager compile(ServerMutableGameStageManager manager) {
-        var compilerTask = new ManagerCompilerTask(manager);
-        compilerTask.precompileRestrictions();
-        var restrictions = compilerTask.preCompileIndex().preCompiledRestrictions();
-        var immutable = new ServerGameStageManager(manager.gameStages(), restrictions);
-        LogicNG.ATTRIBUTE.init(immutable, manager.get(LogicNG.ATTRIBUTE));
-        compilerTask.postCompile(immutable);
-        return immutable;
     }
 
     private static void handlePlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {

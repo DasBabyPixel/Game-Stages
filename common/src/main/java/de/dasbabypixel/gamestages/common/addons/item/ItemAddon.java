@@ -6,10 +6,13 @@ import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestric
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestrictionEntryCompiler;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestrictionEntryReference;
 import de.dasbabypixel.gamestages.common.data.PlayerCompilationTask;
-import de.dasbabypixel.gamestages.common.data.attribute.Attribute;
-import de.dasbabypixel.gamestages.common.data.attribute.AttributeQuery;
+import de.dasbabypixel.gamestages.common.data.attribute.CompilableAttribute;
+import de.dasbabypixel.gamestages.common.data.attribute.ImmutableAttribute;
+import de.dasbabypixel.gamestages.common.data.attribute.SimpleAttribute;
+import de.dasbabypixel.gamestages.common.data.attribute.SimpleImmutableAttribute;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
-import de.dasbabypixel.gamestages.common.data.manager.mutable.AbstractMutableGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.SimpleMutableGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.compiler.ManagerCompilerTask;
 import de.dasbabypixel.gamestages.common.network.CustomPacket;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -26,19 +29,19 @@ public abstract class ItemAddon implements Addon {
         instance = this;
         NETWORK_SYNC_CONFIG_EVENT.addListener(this::handle);
         COMPILE_ALL_PRE_EVENT.addListener(this::handle);
+        COMPILE_ALL_POST_EVENT.addListener(this::handle);
         PRE_COMPILE_PREPARE_EVENT.addListener(this::handle);
-        COMPILE_MANAGER_EVENT.addListener(this::handle);
+        RELOAD_PRE_EVENT.addListener(this::handle);
     }
 
-    private void handle(CompileManagerEvent event) {
-        var ctx = event.task().manager().get(MutableStageManagerContext.ATTRIBUTE);
-        StageManagerContext.ATTRIBUTE.init(event.immutableManager(), new StageManagerContext(ctx.restrictionEntryMap));
+    private void handle(ReloadPreEvent event) {
+        event.manager().init(MutableStageManagerContext.MUTABLE_MANAGER_ATTRIBUTE, new MutableStageManagerContext());
     }
 
     private void handle(CompileAllPreEvent event) {
         var recompilationTask = event.playerCompilationTask();
         var context = recompilationTask.manager().get(StageManagerContext.ATTRIBUTE);
-        var compilationContext = recompilationTask.get(CompilationContext.ATTRIBUTE);
+        var compilationContext = recompilationTask.init(CompilationContext.ATTRIBUTE, new CompilationContext());
         for (var entry : context.restrictionEntryMap.entrySet()) {
             assert entry != null;
             var compiled = ItemStackRestrictionEntryCompiler.compile(recompilationTask.predicateCompiler(), entry.getValue());
@@ -46,10 +49,13 @@ public abstract class ItemAddon implements Addon {
         }
     }
 
+    private void handle(CompileAllPostEvent event) {
+    }
+
     private void handle(NetworkSyncConfigEvent event) {
-        var instance = event.manager();
+        var manager = event.manager();
         var packetConsumer = event.packetConsumer();
-        for (var entry : instance.get(StageManagerContext.ATTRIBUTE).restrictionEntryMap.entrySet()) {
+        for (var entry : manager.get(StageManagerContext.ATTRIBUTE).restrictionEntryMap.entrySet()) {
             assert entry != null;
             var packet = createPacket(entry.getKey(), entry.getValue());
             packetConsumer.send(packet);
@@ -58,11 +64,12 @@ public abstract class ItemAddon implements Addon {
 
     private void handle(PreCompilePrepareEvent event) {
         var task = event.task();
-        var manager = task.manager();
-        var preCompileContext = manager.get(PreCompileContext.ATTRIBUTE);
+        var preCompileContext = task.init(PreCompileContext.ATTRIBUTE, new PreCompileContext());
+        task.init(StageManagerContext.TASK_ATTRIBUTE, new StageManagerContext(task.manager()
+                .get(MutableStageManagerContext.MUTABLE_MANAGER_ATTRIBUTE).restrictionEntryMap));
         if (!preCompileContext.factoryContextMap.isEmpty()) throw new IllegalStateException();
         for (var factory : ItemStackRestrictionResolverFactories.instance().getAll()) {
-            preCompileContext.factoryContextMap.put(factory, factory.createContext(manager));
+            preCompileContext.factoryContextMap.put(factory, factory.createContext(task));
         }
     }
 
@@ -73,12 +80,12 @@ public abstract class ItemAddon implements Addon {
     }
 
     public static class CompilationContext {
-        public static final Attribute<PlayerCompilationTask, CompilationContext> ATTRIBUTE = new Attribute<>(CompilationContext::new);
+        public static final SimpleAttribute<PlayerCompilationTask, CompilationContext> ATTRIBUTE = new SimpleAttribute<>();
         public final Map<ItemStackRestrictionEntryReference, CompiledItemStackRestrictionEntry> compiledMap = new HashMap<>();
     }
 
     public static class PreCompileContext {
-        public static final Attribute<AbstractMutableGameStageManager<?>, PreCompileContext> ATTRIBUTE = new Attribute<>(PreCompileContext::new);
+        public static final SimpleAttribute<ManagerCompilerTask, PreCompileContext> ATTRIBUTE = new SimpleAttribute<>();
 
         private final Map<ItemStackRestrictionResolverFactory<?>, Object> factoryContextMap = new HashMap<>();
 
@@ -89,16 +96,24 @@ public abstract class ItemAddon implements Addon {
     }
 
     public static final class StageManagerContext {
-        public static final AttributeQuery.Holder<AbstractGameStageManager<?>, StageManagerContext> ATTRIBUTE = AttributeQuery.holder();
+        public static final SimpleAttribute<ManagerCompilerTask, StageManagerContext> TASK_ATTRIBUTE = new SimpleAttribute<>();
+        public static final ImmutableAttribute<AbstractGameStageManager<?>, StageManagerContext> ATTRIBUTE = new SimpleImmutableAttribute<>();
         private final Map<ItemStackRestrictionEntryReference, ItemStackRestrictionEntry> restrictionEntryMap;
 
         public StageManagerContext(Map<ItemStackRestrictionEntryReference, ItemStackRestrictionEntry> restrictionEntryMap) {
             this.restrictionEntryMap = Objects.requireNonNull(Map.copyOf(restrictionEntryMap));
         }
+
+        public ItemStackRestrictionEntry getEntry(ItemStackRestrictionEntryReference reference) {
+            return Objects.requireNonNull(restrictionEntryMap.get(reference));
+        }
     }
 
     public static class MutableStageManagerContext {
-        public static final Attribute<AbstractMutableGameStageManager<?>, MutableStageManagerContext> ATTRIBUTE = new Attribute<>(MutableStageManagerContext::new);
+        public static final CompilableAttribute<SimpleMutableGameStageManager<?, ?>, MutableStageManagerContext, AbstractGameStageManager<?>> MUTABLE_MANAGER_ATTRIBUTE = (builder, value) -> {
+            var task = builder.compiler().get(ManagerCompilerTask.ATTRIBUTE);
+            builder.add(StageManagerContext.ATTRIBUTE, task.get(StageManagerContext.TASK_ATTRIBUTE));
+        };
         private final Map<ItemStackRestrictionEntryReference, ItemStackRestrictionEntry> restrictionEntryMap = new HashMap<>();
         private int idCounter = 0;
 

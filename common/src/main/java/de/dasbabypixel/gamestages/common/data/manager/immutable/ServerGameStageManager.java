@@ -1,14 +1,14 @@
 package de.dasbabypixel.gamestages.common.data.manager.immutable;
 
 import de.dasbabypixel.gamestages.common.addon.Addon.NetworkSyncConfigEvent;
-import de.dasbabypixel.gamestages.common.data.GameStage;
-import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
+import de.dasbabypixel.gamestages.common.data.attribute.AttributeEntry;
 import de.dasbabypixel.gamestages.common.network.PacketConsumer;
 import de.dasbabypixel.gamestages.common.network.Status;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 import static de.dasbabypixel.gamestages.common.CommonInstances.platformPacketCreator;
 import static de.dasbabypixel.gamestages.common.addon.Addon.NETWORK_SYNC_CONFIG_EVENT;
@@ -16,13 +16,13 @@ import static de.dasbabypixel.gamestages.common.addon.Addon.NETWORK_SYNC_CONFIG_
 @NullMarked
 public final class ServerGameStageManager extends AbstractGameStageManager<ServerGameStageManager> {
 
-    public ServerGameStageManager(Collection<? extends GameStage> gameStages, Collection<? extends RestrictionEntry.PreCompiled<?, ?>> restrictions) {
-        super(gameStages, restrictions);
+    public ServerGameStageManager(Collection<AttributeEntry<? super ServerGameStageManager, ?>> attributes) {
+        super(attributes);
     }
 
     public void sync(PacketConsumer packetConsumer) {
         packetConsumer.send(platformPacketCreator.createStatusPacket(Status.BEGIN_SYNC));
-        var gameStages = List.copyOf(this.gameStages());
+        var gameStages = Objects.requireNonNull(List.copyOf(this.gameStages()));
         packetConsumer.send(platformPacketCreator.createSyncRegisteredGameStages(gameStages));
         for (var restriction : restrictions()) {
             packetConsumer.send(restriction.createPacket(this));

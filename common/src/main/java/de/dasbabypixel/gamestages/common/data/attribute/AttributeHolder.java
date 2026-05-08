@@ -5,8 +5,15 @@ import org.jspecify.annotations.NullMarked;
 import java.util.Collection;
 
 @NullMarked
-public interface AttributeHolder<Self extends AttributeHolder<Self>> extends IAttributeHolder<Self> {
-    <T> T get(Attribute<? super Self, T> attribute);
+public interface AttributeHolder<Self extends AttributeHolder<? extends Self>> {
+    default <T> T get(Attribute<? super Self, T> attribute) {
+        return attribute.get(self());
+    }
 
     Collection<AttributeEntry<? super Self, ?>> attributes();
+
+    @SuppressWarnings("unchecked")
+    default Self self() {
+        return (Self) this;
+    }
 }

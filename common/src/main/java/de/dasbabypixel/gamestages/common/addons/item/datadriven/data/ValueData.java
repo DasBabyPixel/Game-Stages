@@ -9,7 +9,7 @@ import de.dasbabypixel.gamestages.common.addons.item.datadriven.ResolverAlgorith
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ResolverAlgorithmData;
 import de.dasbabypixel.gamestages.common.data.ItemStack;
 import de.dasbabypixel.gamestages.common.data.PlayerCompilationTask;
-import de.dasbabypixel.gamestages.common.data.manager.mutable.AbstractMutableGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.compiler.ManagerCompilerTask;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
@@ -21,8 +21,8 @@ public record ValueData(
     public static final String TYPE = "value";
 
     @Override
-    public PreCompiled compile(AbstractMutableGameStageManager<?> manager) {
-        var context = manager.get(ItemAddon.MutableStageManagerContext.ATTRIBUTE);
+    public PreCompiled compile(ManagerCompilerTask task) {
+        var context = task.get(ItemAddon.StageManagerContext.TASK_ATTRIBUTE);
         var entry = context.getEntry(restrictionEntryReference);
         return new PreCompiled(restrictionEntryReference, entry);
     }
@@ -56,7 +56,7 @@ public record ValueData(
         private static final Algorithm<CompiledItemStackRestrictionEntry> ALGORITHM = new Algorithm<>();
 
         public Compiled {
-            entries = List.copyOf(entries);
+            entries = Objects.requireNonNull(List.copyOf(entries));
         }
 
         @Override

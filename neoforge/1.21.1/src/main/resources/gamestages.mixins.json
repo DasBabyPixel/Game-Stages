@@ -7,12 +7,16 @@
     "MCBlockEntityMixin",
     "MCItemStackMixin",
     "MCLocalPlayerMixin",
+    "MCMinecraftServerMixin",
     "MCPlayerMixin",
     "MCServerPlayerMixin",
     "recipe.MCAbstractFurnaceBlockEntityMixin",
+    "recipe.MCCampfireBlockEntityMixin",
     "recipe.MCCrafterBlockMixin",
     "recipe.MCCrafterMenuMixin",
     "recipe.MCCraftingMenuMixin",
+    "recipe.MCRecipeCacheMixin",
+    "recipe.MCRecipeManagerMixin",
     "sourcetracking.MCEntityTypeMixin"
   ],
   "injectors": {

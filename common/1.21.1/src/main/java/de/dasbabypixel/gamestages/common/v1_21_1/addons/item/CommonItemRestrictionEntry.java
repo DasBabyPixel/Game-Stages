@@ -9,7 +9,7 @@ import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolve
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenTypedData;
 import de.dasbabypixel.gamestages.common.data.PlayerCompilationTask;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.ServerGameStageManager;
-import de.dasbabypixel.gamestages.common.data.manager.mutable.AbstractMutableGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.compiler.ManagerCompilerTask;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
@@ -36,24 +36,24 @@ public final class CommonItemRestrictionEntry extends AbstractItemRestrictionEnt
     }
 
     @Override
-    public PreCompiled compile(AbstractMutableGameStageManager<?> manager) {
+    public PreCompiled compile(ManagerCompilerTask task) {
         var items = (CommonItemCollection) targetItems();
-        precompileItemStackResolver(manager);
+        precompileItemStackResolver(task);
         return new PreCompiled(this, items, Objects.requireNonNull(preCompiledItemStackResolver));
     }
 
-    public ItemStackRestrictionResolverFactory.PreCompiled precompileItemStackResolver(AbstractMutableGameStageManager<?> manager) {
+    public ItemStackRestrictionResolverFactory.PreCompiled precompileItemStackResolver(ManagerCompilerTask task) {
         if (preCompiledItemStackResolver != null) throw new IllegalStateException();
         var networkData = dataDrivenNetworkData();
         var factoryId = networkData.factoryId();
         var factory = ItemStackRestrictionResolverFactories.instance().getFactory(factoryId);
         if (factory == null) throw new IllegalStateException("Unknown factory " + factoryId);
-        preCompiledItemStackResolver = precompile(manager, factory, networkData.data().toTypedData());
+        preCompiledItemStackResolver = precompile(task, factory, networkData.data().toTypedData());
         return preCompiledItemStackResolver;
     }
 
-    private <T> ItemStackRestrictionResolverFactory.PreCompiled precompile(AbstractMutableGameStageManager<?> instance, ItemStackRestrictionResolverFactory<T> factory, DataDrivenTypedData<?> data) {
-        var context = instance.get(ItemAddon.PreCompileContext.ATTRIBUTE).get(factory);
+    private <T> ItemStackRestrictionResolverFactory.PreCompiled precompile(ManagerCompilerTask task, ItemStackRestrictionResolverFactory<T> factory, DataDrivenTypedData<?> data) {
+        var context = task.get(ItemAddon.PreCompileContext.ATTRIBUTE).get(factory);
         return factory.precompile(data, context);
     }
 

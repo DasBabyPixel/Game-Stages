@@ -2,22 +2,24 @@ package de.dasbabypixel.gamestages.common.data.manager.immutable;
 
 import de.dasbabypixel.gamestages.common.data.GameContentType;
 import de.dasbabypixel.gamestages.common.data.TypedGameContent;
-import de.dasbabypixel.gamestages.common.data.attribute.AttributeQuery;
+import de.dasbabypixel.gamestages.common.data.attribute.ImmutableAttribute;
+import de.dasbabypixel.gamestages.common.data.attribute.SimpleImmutableAttribute;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @NullMarked
 public final class PreCompileIndex {
-    public static final AttributeQuery.Holder<AbstractGameStageManager<?>, PreCompileIndex> ATTRIBUTE = AttributeQuery.holder();
+    public static final ImmutableAttribute<AbstractGameStageManager<?>, PreCompileIndex> ATTRIBUTE = new SimpleImmutableAttribute<>();
     private final Set<RestrictionEntry.PreCompiled<?, ?>> entries;
     private final Map<GameContentType<?>, TypeIndex<?>> typeIndexMap;
 
     public PreCompileIndex(Set<RestrictionEntry.PreCompiled<?, ?>> entries, Map<GameContentType<?>, TypeIndex<?>> typeIndexMap) {
-        this.entries = Set.copyOf(entries);
-        this.typeIndexMap = Map.copyOf(typeIndexMap);
+        this.entries = Objects.requireNonNull(Set.copyOf(entries));
+        this.typeIndexMap = Objects.requireNonNull(Map.copyOf(typeIndexMap));
     }
 
     public Set<RestrictionEntry.PreCompiled<?, ?>> preCompiledRestrictions() {
