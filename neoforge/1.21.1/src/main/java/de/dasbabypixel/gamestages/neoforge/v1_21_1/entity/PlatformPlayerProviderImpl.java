@@ -35,9 +35,11 @@ public class PlatformPlayerProviderImpl implements PlatformPlayerProvider {
 
     @Override
     public void refreshMenu(ServerPlayer player) {
-        var menu = ((net.minecraft.server.level.ServerPlayer) player).containerMenu;
+        var p = ((net.minecraft.server.level.ServerPlayer) player);
+        var menu = p.containerMenu;
         if (menu instanceof StageRefreshableMenu r) {
             r.refresh();
         }
+        ((StageRefreshableMenu) p.inventoryMenu).refresh();
     }
 }

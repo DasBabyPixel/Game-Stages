@@ -15,6 +15,7 @@
     "recipe.MCCrafterBlockMixin",
     "recipe.MCCrafterMenuMixin",
     "recipe.MCCraftingMenuMixin",
+    "recipe.MCInventoryMenuMixin",
     "recipe.MCRecipeCacheMixin",
     "recipe.MCRecipeManagerMixin",
     "sourcetracking.MCEntityTypeMixin"
