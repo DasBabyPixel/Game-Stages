@@ -32,10 +32,12 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.RecipeJEI;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.client.ClientReloadHandler;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.commands.StageArgumentType;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.commands.StagesCommand;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.config.GameStagesClientConfig;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.Attachments;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.entity.PlatformPlayerProviderImpl;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.NeoModProvider;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.RegisterEventJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.ServerRegisterEventJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.startup.StartupRegisterEventJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.probejs.StagesProbeJSPlugin;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.network.NeoNetworkHandler;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.network.PlatformPacketDistributorImpl;
@@ -49,7 +51,9 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.InterModComms;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.neoforged.fml.event.lifecycle.InterModProcessEvent;
@@ -102,7 +106,7 @@ public class NeoForgeEntrypoint {
         CommonVGameStageMod.init();
     }
 
-    public NeoForgeEntrypoint(IEventBus modBus) {
+    public NeoForgeEntrypoint(ModContainer container, IEventBus modBus) {
         modBus.addListener(NeoNetworkHandler::register);
         modBus.addListener(this::handleRegistries);
         modBus.addListener(this::handleRegister);
@@ -123,6 +127,7 @@ public class NeoForgeEntrypoint {
         if (FMLEnvironment.dist.isClient()) {
             NeoForge.EVENT_BUS.addListener(this::handleRecipes);
             ClientReloadHandler.registerListeners();
+            container.registerConfig(ModConfig.Type.CLIENT, GameStagesClientConfig.CONFIG_SPEC);
         }
 
         ReloadHandler.registerListeners();
@@ -190,7 +195,8 @@ public class NeoForgeEntrypoint {
     private void handleLoadComplete(FMLLoadCompleteEvent event) {
         if (Mods.KUBEJS.isLoaded()) {
             var eventRegistry = new EventRegistryImpl();
-            eventRegistry.add(RegisterEventJS.class, RegisterEventJS.TYPE);
+            eventRegistry.add(StartupRegisterEventJS.class, StartupRegisterEventJS.TYPE);
+            eventRegistry.add(ServerRegisterEventJS.class, ServerRegisterEventJS.TYPE);
             for (var addon : NeoAddonManager.instance().addons()) {
                 addon.createKubeJSSupport().registerEventExtensions(eventRegistry);
             }
@@ -356,7 +362,6 @@ public class NeoForgeEntrypoint {
                 .path()
                 .resolve("gamestages"));
         GlobalServerState.init(dataDirectory);
-        ReloadHandler.pushFullUpdate(GlobalServerState.currentManager());
     }
 
     private void handleServerStopped(ServerStoppedEvent event) {

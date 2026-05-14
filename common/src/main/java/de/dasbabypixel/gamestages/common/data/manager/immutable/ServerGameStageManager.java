@@ -3,7 +3,6 @@ package de.dasbabypixel.gamestages.common.data.manager.immutable;
 import de.dasbabypixel.gamestages.common.addon.Addon.NetworkSyncConfigEvent;
 import de.dasbabypixel.gamestages.common.data.attribute.AttributeEntry;
 import de.dasbabypixel.gamestages.common.network.PacketConsumer;
-import de.dasbabypixel.gamestages.common.network.Status;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Collection;
@@ -21,13 +20,13 @@ public final class ServerGameStageManager extends AbstractGameStageManager<Serve
     }
 
     public void sync(PacketConsumer packetConsumer) {
-        packetConsumer.send(platformPacketCreator.createStatusPacket(Status.BEGIN_SYNC));
+        packetConsumer.send(platformPacketCreator.createBeginSyncPacket(get(VERSION)));
         var gameStages = Objects.requireNonNull(List.copyOf(this.gameStages()));
         packetConsumer.send(platformPacketCreator.createSyncRegisteredGameStages(gameStages));
         for (var restriction : restrictions()) {
             packetConsumer.send(restriction.createPacket(this));
         }
         NETWORK_SYNC_CONFIG_EVENT.call(new NetworkSyncConfigEvent(this, packetConsumer));
-        packetConsumer.send(platformPacketCreator.createStatusPacket(Status.END_SYNC));
+        packetConsumer.send(platformPacketCreator.createEndSyncPacket());
     }
 }

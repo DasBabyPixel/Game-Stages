@@ -2,16 +2,19 @@ package de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network;
 
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenData;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import org.jspecify.annotations.NullMarked;
 
+@SuppressWarnings("DataFlowIssue")
 @NullMarked
 public record DataDrivenType<B extends ByteBuf, Data extends DataDrivenData<?, ?>>(Class<Data> cls, String type,
                                                                                    StreamCodec<B, Data> codec,
                                                                                    StreamCodec<B, DataDrivenRTypedData<Data>> typedCodec) {
-    @SuppressWarnings("DataFlowIssue")
+    public static final StreamCodec<ByteBuf, DataDrivenType<?, ?>> STREAM_CODEC = ByteBufCodecs.STRING_UTF8.map(DataDrivenTypes.instance()::get, DataDrivenType::type);
+
     public DataDrivenType(Class<Data> cls, String type, StreamCodec<B, Data> codec) {
-        this(cls, type, codec, StreamCodec.composite(DataDrivenNetwork.DATA_DRIVEN_TYPE_STREAM_CODEC, DataDrivenRTypedData::type, codec, DataDrivenRTypedData::data, DataDrivenRTypedData::fromTypedData));
+        this(cls, type, codec, StreamCodec.composite(STREAM_CODEC, DataDrivenRTypedData::type, codec, DataDrivenRTypedData::data, DataDrivenRTypedData::fromTypedData));
     }
 
     @SuppressWarnings("unchecked")

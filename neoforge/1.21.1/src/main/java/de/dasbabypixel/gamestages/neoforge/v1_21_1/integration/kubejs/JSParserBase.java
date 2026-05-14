@@ -16,7 +16,17 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -209,7 +219,9 @@ public class JSParserBase {
         @Override
         public @Nullable CommonGameContent finish() {
             if (set.isEmpty()) return null;
-            return finish(set);
+            var content = finish(Set.copyOf(set));
+            set.clear();
+            return content;
         }
 
         public abstract V transform(T value);
@@ -238,8 +250,7 @@ public class JSParserBase {
             if (set.size() == 1) {
                 return contentCreator.apply(registry.getTag(set.iterator().next()).orElseThrow());
             }
-            HolderSet<V> holderSet = HolderSet.direct(set
-                    .stream()
+            HolderSet<V> holderSet = HolderSet.direct(set.stream()
                     .map(registry::getTag)
                     .map(Optional::orElseThrow)
                     .map(Objects::requireNonNull)

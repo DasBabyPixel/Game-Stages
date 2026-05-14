@@ -28,12 +28,12 @@ public class StagesJEIPlugin implements IModPlugin {
 
     @Override
     public void onRuntimeAvailable(IJeiRuntime jeiRuntime) {
-        for (var addon : addonMap().values()) {
+        for (var addon : addons()) {
             addon.onRuntimeAvailable(jeiRuntime);
         }
         var player = CommonInstances.platformPlayerProvider.clientSelfPlayer();
         if (player != null && ClientGameStageManager.initialized()) {
-            JEIAddon.ADDON.singleRefreshAll(ClientGameStageManager.currentManager(), player.getGameStages());
+            JEIAddon.ADDON.jeiReloaded(ClientGameStageManager.currentManager(), player.getGameStages());
         }
     }
 

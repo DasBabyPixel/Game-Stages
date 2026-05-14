@@ -26,6 +26,7 @@ import java.util.Set;
  */
 @NullMarked
 public abstract class SimpleMutableGameStageManager<H extends SimpleMutableGameStageManager<H, IM>, IM extends AbstractGameStageManager<IM>> extends AbstractCompilableAttributeHolder<H, IM> {
+    public static final CompilableAttribute<SimpleMutableGameStageManager<?, ?>, Integer, AbstractGameStageManager<?>> VERSION = AbstractGameStageManager.VERSION.compilable();
     public static final CompilableAttribute<SimpleMutableGameStageManager<?, ?>, Set<GameStage>, AbstractGameStageManager<?>> GAME_STAGES = AbstractGameStageManager.GAME_STAGES.compilable((a, v) -> Objects.requireNonNull(Set.copyOf(v)));
     public static final CompilableAttribute<SimpleMutableGameStageManager<?, ?>, List<RestrictionEntry<?, ?, ?>>, AbstractGameStageManager<?>> RESTRICTIONS = AbstractGameStageManager.RESTRICTIONS.compilable((builder, value) -> {
         var compiler = builder.compiler().get(ManagerCompilerTask.ATTRIBUTE);

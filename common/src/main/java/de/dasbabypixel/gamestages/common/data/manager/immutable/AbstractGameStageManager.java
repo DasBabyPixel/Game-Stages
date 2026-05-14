@@ -20,6 +20,7 @@ import java.util.Set;
  */
 @NullMarked
 public abstract class AbstractGameStageManager<Self extends AbstractGameStageManager<Self>> extends SimpleImmutableAttributeHolder<Self> {
+    public static final ImmutableAttribute<AbstractGameStageManager<?>, Integer> VERSION = new SimpleImmutableAttribute<>();
     public static final ImmutableAttribute<AbstractGameStageManager<?>, Set<GameStage>> GAME_STAGES = new SimpleImmutableAttribute<>();
     public static final ImmutableAttribute<AbstractGameStageManager<?>, Set<RestrictionEntry.PreCompiled<?, ?>>> RESTRICTIONS = new SimpleImmutableAttribute<>();
 

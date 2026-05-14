@@ -44,9 +44,9 @@ public class CommonGameContentFlattener implements GameContentFlattener {
     @SuppressWarnings("unchecked")
     @Override
     public <T extends TypedGameContent> T flatten(GameContent gameContent, GameContentType<T> requestType) {
-        if (typeCache.containsKey(requestType) && Objects.requireNonNull(typeCache.get(requestType))
-                .containsKey(gameContent)) {
-            return (T) Objects.requireNonNull(Objects.requireNonNull(typeCache.get(requestType)).get(gameContent));
+        var cache = typeCache.get(requestType);
+        if (cache != null && cache.containsKey(gameContent)) {
+            return (T) Objects.requireNonNull(cache.get(gameContent));
         }
         var type = (CommonGameContentType<T>) requestType;
         return cache(gameContent, type, (T) flattenInternal(gameContent, type));

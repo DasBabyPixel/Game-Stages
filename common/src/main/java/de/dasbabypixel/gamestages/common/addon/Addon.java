@@ -6,6 +6,7 @@ import de.dasbabypixel.gamestages.common.data.GameContentType;
 import de.dasbabypixel.gamestages.common.data.PlayerCompilationTask;
 import de.dasbabypixel.gamestages.common.data.attribute.CompilableAttributeHolder;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.ClientGameStageManager;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.ServerGameStageManager;
 import de.dasbabypixel.gamestages.common.data.manager.mutable.SimpleMutableGameStageManager;
 import de.dasbabypixel.gamestages.common.data.manager.mutable.compiler.ManagerCompilerTask;
@@ -13,6 +14,7 @@ import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestr
 import de.dasbabypixel.gamestages.common.event.EventType;
 import de.dasbabypixel.gamestages.common.network.PacketConsumer;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +34,9 @@ public interface Addon {
     EventType<PreCompileTypeEvent> PRE_COMPILE_TYPE_EVENT = EventType.create();
     EventType<PostCompileTypeEvent> POST_COMPILE_TYPE_EVENT = EventType.create();
     EventType<PreCompilePrepareEvent> PRE_COMPILE_PREPARE_EVENT = EventType.create();
+    EventType<ClientReplaceManagerEvent> CLIENT_REPLACE_MANAGER_EVENT = EventType.create();
+    EventType<ClientRecompilePreEvent> CLIENT_RECOMPILE_PRE_EVENT = EventType.create();
+    EventType<ClientRecompilePostEvent> CLIENT_RECOMPILE_POST_EVENT = EventType.create();
 
     default void onRegister(AddonManager<? extends Addon> addonManager) {
     }
@@ -100,5 +105,15 @@ public interface Addon {
         public void addEvaluationDependency(GameContentType<?> content, GameContentType<?> dependency) {
             evaluationDependencies.computeIfAbsent(content, ignored -> new ArrayList<>()).add(dependency);
         }
+    }
+
+    record ClientReplaceManagerEvent(@Nullable ClientGameStageManager oldManager,
+                                     @Nullable ClientGameStageManager newManager) {
+    }
+
+    record ClientRecompilePreEvent(ClientGameStageManager newManager, BaseStages stages) {
+    }
+
+    record ClientRecompilePostEvent(ClientGameStageManager newManager, BaseStages stages) {
     }
 }

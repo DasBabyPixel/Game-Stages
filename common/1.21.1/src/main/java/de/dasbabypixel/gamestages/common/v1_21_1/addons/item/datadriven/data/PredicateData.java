@@ -1,5 +1,7 @@
 package de.dasbabypixel.gamestages.common.v1_21_1.addons.item.datadriven.data;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import de.dasbabypixel.gamestages.common.addons.item.ItemAddon;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.CompiledItemStackRestrictionEntry;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenData;
@@ -10,23 +12,46 @@ import de.dasbabypixel.gamestages.common.addons.item.datadriven.ResolverAlgorith
 import de.dasbabypixel.gamestages.common.data.ItemStack;
 import de.dasbabypixel.gamestages.common.data.PlayerCompilationTask;
 import de.dasbabypixel.gamestages.common.data.manager.mutable.compiler.ManagerCompilerTask;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenNetwork;
 import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.advancements.critereon.ItemPredicate;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.RegistryOps;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
 
+@SuppressWarnings("DataFlowIssue")
 @NullMarked
 public record PredicateData(ItemPredicate predicate,
                             ItemStackRestrictionEntryReference resultReference) implements DataDrivenData<PredicateData.PreCompiled, PredicateData.Compiled> {
+    public static final StreamCodec<RegistryFriendlyByteBuf, PredicateData> STREAM_CODEC = StreamCodec.composite(fromCodec(ItemPredicate.CODEC), PredicateData::predicate, DataDrivenNetwork.ITEM_STACK_RESTRICTION_ENTRY_REFERENCE_STREAM_CODEC, PredicateData::resultReference, PredicateData::new);
     public static final String TYPE = "predicate";
 
     @Override
     public PreCompiled compile(ManagerCompilerTask task) {
         var entry = task.get(ItemAddon.StageManagerContext.TASK_ATTRIBUTE).getEntry(resultReference);
         return new PreCompiled(Pair.of(entry, predicate), resultReference);
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static <V> StreamCodec<RegistryFriendlyByteBuf, V> fromCodec(Codec<V> codec) {
+        return StreamCodec.of((o, v) -> {
+            var ops = RegistryOps.create(NbtOps.INSTANCE, o.registryAccess());
+            DataResult<Tag> tagResult = codec.encodeStart(ops, v);
+            var tag = tagResult.result().orElseThrow();
+            ByteBufCodecs.TAG.encode(o, tag);
+        }, o -> {
+            var tag = ByteBufCodecs.TAG.decode(o);
+            var result = codec.decode(RegistryOps.create(NbtOps.INSTANCE, o.registryAccess()), tag);
+            return Objects.requireNonNull(result.result().orElseThrow().getFirst());
+        });
     }
 
     public record PreCompiled(Pair<ItemStackRestrictionEntry, ItemPredicate> customData,

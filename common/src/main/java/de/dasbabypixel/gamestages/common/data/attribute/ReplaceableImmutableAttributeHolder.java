@@ -24,6 +24,10 @@ public class ReplaceableImmutableAttributeHolder<Self extends ReplaceableImmutab
         return value;
     }
 
+    public boolean has(ImmutableAttribute<? super Self, ?> attribute) {
+        return attributeMap.containsKey(attribute);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public <T> T get(ImmutableAttribute<? super Self, T> attribute) {

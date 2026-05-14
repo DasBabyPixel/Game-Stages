@@ -1,6 +1,7 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event;
 
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.RegisterEventJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.ServerRegisterEventJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.startup.StartupRegisterEventJS;
 import dev.latvian.mods.kubejs.event.EventGroup;
 import dev.latvian.mods.kubejs.event.EventHandler;
 import org.jspecify.annotations.NullMarked;
@@ -9,7 +10,6 @@ import org.jspecify.annotations.NullMarked;
 public class StageEvents {
     public static final EventGroup GROUP = EventGroup.of("StageEvents");
 
-    public static final EventHandler STAGE_ADDED = GROUP.server("added", () -> StageAddedToPlayerEventJS.class);
-    public static final EventHandler STAGE_REMOVED = GROUP.server("removed", () -> StageRemovedFromPlayerEventJS.class);
-    public static final EventHandler REGISTER = GROUP.server("register", () -> RegisterEventJS.class);
+    public static final EventHandler STARTUP_REGISTER = GROUP.startup("startupRegister", () -> StartupRegisterEventJS.class);
+    public static final EventHandler SERVER_REGISTER = GROUP.server("serverRegister", () -> ServerRegisterEventJS.class);
 }

@@ -3,7 +3,6 @@ package de.dasbabypixel.gamestages.common.client;
 import de.dasbabypixel.gamestages.common.addon.Addon.ClientPostSyncUnlockedStagesEvent;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.GameStage;
-import de.dasbabypixel.gamestages.common.data.manager.immutable.ClientGameStageManager;
 import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,9 +21,6 @@ public class ClientPlayerStages extends BaseStages {
 
     public ClientPlayerStages() {
         super(Set.of());
-        if (ClientGameStageManager.initialized()) {
-            recompileAll(ClientGameStageManager.currentManager());
-        }
     }
 
     public void syncUnlockedStages(List<GameStage> gameStages) {
@@ -45,7 +41,7 @@ public class ClientPlayerStages extends BaseStages {
         }
         updated.forEach(this::update);
         var took = System.nanoTime() - time1;
-        LOGGER.info("Syncing unlocked stages took " + TimeUnit.NANOSECONDS.toMillis(took) + "ms");
+        LOGGER.info("Syncing unlocked stages took {}ms", TimeUnit.NANOSECONDS.toMillis(took));
         // TODO do we need to test eagerly?
         CLIENT_POST_SYNC_UNLOCKED_STAGES_EVENT.call(new ClientPostSyncUnlockedStagesEvent(this));
     }

@@ -8,7 +8,6 @@ import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenT
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenTypes;
 import org.jspecify.annotations.NullMarked;
 
-import static de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenNetwork.PREDICATE_DATA_STREAM_CODEC;
 import static de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenNetwork.SEQUENTIAL_DATA_STREAM_CODEC;
 import static de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenNetwork.VALUE_DATA_STREAM_CODEC;
 
@@ -16,7 +15,7 @@ import static de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.Data
 public class VDataDrivenTypes {
     public static void register(DataDrivenTypes types, ItemStackRestrictionResolverFactories factories) {
         types.register(new DataDrivenType<>(ValueData.class, ValueData.TYPE, VALUE_DATA_STREAM_CODEC));
-        types.register(new DataDrivenType<>(PredicateData.class, PredicateData.TYPE, PREDICATE_DATA_STREAM_CODEC));
+        types.register(new DataDrivenType<>(PredicateData.class, PredicateData.TYPE, PredicateData.STREAM_CODEC));
         types.register(new DataDrivenType<>(SequentialData.class, SequentialData.TYPE, SEQUENTIAL_DATA_STREAM_CODEC));
     }
 }

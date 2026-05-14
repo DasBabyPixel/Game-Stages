@@ -1,16 +1,21 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe;
 
 import de.dasbabypixel.gamestages.common.data.BaseStages;
-import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.ClientGameStageManager;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeCollection;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeRestrictionEntry;
+import de.dasbabypixel.gamestages.neoforge.integration.Mod;
+import de.dasbabypixel.gamestages.neoforge.integration.Mods;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonJEI;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.integration.ExDeorumJEIIntegration;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.client.ContentVisibilityUpdater;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.config.GameStagesClientConfig;
 import mezz.jei.api.recipe.IRecipeManager;
+import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -24,71 +29,147 @@ import java.util.Objects;
 
 @NullMarked
 public class RecipeJEI implements NeoAddonJEI {
+    private static final Mod EX_DEORUM = Mods.mod("exdeorum");
     private static final Logger LOGGER = LoggerFactory.getLogger(RecipeJEI.class);
+    private static final RecipeConverter DEFAULT_CONVERTER = RecipeJEI::convert;
     public static @Nullable RecipeManager recipeManager;
-    private @Nullable IJeiRuntime runtime;
+    private final Map<net.minecraft.world.item.crafting.RecipeType<?>, RecipeConverter> converterMap = new HashMap<>();
+    private @Nullable Context context;
+    private final ContentVisibilityUpdater<RecipeAndType<?>, CommonRecipeRestrictionEntry.Compiled> updater = new ContentVisibilityUpdater<>(CommonRecipeCollection.TYPE) {
+        @Override
+        protected void collect(BaseStages stages, BaseStages.CompileIndex compileIndex, CommonRecipeRestrictionEntry.Compiled compiledEntry, Collector<RecipeAndType<?>> collector) {
+            if (!compiledEntry.hideInJEI()) return;
+            var converter = new Converter();
+            converter.add(compiledEntry.gameContent());
+            if (compiledEntry.predicate().test()) {
+                collector.showAll(converter.convert());
+            } else {
+                collector.hideAll(converter.convert());
+            }
+        }
+
+        @Override
+        protected void registerUpdateNotifier(BaseStages stages, BaseStages.CompileIndex compileIndex, List<CommonRecipeRestrictionEntry.Compiled> compiledEntries, UpdateRegistrar<RecipeAndType<?>> registrar) {
+            for (var compiledEntry : compiledEntries) {
+                if (!compiledEntry.hideInJEI()) continue;
+                var converter = new Converter();
+                converter.add(compiledEntry.gameContent());
+                var data = converter.convert();
+                registrar.register(compiledEntry.predicate(), data);
+            }
+        }
+
+        @Override
+        protected void show(List<RecipeAndType<?>> show) {
+            var r = Objects.requireNonNull(context).runtime.getRecipeManager();
+            holders(show).forEach(h -> h.unhide(r));
+        }
+
+        @Override
+        protected void hide(List<RecipeAndType<?>> hide) {
+            var r = Objects.requireNonNull(context).runtime.getRecipeManager();
+            holders(hide).forEach(h -> h.hide(r));
+        }
+
+        @SuppressWarnings("unchecked")
+        private List<Holder<?>> holders(List<RecipeAndType<?>> recipes) {
+            var map = new HashMap<RecipeType<?>, List<Object>>();
+            for (var recipe : recipes) {
+                map.computeIfAbsent(recipe.type, t -> new ArrayList<>()).add(recipe.recipe);
+            }
+            var list = new ArrayList<Holder<?>>();
+            for (var entry : map.entrySet()) {
+                Objects.requireNonNull(entry);
+                var type = (RecipeType<Object>) entry.getKey();
+                list.add(new Holder<>(type, entry.getValue()));
+            }
+            return list;
+        }
+    };
 
     @Override
-    public void singleRefreshAll(AbstractGameStageManager<?> instance, BaseStages stages) {
-        var collected = new Collected(Objects.requireNonNull(runtime));
-        iterate(stages, CommonRecipeCollection.TYPE, entry -> {
-            if (entry instanceof CommonRecipeRestrictionEntry.Compiled(
-                    var preCompiled, var predicate, var hideInJEI
-            )) {
-                if (!hideInJEI) return;
-
-                var show = predicate.test();
-                collected.collect(show, preCompiled.gameContent());
-            }
-        });
-
-        collected.apply(runtime);
-    }
-
-    @Override
-    public void postCompileAll(AbstractGameStageManager<?> instance, BaseStages stages) {
-        iterate(stages, CommonRecipeCollection.TYPE, entry -> {
-            if (entry instanceof CommonRecipeRestrictionEntry.Compiled(
-                    var preCompiled, var predicate, var hideInJEI
-            )) {
-                if (!hideInJEI) return;
-                predicate.addNotifier(newTest -> {
-                    var collected = new Collected(Objects.requireNonNull(runtime));
-                    collected.collect(newTest, preCompiled.gameContent());
-                    collected.apply(Objects.requireNonNull(runtime));
-                });
-            }
-        });
+    public void jeiReloaded(ClientGameStageManager instance, BaseStages stages) {
+        updater.fullReconfigure(stages);
     }
 
     @Override
     public void onRuntimeAvailable(IJeiRuntime runtime) {
-        this.runtime = runtime;
+        var recipeTypeByJEI = new HashMap<RecipeType<?>, net.minecraft.world.item.crafting.RecipeType<?>>();
+        var recipeTypeByMinecraft = new HashMap<net.minecraft.world.item.crafting.RecipeType<?>, RecipeType<?>>();
+
+        for (var category : runtime.getRecipeManager().createRecipeCategoryLookup().includeHidden().get().toList()) {
+            Objects.requireNonNull(category);
+            var type = category.getRecipeType();
+            var minecraftType = BuiltInRegistries.RECIPE_TYPE.get(type.getUid());
+            if (minecraftType != null) {
+                recipeTypeByJEI.put(type, minecraftType);
+                recipeTypeByMinecraft.put(minecraftType, type);
+            }
+            var recipes = runtime.getRecipeManager().createRecipeLookup(type).includeHidden().get().toList();
+        }
+
+        this.context = new Context(runtime, recipeTypeByJEI, recipeTypeByMinecraft);
+
+        reload(this.context);
     }
 
     @Override
     public void onRuntimeUnavailable() {
-        this.runtime = null;
+        this.context = null;
     }
 
-    private static class Collected {
-        private final IJeiRuntime runtime;
-        private final RecipeManager recipeManager = Objects.requireNonNull(RecipeJEI.recipeManager);
-        private final Map<mezz.jei.api.recipe.RecipeType<?>, Holder<?>> showCache = new HashMap<>();
-        private final Map<mezz.jei.api.recipe.RecipeType<?>, Holder<?>> hideCache = new HashMap<>();
+    private void reload(Context context) {
+        var runtime = context.runtime();
+        converterMap.clear();
 
-        public Collected(IJeiRuntime runtime) {
-            this.runtime = runtime;
+        if (EX_DEORUM.isLoaded()) {
+            if (GameStagesClientConfig.CONFIG.exdeorumOverrideJEI.isTrue()) {
+                runtime.getRecipeManager().hideRecipeCategory(ExDeorumJEIIntegration.SIEVE);
+                runtime.getRecipeManager().hideRecipeCategory(ExDeorumJEIIntegration.COMPRESSED_SIEVE);
+            }
         }
+    }
 
-        @SuppressWarnings("unchecked")
-        public void collect(boolean show, CommonRecipeCollection recipes) {
-            var recipeIds = recipes.recipes();
+    @SuppressWarnings("unchecked")
+    private static void convert(Context context, List<RecipeAndType<?>> list, net.minecraft.world.item.crafting.RecipeType<?> minecraftType, List<RecipeHolder<?>> recipeHolders) {
+        var jeiType = context.getByMinecraft(minecraftType);
+        if (jeiType == null) {
+            LOGGER.error("Skipping unknown type {}", BuiltInRegistries.RECIPE_TYPE.getKey(minecraftType));
+            return;
+        }
+        var recipeClass = jeiType.getRecipeClass();
+        var recipeList = new ArrayList<>();
+        for (var recipeHolder : recipeHolders) {
+            if (recipeClass.isInstance(recipeHolder)) {
+                recipeList.add(recipeHolder);
+            } else if (recipeClass.isInstance(recipeHolder.value())) {
+                recipeList.add(recipeHolder.value());
+            } else if (recipeClass.isInstance(recipeHolder.id())) {
+                recipeList.add(recipeHolder.id());
+            } else {
+                recipeList.clear();
+                LOGGER.error("Failed to convert recipe holder to instance of {}, skipping recipe", recipeClass.getName());
+                break;
+            }
+        }
+        for (var o : recipeList) {
+            Objects.requireNonNull(o);
+            var recipeAndType = new RecipeAndType<Object>((RecipeType<Object>) jeiType, o);
+            list.add(recipeAndType);
+        }
+    }
 
-            var cache = new HashMap<net.minecraft.world.item.crafting.RecipeType<?>, List<RecipeHolder<?>>>();
+    private interface RecipeConverter {
+        void convert(Context context, List<RecipeAndType<?>> list, net.minecraft.world.item.crafting.RecipeType<?> minecraftType, List<RecipeHolder<?>> recipeHolders);
+    }
 
+    private class Converter {
+        private final HashMap<net.minecraft.world.item.crafting.RecipeType<?>, List<RecipeHolder<?>>> cache = new HashMap<>();
+
+        public void add(CommonRecipeCollection recipeCollection) {
+            var recipeIds = recipeCollection.recipes();
             for (var recipeId : recipeIds) {
-                var recipeOptional = recipeManager.byKey(recipeId);
+                var recipeOptional = Objects.requireNonNull(recipeManager).byKey(recipeId);
                 if (recipeOptional.isEmpty()) {
                     LOGGER.error("No recipe for {}", recipeId, new Exception());
                 }
@@ -96,54 +177,41 @@ public class RecipeJEI implements NeoAddonJEI {
                 var type = recipe.value().getType();
                 cache.computeIfAbsent(type, ignored -> new ArrayList<>()).add(recipe);
             }
+        }
+
+        public List<RecipeAndType<?>> convert() {
+            var ctx = Objects.requireNonNull(context);
+            var list = new ArrayList<RecipeAndType<?>>();
             for (var entry : cache.entrySet()) {
                 Objects.requireNonNull(entry);
                 var type = entry.getKey();
+                var recipeHolders = entry.getValue();
 
-                var jeiType = runtime.getRecipeManager()
-                        .getRecipeType(Objects.requireNonNull(BuiltInRegistries.RECIPE_TYPE.getKey(type)))
-                        .orElse(null);
-                if (jeiType == null) {
-                    LOGGER.error("Skipping unknown type {}", BuiltInRegistries.RECIPE_TYPE.getKey(type));
-                    return;
-                }
-                var recipeClass = jeiType.getRecipeClass();
-                var recipeList = new ArrayList<>();
-                for (var recipeHolder : entry.getValue()) {
-                    if (recipeClass.isInstance(recipeHolder)) {
-                        recipeList.add(recipeHolder);
-                    } else if (recipeClass.isInstance(recipeHolder.value())) {
-                        recipeList.add(recipeHolder.value());
-                    } else if (recipeClass.isInstance(recipeHolder.id())) {
-                        recipeList.add(recipeHolder.id());
-                    } else {
-                        recipeList.clear();
-                        LOGGER.error("Failed to convert recipe holder to instance of {}, skipping recipe", recipeClass.getName());
-                        break;
-                    }
-                }
-
-                var showList = (Holder<@NonNull Object>) showCache.computeIfAbsent(jeiType, t -> new Holder<>(t, new ArrayList<>()));
-                var hideList = (Holder<@NonNull Object>) hideCache.computeIfAbsent(jeiType, t -> new Holder<>(t, new ArrayList<>()));
-
-                for (var o : recipeList) {
-                    if (show) {
-                        showList.recipes.add(Objects.requireNonNull(o));
-                    } else {
-                        hideList.recipes.add(Objects.requireNonNull(o));
-                    }
-                }
+                var converter = converterMap.getOrDefault(type, DEFAULT_CONVERTER);
+                converter.convert(ctx, list, type, recipeHolders);
             }
+            return list;
+        }
+    }
+
+    private record Context(IJeiRuntime runtime,
+                           Map<RecipeType<?>, net.minecraft.world.item.crafting.RecipeType<?>> recipeTypeByJEI,
+                           Map<net.minecraft.world.item.crafting.RecipeType<?>, RecipeType<?>> recipeTypeByMinecraft) {
+        private Context {
+            recipeTypeByJEI = Map.copyOf(recipeTypeByJEI);
+            recipeTypeByMinecraft = Map.copyOf(recipeTypeByMinecraft);
         }
 
-        public void apply(IJeiRuntime runtime) {
-            for (var holder : showCache.values()) {
-                holder.unhide(runtime.getRecipeManager());
-            }
-            for (var holder : hideCache.values()) {
-                holder.hide(runtime.getRecipeManager());
-            }
+        public net.minecraft.world.item.crafting.@Nullable RecipeType<?> getByJEI(RecipeType<?> recipeType) {
+            return recipeTypeByJEI.get(recipeType);
         }
+
+        public @Nullable RecipeType<?> getByMinecraft(net.minecraft.world.item.crafting.RecipeType<?> recipeType) {
+            return recipeTypeByMinecraft.get(recipeType);
+        }
+    }
+
+    private record RecipeAndType<T>(RecipeType<T> type, T recipe) {
     }
 
     private record Holder<T>(mezz.jei.api.recipe.RecipeType<T> type, List<T> recipes) {

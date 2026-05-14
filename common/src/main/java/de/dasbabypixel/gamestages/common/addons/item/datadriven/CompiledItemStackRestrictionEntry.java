@@ -1,11 +1,14 @@
 package de.dasbabypixel.gamestages.common.addons.item.datadriven;
 
+import de.dasbabypixel.gamestages.common.addons.item.datadriven.settings.CompiledItemStackRestrictionEntrySettings;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
 import org.jspecify.annotations.NullMarked;
 
 @NullMarked
 public interface CompiledItemStackRestrictionEntry {
     ItemStackRestrictionEntry entry();
+
+    CompiledItemStackRestrictionEntrySettings settings();
 
     CompiledRestrictionPredicate predicate();
 }

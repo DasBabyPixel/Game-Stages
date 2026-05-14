@@ -1,7 +1,7 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.fluid;
 
 import de.dasbabypixel.gamestages.common.data.BaseStages;
-import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.ClientGameStageManager;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonFluidCollection;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonJEI;
 import mezz.jei.api.neoforge.NeoForgeTypes;
@@ -38,7 +38,12 @@ public class FluidJEI implements NeoAddonJEI {
     }
 
     @Override
-    public void postCompileAll(AbstractGameStageManager<?> instance, BaseStages stages) {
+    public void postRecompileStages(ClientGameStageManager manager, BaseStages stages) {
+        initVisibility(stages);
+        registerUpdateNotifiers(stages);
+    }
+
+    private void registerUpdateNotifiers(BaseStages stages) {
         iterate(stages, CommonFluidCollection.TYPE, entry -> {
             if (entry instanceof NeoFluidRestrictionEntry.Compiled(
                     var ignored, var gameContent, var predicate, var hideInJEI
@@ -49,8 +54,7 @@ public class FluidJEI implements NeoAddonJEI {
         });
     }
 
-    @Override
-    public void singleRefreshAll(AbstractGameStageManager<?> instance, BaseStages stages) {
+    private void initVisibility(BaseStages stages) {
         iterate(stages, CommonFluidCollection.TYPE, entry -> {
             if (entry instanceof NeoFluidRestrictionEntry.Compiled(
                     var ignored, var gameContent, var predicate, var hideInJEI
@@ -59,6 +63,11 @@ public class FluidJEI implements NeoAddonJEI {
                 updateVisibility(predicate.test(), gameContent.fluids(), this::showFluids, this::hideFluids);
             }
         });
+    }
+
+    @Override
+    public void jeiReloaded(ClientGameStageManager instance, BaseStages stages) {
+        initVisibility(stages);
     }
 
     public void showFluids(HolderSet<Fluid> fluids) {

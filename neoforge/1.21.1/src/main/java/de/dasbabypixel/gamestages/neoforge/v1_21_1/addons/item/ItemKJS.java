@@ -16,13 +16,15 @@ import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPre
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemCollection;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemRestrictionEntry;
-import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.datadriven.VItemStackRestrictionEntrySettings;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.datadriven.data.PredicateData;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.datadriven.settings.VItemStackRestrictionEntrySettings;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenNetwork;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenTypes;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.EventRegistry;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonKJS;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.RegisterEventJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.EventType;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.ServerRegisterEventJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.startup.StartupRegisterEventJS;
 import dev.latvian.mods.kubejs.script.KubeJSContext;
 import dev.latvian.mods.kubejs.script.SourceLine;
 import dev.latvian.mods.kubejs.script.TypeWrapperRegistry;
@@ -46,9 +48,17 @@ public class ItemKJS implements NeoAddonKJS {
 
     @Override
     public void registerEventExtensions(EventRegistry registry) {
+        startupRegisterExtensions(registry.get(StartupRegisterEventJS.class));
+        serverRegisterExtensions(registry.get(ServerRegisterEventJS.class));
+    }
+
+    private void startupRegisterExtensions(EventType<StartupRegisterEventJS> type) {
+        type.addFunction("itemDefaultSettings", (event, cx, args) -> VItemStackRestrictionEntrySettings.DEFAULT_SETTINGS, VItemStackRestrictionEntrySettings.class);
+    }
+
+    private void serverRegisterExtensions(EventType<ServerRegisterEventJS> type) {
         var dataDrivenTypedDataType = new TypeToken<DataDrivenTypedData<?>>() {
         }.getType();
-        var type = registry.get(RegisterEventJS.class);
         type.addFunctionVarArgs("items", (event, cx, args) -> args[0], ItemCollectionWrapper.class, ItemCollectionWrapper.class, ItemCollectionWrapper[].class);
         type.addFunctionVarArgs("restrictItems", this::restrictItems, ItemCollectionWrapper.class, CommonItemRestrictionEntry.class, PreparedRestrictionPredicate.class, ItemCollectionWrapper[].class);
         type.addFunction("registerItemStackEntry", e -> new RegisteredItemStackEntries(), (event, cx, s, args) -> {
@@ -56,7 +66,7 @@ public class ItemKJS implements NeoAddonKJS {
             var predicate = (PreparedRestrictionPredicate) Objects.requireNonNull(args[0]);
             var compilationContext = event.stageManager()
                     .get(ItemAddon.MutableStageManagerContext.MUTABLE_MANAGER_ATTRIBUTE);
-            var settings = VItemStackRestrictionEntrySettings.instance();
+            var settings = VItemStackRestrictionEntrySettings.create(event.stageManager());
             var restrictionEntry = new ItemStackRestrictionEntry(predicate, settings);
             var reference = compilationContext.addRestrictionEntry(restrictionEntry);
 
@@ -78,16 +88,16 @@ public class ItemKJS implements NeoAddonKJS {
         }, ItemCollectionWrapper.class, void.class, dataDrivenTypedDataType, ItemCollectionWrapper[].class);
     }
 
-    private CommonItemRestrictionEntry restrictItems(RegisterEventJS event, KubeJSContext cx, Object[] args) {
+    private CommonItemRestrictionEntry restrictItems(ServerRegisterEventJS event, KubeJSContext cx, Object[] args) {
         var flattener = event.stageManager().get(GameContentFlattener.Attribute.MUTABLE_MANAGER_ATTRIBUTE);
         return restrictItems(event, cx, (PreparedRestrictionPredicate) args[0], flattener.flatten(((ItemCollectionWrapper) Objects.requireNonNull(args[1])).content(), CommonItemCollection.TYPE));
     }
 
-    private CommonItemRestrictionEntry restrictItems(RegisterEventJS event, KubeJSContext cx, PreparedRestrictionPredicate predicate, ItemCollection itemsContent) {
+    private CommonItemRestrictionEntry restrictItems(ServerRegisterEventJS event, KubeJSContext cx, PreparedRestrictionPredicate predicate, ItemCollection itemsContent) {
         var origin = origin(cx);
         var dataDrivenType = DataDrivenTypes.instance().get(ValueData.TYPE).unsafeCast();
         var factoryId = "data_driven";
-        var itemStackSettings = VItemStackRestrictionEntrySettings.instance();
+        var itemStackSettings = VItemStackRestrictionEntrySettings.create(event.stageManager());
         var itemStackRestrictionEntry = new ItemStackRestrictionEntry(predicate, itemStackSettings);
         var reference = event.stageManager()
                 .get(ItemAddon.MutableStageManagerContext.MUTABLE_MANAGER_ATTRIBUTE)
@@ -164,7 +174,7 @@ public class ItemKJS implements NeoAddonKJS {
     }
 
     private static class RestrictContext {
-        public RestrictContext(RegisterEventJS event) {
+        public RestrictContext(ServerRegisterEventJS event) {
         }
     }
 

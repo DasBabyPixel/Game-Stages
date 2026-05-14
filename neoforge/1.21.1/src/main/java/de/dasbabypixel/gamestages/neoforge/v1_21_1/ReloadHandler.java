@@ -4,22 +4,29 @@ import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.addon.Addon.ReloadPostEvent;
 import de.dasbabypixel.gamestages.common.addon.Addon.ReloadPreEvent;
 import de.dasbabypixel.gamestages.common.data.DuplicatesException;
-import de.dasbabypixel.gamestages.common.data.graph.DependencyContent;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.ServerGameStageManager;
 import de.dasbabypixel.gamestages.common.data.manager.mutable.ServerMutableGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.mutable.SimpleMutableGameStageManager;
 import de.dasbabypixel.gamestages.common.data.server.GlobalServerState;
 import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
 import de.dasbabypixel.gamestages.neoforge.integration.Mods;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon.InitResourcesEvent;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon.RegisterEventData;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.listener.KJSListeners;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.ReloadableServerResources;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import org.jspecify.annotations.NullMarked;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static de.dasbabypixel.gamestages.common.addon.Addon.RELOAD_POST_EVENT;
 import static de.dasbabypixel.gamestages.common.addon.Addon.RELOAD_PRE_EVENT;
@@ -31,20 +38,20 @@ import static de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon.INIT_RE
 
 @NullMarked
 public class ReloadHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReloadHandler.class);
+    private static final List<String> PENDING_DUPLICATES = new ArrayList<>();
+    private static final AtomicInteger VERSION_COUNTER = new AtomicInteger();
+
     public static void registerListeners() {
-        NeoForge.EVENT_BUS.addListener(EventPriority.LOW, ReloadHandler::handleAddReloadListener);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, ReloadHandler::handlePlayerJoin);
     }
 
-    private static void handleAddReloadListener(AddReloadListenerEvent event) {
-        var serverResources = event.getServerResources();
-        var registryAccess = event.getRegistryAccess();
-        INIT_RESOURCES_EVENT.call(new InitResourcesEvent(serverResources, registryAccess));
-//        event.addListener((ResourceManagerReloadListener) resourceManager -> fullReload(serverResources, registryAccess));
-    }
-
     public static void fullReload(ReloadableServerResources serverResources, RegistryAccess registryAccess) {
+        var version = VERSION_COUNTER.incrementAndGet();
+        PENDING_DUPLICATES.clear();
+        INIT_RESOURCES_EVENT.call(new NeoAddon.InitResourcesEvent(serverResources, registryAccess));
         var manager = new ServerMutableGameStageManager();
+        manager.init(SimpleMutableGameStageManager.VERSION, version);
         manager.init(SERVER_RESOURCES_ATTRIBUTE, serverResources);
         manager.init(REGISTRY_ATTRIBUTE, registryAccess);
 
@@ -58,16 +65,24 @@ public class ReloadHandler {
 
         RELOAD_POST_EVENT.call(new ReloadPostEvent(manager));
 
-        var immutableManager = manager.compile();
+        ServerGameStageManager immutableManager;
+        try {
+            immutableManager = manager.compile();
+        } catch (DuplicatesException exception) {
+            exception.print(s -> {
+                LOGGER.error(s);
+                PENDING_DUPLICATES.add(s);
+            });
+            manager = new ServerMutableGameStageManager();
+            manager.init(SimpleMutableGameStageManager.VERSION, version);
+            manager.init(SERVER_RESOURCES_ATTRIBUTE, serverResources);
+            manager.init(REGISTRY_ATTRIBUTE, registryAccess);
+            RELOAD_PRE_EVENT.call(new ReloadPreEvent(manager));
+            RELOAD_POST_EVENT.call(new ReloadPostEvent(manager));
+            immutableManager = manager.compile();
+        }
         GlobalServerState.updateManager(immutableManager);
         pushFullUpdate(immutableManager);
-    }
-
-    private static String gv(DependencyContent content) {
-        var cs = content.toString();
-        var max = 5000;
-        if (cs.length() > max) cs = cs.substring(0, max) + ".." + (cs.length() - max);
-        return "\"" + cs + "\"";
     }
 
     private static void handlePlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
@@ -84,12 +99,20 @@ public class ReloadHandler {
             NeoForgeEntrypoint.LOGGER.error("Failed GameStages reload because of duplicates", d);
         }
         player.getGameStages().fullSync();
+
+        net.minecraft.server.level.ServerPlayer sp = (net.minecraft.server.level.ServerPlayer) player;
+        for (var pendingDuplicate : PENDING_DUPLICATES) {
+            sp.sendSystemMessage(Component.literal(pendingDuplicate).withStyle(ChatFormatting.RED));
+        }
     }
 
     public static void pushFullUpdate(ServerGameStageManager manager) {
-        manager.sync(CommonInstances.platformPacketDistributor::sendToAllPlayers);
-        for (var player : CommonInstances.platformPlayerProvider.allPlayers()) {
-            playerUpdate(manager, player);
+        var players = CommonInstances.platformPlayerProvider.allPlayers();
+        if (!players.isEmpty()) {
+            manager.sync(CommonInstances.platformPacketDistributor::sendToAllPlayers);
+            for (var player : CommonInstances.platformPlayerProvider.allPlayers()) {
+                playerUpdate(manager, player);
+            }
         }
         if (GlobalServerState.initialized()) {
             GlobalServerState.state().stagesCache().recompileComposite(manager);

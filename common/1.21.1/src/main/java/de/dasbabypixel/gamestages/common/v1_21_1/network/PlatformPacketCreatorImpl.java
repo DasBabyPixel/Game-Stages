@@ -3,8 +3,8 @@ package de.dasbabypixel.gamestages.common.v1_21_1.network;
 import de.dasbabypixel.gamestages.common.data.GameStage;
 import de.dasbabypixel.gamestages.common.network.CustomPacket;
 import de.dasbabypixel.gamestages.common.network.PlatformPacketCreator;
-import de.dasbabypixel.gamestages.common.network.Status;
-import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.StatusPacket;
+import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.BeginSyncPacket;
+import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.EndSyncPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.SyncRegisteredGameStagesPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.SyncUnlockedGameStagesPacket;
 import org.jspecify.annotations.NullMarked;
@@ -24,7 +24,12 @@ public class PlatformPacketCreatorImpl implements PlatformPacketCreator {
     }
 
     @Override
-    public CustomPacket createStatusPacket(Status status) {
-        return new StatusPacket(status);
+    public CustomPacket createBeginSyncPacket(int version) {
+        return new BeginSyncPacket(version);
+    }
+
+    @Override
+    public CustomPacket createEndSyncPacket() {
+        return new EndSyncPacket();
     }
 }

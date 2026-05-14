@@ -1,12 +1,11 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.item;
 
-import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolver;
-import de.dasbabypixel.gamestages.common.addons.item.datadriven.CompiledItemStackRestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
-import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.ClientGameStageManager;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemCollection;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemRestrictionEntry;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonJEI;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.client.ContentVisibilityUpdater;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.core.Holder;
@@ -15,8 +14,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,12 +24,55 @@ import java.util.Objects;
 
 @NullMarked
 public class ItemJEI implements NeoAddonJEI {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ItemJEI.class);
     private final Map<Item, List<ItemStack>> itemCache = new HashMap<>();
-    private final List<ItemStack> showCache = new ArrayList<>();
-    private final List<ItemStack> hideCache = new ArrayList<>();
     private boolean cachePopulated = false;
     private @Nullable IJeiRuntime runtime;
+    private final ContentVisibilityUpdater<ItemStack, CommonItemRestrictionEntry.Compiled> updater = new ContentVisibilityUpdater<>(CommonItemCollection.TYPE) {
+        @Override
+        protected void collect(BaseStages stages, BaseStages.CompileIndex compileIndex, CommonItemRestrictionEntry.Compiled compiled, Collector<ItemStack> collector) {
+            var itemSet = compiled.gameContent().items();
+            var resolver = compiled.resolver();
+
+            Objects.requireNonNull(runtime);
+            List<ItemStack> items = getItems(itemSet);
+            if (items.isEmpty()) return;
+            for (var item : items) {
+                var resolved = resolver.resolveRestrictionEntry(item);
+                if (resolved == null || resolved.predicate().test()) {
+                    collector.show(item);
+                } else {
+                    collector.hide(item);
+                }
+            }
+        }
+
+        @Override
+        protected void registerUpdateNotifier(BaseStages stages, BaseStages.CompileIndex compileIndex, List<CommonItemRestrictionEntry.Compiled> compiledEntries, UpdateRegistrar<ItemStack> registrar) {
+            for (var compiledEntry : compiledEntries) {
+                var items = getItems(compiledEntry.gameContent().items());
+                for (var item : items) {
+                    var resolved = compiledEntry.resolver().resolveRestrictionEntry(item);
+                    if (resolved == null) continue;
+                    var predicate = resolved.predicate();
+                    registrar.register(predicate, item);
+                }
+            }
+        }
+
+        @Override
+        protected void show(List<ItemStack> show) {
+            Objects.requireNonNull(runtime)
+                    .getIngredientManager()
+                    .addIngredientsAtRuntime(VanillaTypes.ITEM_STACK, show);
+        }
+
+        @Override
+        protected void hide(List<ItemStack> hide) {
+            Objects.requireNonNull(runtime)
+                    .getIngredientManager()
+                    .removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hide);
+        }
+    };
 
     public ItemJEI() {
     }
@@ -62,53 +102,8 @@ public class ItemJEI implements NeoAddonJEI {
     }
 
     @Override
-    public void singleRefreshAll(AbstractGameStageManager<?> instance, BaseStages stages) {
-        if (runtime == null) {
-            LOGGER.warn("JEI runtime missing when refreshing game stages");
-            return;
-        }
-        iterate(stages, CommonItemCollection.TYPE, entry -> {
-            if (entry instanceof CommonItemRestrictionEntry.Compiled compiled) {
-                updateItems(compiled.gameContent().items(), compiled.resolver());
-            }
-        });
-        if (!showCache.isEmpty()) {
-            runtime.getIngredientManager().addIngredientsAtRuntime(VanillaTypes.ITEM_STACK, showCache);
-            showCache.clear();
-        }
-        if (!hideCache.isEmpty()) {
-            runtime.getIngredientManager().removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hideCache);
-            hideCache.clear();
-        }
-    }
-
-    @Override
-    public void postCompileAll(AbstractGameStageManager<?> instance, BaseStages stages) {
-        var byEntry = new HashMap<CompiledItemStackRestrictionEntry, List<ItemStack>>();
-        iterate(stages, CommonItemCollection.TYPE, entry -> {
-            if (entry instanceof CommonItemRestrictionEntry.Compiled compiled) {
-                var items = getItems(compiled.gameContent().items());
-                for (var item : items) {
-                    var resolved = compiled.resolver().resolveRestrictionEntry(item);
-                    if (resolved != null) {
-                        var list = byEntry.computeIfAbsent(resolved, ignored -> new ArrayList<>());
-                        list.add(item);
-                    }
-                }
-            }
-        });
-        for (var entry : byEntry.entrySet()) {
-            var list = Objects.requireNonNull(entry).getValue();
-            entry.getKey().predicate().addNotifier(newTest -> {
-                var r = runtime;
-                if (r == null) return;
-                if (newTest) {
-                    r.getIngredientManager().addIngredientsAtRuntime(VanillaTypes.ITEM_STACK, list);
-                } else {
-                    r.getIngredientManager().removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, list);
-                }
-            });
-        }
+    public void jeiReloaded(ClientGameStageManager instance, BaseStages stages) {
+        updater.fullReconfigure(stages);
     }
 
     private List<ItemStack> getItems(HolderSet<Item> itemSet) {
@@ -120,28 +115,6 @@ public class ItemJEI implements NeoAddonJEI {
                 .filter(Objects::nonNull)
                 .flatMap(Collection::stream)
                 .toList();
-    }
-
-    private void updateItems(HolderSet<Item> itemSet, ItemStackRestrictionResolver resolver) {
-        Objects.requireNonNull(runtime);
-        List<ItemStack> items = getItems(itemSet);
-        if (items.isEmpty()) return;
-        var showItems = new ArrayList<ItemStack>();
-        var hideItems = new ArrayList<ItemStack>();
-        for (var item : items) {
-            var resolved = resolver.resolveRestrictionEntry(item);
-            if (resolved == null || resolved.predicate().test()) {
-                showItems.add(item);
-            } else {
-                hideItems.add(item);
-            }
-        }
-        if (!showItems.isEmpty()) {
-            showCache.addAll(showItems);
-        }
-        if (!hideItems.isEmpty()) {
-            hideCache.addAll(hideItems);
-        }
     }
 
     @Override

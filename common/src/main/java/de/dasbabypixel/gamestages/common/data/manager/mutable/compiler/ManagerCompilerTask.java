@@ -111,10 +111,9 @@ public final class ManagerCompilerTask extends SimpleAttributeHolder<ManagerComp
                 var typed = restriction.gameContent();
                 preCompileIndex.preCompiledRestrictions().add(preCompiled);
 
-                if (typed.isEmpty()) continue;
-
                 typeIndex.entries().add(preCompiled);
 
+                if (typed.isEmpty()) continue;
                 for (var content : typed.content()) {
                     if (typeIndex.preCompiledByContent().containsKey(content)) {
                         duplicates.computeIfAbsent(type, ignored -> new HashMap<>())

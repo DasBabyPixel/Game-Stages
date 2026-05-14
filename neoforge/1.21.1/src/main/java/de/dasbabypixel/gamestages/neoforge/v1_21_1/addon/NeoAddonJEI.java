@@ -2,7 +2,7 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.addon;
 
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.TypedGameContent;
-import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.ClientGameStageManager;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContentType;
 import mezz.jei.api.runtime.IJeiRuntime;
@@ -21,6 +21,7 @@ public interface NeoAddonJEI {
     }
 
     default <T extends TypedGameContent> void iterate(BaseStages stages, CommonGameContentType<T> type, Consumer<CompiledRestrictionEntry<?, ?>> consumer) {
+        if (!stages.has(BaseStages.CompileIndex.ATTRIBUTE)) return;
         var typeIndex = stages.get(BaseStages.CompileIndex.ATTRIBUTE).typeIndex(type);
         for (var entry : typeIndex.contentListByEntry().keySet()) {
             consumer.accept(entry);
@@ -33,9 +34,12 @@ public interface NeoAddonJEI {
     default void onRuntimeUnavailable() {
     }
 
-    default void postCompileAll(AbstractGameStageManager<?> manager, BaseStages stages) {
+    default void jeiReloaded(ClientGameStageManager manager, BaseStages stages) {
     }
 
-    default void singleRefreshAll(AbstractGameStageManager<?> manager, BaseStages stages) {
+    default void preRecompileStages(ClientGameStageManager manager, BaseStages stages) {
+    }
+
+    default void postRecompileStages(ClientGameStageManager manager, BaseStages stages) {
     }
 }

@@ -4,7 +4,8 @@ import de.dasbabypixel.gamestages.common.v1_21_1.addon.PacketRegistry;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon.RegisterPacketsEvent;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.GameStagesPacket;
-import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.StatusPacket;
+import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.BeginSyncPacket;
+import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.EndSyncPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.SyncRegisteredGameStagesPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.network.packets.clientbound.SyncUnlockedGameStagesPacket;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.NeoForgeEntrypoint;
@@ -32,7 +33,8 @@ public class NeoNetworkHandler {
 
         registry.playClientBound(SyncRegisteredGameStagesPacket.TYPE, SyncRegisteredGameStagesPacket.STREAM_CODEC);
         registry.playClientBound(SyncUnlockedGameStagesPacket.TYPE, SyncUnlockedGameStagesPacket.STREAM_CODEC);
-        registry.playClientBound(StatusPacket.TYPE, StatusPacket.STREAM_CODEC);
+        registry.playClientBound(BeginSyncPacket.TYPE, BeginSyncPacket.STREAM_CODEC);
+        registry.playClientBound(EndSyncPacket.TYPE, EndSyncPacket.STREAM_CODEC);
     }
 
     private record PacketRegistryImpl(PayloadRegistrar registrar) implements PacketRegistry {

@@ -11,5 +11,7 @@ public interface PlatformPacketCreator {
 
     CustomPacket createSyncUnlockedGameStages(List<GameStage> gameStages);
 
-    CustomPacket createStatusPacket(Status status);
+    CustomPacket createBeginSyncPacket(int version);
+
+    CustomPacket createEndSyncPacket();
 }

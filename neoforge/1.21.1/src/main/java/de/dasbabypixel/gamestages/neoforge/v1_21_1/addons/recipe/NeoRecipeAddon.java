@@ -13,7 +13,7 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonJEI;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonKJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonProbeJS;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.RegisterEventJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.ServerRegisterEventJS;
 import dev.latvian.mods.kubejs.script.SourceLine;
 import dev.latvian.mods.kubejs.script.TypeWrapperRegistry;
 import org.jspecify.annotations.NullMarked;
@@ -62,7 +62,7 @@ public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
 
         @Override
         public void registerEventExtensions(EventRegistry registry) {
-            var type = registry.get(RegisterEventJS.class);
+            var type = registry.get(ServerRegisterEventJS.class);
             type.addFunctionVarArgs("recipes", (event, cx, args) -> args[0], RecipeCollectionWrapper.class, RecipeCollectionWrapper.class, RecipeCollectionWrapper[].class);
             type.addFunctionVarArgs("restrictRecipes", (event, cx, args) -> {
                 var flattener = event.stageManager().get(GameContentFlattener.Attribute.MUTABLE_MANAGER_ATTRIBUTE);

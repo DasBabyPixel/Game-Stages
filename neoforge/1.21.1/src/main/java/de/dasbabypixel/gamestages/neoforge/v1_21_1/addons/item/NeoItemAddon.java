@@ -5,10 +5,18 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonJEI;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonKJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonProbeJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.item.listener.ClientEventListener;
+import net.neoforged.fml.loading.FMLEnvironment;
 import org.jspecify.annotations.NullMarked;
 
 @NullMarked
 public class NeoItemAddon extends VItemAddon implements NeoAddon {
+    public NeoItemAddon() {
+        if (FMLEnvironment.dist.isClient()) {
+            ClientEventListener.register();
+        }
+    }
+
     @Override
     public NeoAddonKJS createKubeJSSupport() {
         return new ItemKJS();

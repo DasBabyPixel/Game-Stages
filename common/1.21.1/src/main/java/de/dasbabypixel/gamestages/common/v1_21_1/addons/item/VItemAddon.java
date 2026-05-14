@@ -20,6 +20,7 @@ import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin
 import de.dasbabypixel.gamestages.common.network.CustomPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VContentRegistry;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.datadriven.settings.VItemStackRestrictionEntrySettings;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.CommonItemRestrictionPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.CommonItemStackRestrictionEntryPacket;
 import net.minecraft.core.Holder;
@@ -46,11 +47,18 @@ public abstract class VItemAddon extends ItemAddon implements VAddon {
         COMPILE_MANAGER_EVENT.addListener(this::handle);
         POST_COMPILE_TYPE_EVENT.addListener(this::handle);
         PRE_COMPILE_PREPARE_EVENT.addListener(this::handle);
+        RELOAD_PRE_EVENT.addListener(this::handle);
     }
 
     @Override
     public void onRegister(AddonManager<? extends Addon> addonManager) {
         recipeIntegration.register(addonManager);
+    }
+
+    private void handle(ReloadPreEvent event) {
+        if (event.manager() instanceof ServerMutableGameStageManager manager) {
+            manager.init(VItemStackRestrictionEntrySettings.DEFAULT_SETTINGS_ATTRIBUTE, VItemStackRestrictionEntrySettings.DEFAULT_SETTINGS);
+        }
     }
 
     private void handle(PreCompilePrepareEvent event) {
@@ -79,16 +87,17 @@ public abstract class VItemAddon extends ItemAddon implements VAddon {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void handle(CompileAllPostEvent event) {
         var recompilationTask = event.playerCompilationTask();
         var itemMap = new HashMap<Holder<Item>, CommonItemRestrictionEntry.Compiled>();
         var compileIndex = recompilationTask.stages().get(BaseStages.CompileIndex.ATTRIBUTE);
         var typeIndex = compileIndex.typeIndex(CommonItemCollection.TYPE);
-        for (var entry_ : typeIndex.entryByContent().values()) {
-            var entry = (CommonItemRestrictionEntry.Compiled) entry_;
-            for (var item : entry.gameContent().content()) {
-                itemMap.put(item, entry);
-            }
+        for (var entry_ : typeIndex.entryByContent().entrySet()) {
+            Objects.requireNonNull(entry_);
+            var item = (Holder<Item>) entry_.getKey();
+            var entry = (CommonItemRestrictionEntry.Compiled) entry_.getValue();
+            itemMap.put(item, entry);
         }
 
         var stages = recompilationTask.stages();

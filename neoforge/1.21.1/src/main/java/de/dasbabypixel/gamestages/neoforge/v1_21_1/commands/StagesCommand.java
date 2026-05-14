@@ -1,5 +1,6 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.commands;
 
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -7,7 +8,10 @@ import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.VItemAddon;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.VRecipeAddon;
+import de.dasbabypixel.gamestages.neoforge.integration.Mods;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.ReloadHandler;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.entity.IBlockEntity;
+import dev.latvian.mods.kubejs.core.ReloadableServerResourcesKJS;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -75,9 +79,25 @@ public class StagesCommand {
                         })
                 )
         );
+        cmd.then(Commands.literal("reload").executes(StagesCommand::reload));
         // @formatter:on
 
         dispatcher.register(cmd);
+    }
+
+    private static int reload(CommandContext<CommandSourceStack> ctx) {
+        var server = ctx.getSource().getServer();
+        var time1 = System.nanoTime();
+        if (Mods.KUBEJS.isLoaded()) {
+            var scriptManager = Objects.requireNonNull(((ReloadableServerResourcesKJS) server.getServerResources()
+                    .managers()).kjs$getServerScriptManager());
+            scriptManager.reload();
+        }
+        ReloadHandler.fullReload(server.getServerResources().managers(), server.registryAccess());
+        var took = System.nanoTime() - time1;
+        ctx.getSource()
+                .sendSuccess(() -> Component.literal("Reload finished in " + TimeUnit.NANOSECONDS.toMillis(took) + "ms"), true);
+        return Command.SINGLE_SUCCESS;
     }
 
     private static @Nullable BaseStages stagesOf(CommandSourceStack source) throws CommandSyntaxException {
@@ -111,7 +131,7 @@ public class StagesCommand {
         var msg = entry == null ? "No restriction" : (entry.predicate().predicate() + " -> " + entry.predicate()
                                                                                                .test());
         context.getSource().sendSuccess(() -> Component.literal(msg), true);
-        return 0;
+        return Command.SINGLE_SUCCESS;
     }
 
     private static int listTarget(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
@@ -124,7 +144,7 @@ public class StagesCommand {
             }
             return c;
         }, true);
-        return 0;
+        return Command.SINGLE_SUCCESS;
     }
 
     private static int addTargetStage(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
@@ -144,7 +164,7 @@ public class StagesCommand {
         var fcnt = cnt;
         context.getSource()
                 .sendSuccess(() -> Component.literal("Added stage " + stage + " to " + fcnt + " players"), true);
-        return 0;
+        return Command.SINGLE_SUCCESS;
     }
 
     private static int removeTargetStage(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
@@ -164,6 +184,6 @@ public class StagesCommand {
         var fcnt = cnt;
         context.getSource()
                 .sendSuccess(() -> Component.literal("Removed stage " + stage + " from " + fcnt + " players"), true);
-        return 0;
+        return Command.SINGLE_SUCCESS;
     }
 }
