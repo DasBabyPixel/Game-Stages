@@ -8,6 +8,10 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonJEI;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.registration.IAdvancedRegistration;
+import mezz.jei.api.registration.IRecipeCatalystRegistration;
+import mezz.jei.api.registration.IRecipeCategoryRegistration;
+import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.resources.ResourceLocation;
 import org.jspecify.annotations.NullMarked;
@@ -24,6 +28,26 @@ public class StagesJEIPlugin implements IModPlugin {
 
     static {
         NeoAddonManager.registerAddon("jei", () -> JEIAddon.ADDON);
+    }
+
+    @Override
+    public void registerCategories(IRecipeCategoryRegistration registration) {
+        JEIAddon.REGISTER_CATEGORIES_EVENT.call(new JEIAddon.RegisterCategoriesEvent(registration));
+    }
+
+    @Override
+    public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
+        JEIAddon.REGISTER_RECIPE_CATALYSTS_EVENT.call(new JEIAddon.RegisterRecipeCatalystsEvent(registration));
+    }
+
+    @Override
+    public void registerRecipes(IRecipeRegistration registration) {
+        JEIAddon.REGISTER_RECIPES_EVENT.call(new JEIAddon.RegisterRecipesEvent(registration));
+    }
+
+    @Override
+    public void registerAdvanced(IAdvancedRegistration registration) {
+        JEIAddon.REGISTER_ADVANCED_EVENT.call(new JEIAddon.RegisterAdvancedEvent(registration));
     }
 
     @Override
@@ -49,7 +73,7 @@ public class StagesJEIPlugin implements IModPlugin {
         return CommonVGameStageMod.location("game_stages");
     }
 
-    public static Map<NeoAddon, NeoAddonJEI> addonMap() {
+    private static Map<NeoAddon, NeoAddonJEI> addonMap() {
         if (!populated) {
             for (var addon : NeoAddonManager.instance().addons()) {
                 ADDON_MAP.put(addon, addon.createJEISupport());

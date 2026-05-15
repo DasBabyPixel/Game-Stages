@@ -7,7 +7,7 @@ import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeRestr
 import de.dasbabypixel.gamestages.neoforge.integration.Mod;
 import de.dasbabypixel.gamestages.neoforge.integration.Mods;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonJEI;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.integration.ExDeorumJEIIntegration;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.integration.exdeorum.ExDeorumJEIIntegration;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.client.ContentVisibilityUpdater;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.config.GameStagesClientConfig;
 import mezz.jei.api.recipe.IRecipeManager;
@@ -86,6 +86,12 @@ public class RecipeJEI implements NeoAddonJEI {
             return list;
         }
     };
+
+    public RecipeJEI() {
+        if (EX_DEORUM.isLoaded()) {
+            ExDeorumJEIIntegration.init();
+        }
+    }
 
     @Override
     public void jeiReloaded(ClientGameStageManager instance, BaseStages stages) {

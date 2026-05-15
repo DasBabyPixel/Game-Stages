@@ -37,6 +37,7 @@ public interface Addon {
     EventType<ClientReplaceManagerEvent> CLIENT_REPLACE_MANAGER_EVENT = EventType.create();
     EventType<ClientRecompilePreEvent> CLIENT_RECOMPILE_PRE_EVENT = EventType.create();
     EventType<ClientRecompilePostEvent> CLIENT_RECOMPILE_POST_EVENT = EventType.create();
+    EventType<FinishStartupEvent> FINISH_STARTUP_EVENT = EventType.create();
 
     default void onRegister(AddonManager<? extends Addon> addonManager) {
     }
@@ -115,5 +116,8 @@ public interface Addon {
     }
 
     record ClientRecompilePostEvent(ClientGameStageManager newManager, BaseStages stages) {
+    }
+
+    record FinishStartupEvent() {
     }
 }

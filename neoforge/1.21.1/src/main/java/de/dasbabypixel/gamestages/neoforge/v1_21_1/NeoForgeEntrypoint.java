@@ -2,6 +2,7 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1;
 
 import de.dasbabypixel.gamestages.common.BuildConstants;
 import de.dasbabypixel.gamestages.common.CommonInstances;
+import de.dasbabypixel.gamestages.common.addon.Addon;
 import de.dasbabypixel.gamestages.common.addon.Addon.RegisterCustomContentEvent;
 import de.dasbabypixel.gamestages.common.addon.ContentRegistry;
 import de.dasbabypixel.gamestages.common.addon.ContentRegistryImpl;
@@ -81,6 +82,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
+import static de.dasbabypixel.gamestages.common.addon.Addon.FINISH_STARTUP_EVENT;
 import static de.dasbabypixel.gamestages.common.addon.Addon.REGISTER_CUSTOM_CONTENT_EVENT;
 import static de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod.location;
 
@@ -205,6 +207,8 @@ public class NeoForgeEntrypoint {
             if (Mods.PROBEJS.isLoaded()) {
                 StagesProbeJSPlugin.eventRegistry = eventRegistry;
             }
+
+            FINISH_STARTUP_EVENT.call(new Addon.FinishStartupEvent());
         }
     }
 
