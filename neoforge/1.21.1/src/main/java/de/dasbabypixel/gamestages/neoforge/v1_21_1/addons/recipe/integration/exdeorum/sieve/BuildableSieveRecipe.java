@@ -11,14 +11,15 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.runtime.IIngredientManager;
 import mezz.jei.library.ingredients.TypedIngredient;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
-import org.apache.commons.lang3.mutable.MutableInt;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import thedarkcolour.exdeorum.client.ClientsideCode;
 import thedarkcolour.exdeorum.recipe.RecipeUtil;
 import thedarkcolour.exdeorum.recipe.sieve.SieveRecipe;
@@ -28,25 +29,37 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @NullMarked
 public class BuildableSieveRecipe implements Buildable<JEISieveRecipe>, IIngredientSupplier {
     private final IIngredientManager ingredientManager;
+    private final @Nullable ResourceLocation identifier;
     private final Ingredient ingredient;
     private final ItemStack mesh;
     private final List<JEISieveRecipe.Result> possibleResults;
 
-    public BuildableSieveRecipe(IIngredientManager ingredientManager, Ingredient ingredient, ItemStack mesh, List<JEISieveRecipe.Result> results) {
+    public BuildableSieveRecipe(IIngredientManager ingredientManager, @Nullable ResourceLocation identifier, Ingredient ingredient, ItemStack mesh, List<JEISieveRecipe.Result> results) {
         this.ingredientManager = ingredientManager;
+        this.identifier = identifier;
         this.ingredient = ingredient;
         this.mesh = mesh;
         this.possibleResults = results;
+    }
+
+    public ItemStack mesh() {
+        return mesh;
+    }
+
+    public List<JEISieveRecipe.Result> possibleResults() {
+        return possibleResults;
     }
 
     public ABuilder build(BaseStages stages) {
         return new ABuilder(stages);
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public List<ITypedIngredient<?>> getIngredients(RecipeIngredientRole role) {
         if (role == RecipeIngredientRole.OUTPUT) {
@@ -70,7 +83,7 @@ public class BuildableSieveRecipe implements Buildable<JEISieveRecipe>, IIngredi
         return List.of();
     }
 
-    public static Prepared prepareAll(IIngredientManager ingredientManager, net.minecraft.world.item.crafting.RecipeType<? extends SieveRecipe> recipeType, MutableInt maxRows) {
+    public static Prepared prepareAll(IIngredientManager ingredientManager, net.minecraft.world.item.crafting.RecipeType<? extends SieveRecipe> recipeType) {
         int maxSieveRows = 1;
 
         var recipeManager = Objects.requireNonNull(ClientsideCode.getRecipeManager());
@@ -102,7 +115,9 @@ public class BuildableSieveRecipe implements Buildable<JEISieveRecipe>, IIngredi
 
         ImmutableList.Builder<BuildableSieveRecipe> jeiRecipes = new ImmutableList.Builder<>();
         // Sort based on expected count of result
-        var resultSorter = Comparator.comparingDouble(JEISieveRecipe.Result::expectedCount).reversed();
+        var resultSorter = Objects
+                .requireNonNull(Comparator.comparingDouble(JEISieveRecipe.Result::expectedCount))
+                .reversed();
         // Sort based on order of sieve tier
         var meshSorter = Comparator.comparingInt(BuildableSieveRecipe::meshOrder);
 
@@ -126,17 +141,21 @@ public class BuildableSieveRecipe implements Buildable<JEISieveRecipe>, IIngredi
                 var meshRecipes = meshGrouper.get(mesh);
                 var results = new ArrayList<JEISieveRecipe.Result>(meshRecipes.size());
 
+                var hash = meshRecipes.stream().map(s -> s.holder.id()).collect(Collectors.toSet()).hashCode();
+                var identifier = ResourceLocation.fromNamespaceAndPath("gamestages", Integer.toHexString(hash));
+
                 for (var recipeEntry : meshRecipes) {
                     var recipe = recipeEntry.recipe();
                     var holder = recipeEntry.holder();
                     int resultCount = recipe.resultAmount instanceof ConstantValue(float value) ? Math.round(value) : 1;
-                    results.add(new JEISieveRecipe.Result(holder, Objects.requireNonNull(recipe.result)
+                    results.add(new JEISieveRecipe.Result(holder, Objects
+                            .requireNonNull(recipe.result)
                             .copyWithCount(resultCount), Objects.requireNonNull(recipe.resultAmount), recipe.byHandOnly));
                 }
 
                 results.sort(resultSorter);
 
-                var jeiRecipe = new BuildableSieveRecipe(ingredientManager, ingredient, new ItemStack(mesh), results);
+                var jeiRecipe = new BuildableSieveRecipe(ingredientManager, identifier, ingredient, new ItemStack(mesh), results);
                 jeiRecipes.add(jeiRecipe);
 
                 var rows = Mth.ceil((float) meshRecipes.size() / 9f);
@@ -145,8 +164,6 @@ public class BuildableSieveRecipe implements Buildable<JEISieveRecipe>, IIngredi
                 }
             }
         }
-
-        maxRows.setValue(maxSieveRows);
 
         return new Prepared(jeiRecipes.build());
     }
@@ -170,12 +187,9 @@ public class BuildableSieveRecipe implements Buildable<JEISieveRecipe>, IIngredi
     }
 
     public class ABuilder implements Builder<JEISieveRecipe> {
-        private final BaseStages stages;
         private final List<JEISieveRecipe.Result> actualResults;
 
         public ABuilder(BaseStages stages) {
-            this.stages = stages;
-
             var actualResults = new ArrayList<JEISieveRecipe.Result>();
             for (var possibleResult : possibleResults) {
                 var entry = VRecipeAddon.getEntry(stages, possibleResult.holder());
@@ -194,13 +208,13 @@ public class BuildableSieveRecipe implements Buildable<JEISieveRecipe>, IIngredi
         }
 
         public JEISieveRecipe build() {
-            return new JEISieveRecipe(ingredient, mesh, actualResults);
+            return new JEISieveRecipe(identifier, ingredient, mesh, actualResults);
         }
     }
 
     public record Prepared(List<BuildableSieveRecipe> sieveRecipes) {
     }
 
-    private record RecipeEntry(RecipeHolder<?> holder, SieveRecipe recipe) {
+    private record RecipeEntry(RecipeHolder<? extends SieveRecipe> holder, SieveRecipe recipe) {
     }
 }

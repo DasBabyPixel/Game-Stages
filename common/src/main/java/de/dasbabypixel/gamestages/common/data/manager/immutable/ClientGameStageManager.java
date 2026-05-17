@@ -1,6 +1,8 @@
 package de.dasbabypixel.gamestages.common.data.manager.immutable;
 
+import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.addon.Addon;
+import de.dasbabypixel.gamestages.common.client.ClientPlayerStages;
 import de.dasbabypixel.gamestages.common.data.attribute.AttributeEntry;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -36,7 +38,12 @@ public final class ClientGameStageManager extends AbstractGameStageManager<Clien
     }
 
     public static boolean initialized() {
-        return currentManager != null;
+        return currentManager != null && active;
+    }
+
+    public static ClientPlayerStages stages() {
+        if (!initialized()) throw new IllegalStateException();
+        return Objects.requireNonNull(CommonInstances.platformPlayerProvider.clientSelfPlayer()).getGameStages();
     }
 
     public static void update(ClientGameStageManager manager) {

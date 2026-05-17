@@ -15,9 +15,9 @@ import java.util.Set;
 public final class PreCompileIndex {
     public static final ImmutableAttribute<AbstractGameStageManager<?>, PreCompileIndex> ATTRIBUTE = new SimpleImmutableAttribute<>();
     private final Set<RestrictionEntry.PreCompiled<?, ?>> entries;
-    private final Map<GameContentType<?>, TypeIndex<?>> typeIndexMap;
+    private final Map<GameContentType<?>, TypeIndex> typeIndexMap;
 
-    public PreCompileIndex(Set<RestrictionEntry.PreCompiled<?, ?>> entries, Map<GameContentType<?>, TypeIndex<?>> typeIndexMap) {
+    public PreCompileIndex(Set<RestrictionEntry.PreCompiled<?, ?>> entries, Map<GameContentType<?>, TypeIndex> typeIndexMap) {
         this.entries = Objects.requireNonNull(Set.copyOf(entries));
         this.typeIndexMap = Objects.requireNonNull(Map.copyOf(typeIndexMap));
     }
@@ -26,12 +26,11 @@ public final class PreCompileIndex {
         return entries;
     }
 
-    @SuppressWarnings("unchecked")
-    public <Type extends TypedGameContent> TypeIndex<Type> typeIndex(GameContentType<Type> type) {
-        return (TypeIndex<Type>) typeIndexMap.getOrDefault(type, TypeIndex.EMPTY);
+    public <Type extends TypedGameContent> TypeIndex typeIndex(GameContentType<Type> type) {
+        return typeIndexMap.getOrDefault(type, TypeIndex.EMPTY);
     }
 
-    public Map<GameContentType<?>, TypeIndex<?>> typeIndexMap() {
+    public Map<GameContentType<?>, TypeIndex> typeIndexMap() {
         return typeIndexMap;
     }
 }

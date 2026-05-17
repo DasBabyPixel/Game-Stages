@@ -1,6 +1,5 @@
 package de.dasbabypixel.gamestages.common.data.manager.immutable;
 
-import de.dasbabypixel.gamestages.common.data.TypedGameContent;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
 import org.jspecify.annotations.NullMarked;
 
@@ -8,8 +7,8 @@ import java.util.Map;
 import java.util.Set;
 
 @NullMarked
-public final class TypeIndex<Type extends TypedGameContent> {
-    public static final TypeIndex<?> EMPTY = new TypeIndex<>(Map.of(), Set.of());
+public final class TypeIndex {
+    public static final TypeIndex EMPTY = new TypeIndex(Map.of(), Set.of());
     private final Map<Object, RestrictionEntry.PreCompiled<?, ?>> preCompiledByContent;
     private final Set<RestrictionEntry.PreCompiled<?, ?>> entries;
 

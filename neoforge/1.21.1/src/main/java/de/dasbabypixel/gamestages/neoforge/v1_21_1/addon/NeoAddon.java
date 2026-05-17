@@ -18,11 +18,6 @@ public interface NeoAddon extends VAddon {
         };
     }
 
-    default NeoAddonJEI createJEISupport() {
-        return new NeoAddonJEI() {
-        };
-    }
-
     default NeoAddonProbeJS createProbeJSSupport() {
         return new NeoAddonProbeJS() {
         };

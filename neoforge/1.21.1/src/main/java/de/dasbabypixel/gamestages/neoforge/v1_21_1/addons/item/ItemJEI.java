@@ -4,8 +4,8 @@ import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.ClientGameStageManager;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemCollection;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemRestrictionEntry;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonJEI;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.client.ContentVisibilityUpdater;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.jei.JEIAddon;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.core.Holder;
@@ -23,7 +23,8 @@ import java.util.Map;
 import java.util.Objects;
 
 @NullMarked
-public class ItemJEI implements NeoAddonJEI {
+public class ItemJEI {
+    private static @Nullable ItemJEI instance;
     private final Map<Item, List<ItemStack>> itemCache = new HashMap<>();
     private boolean cachePopulated = false;
     private @Nullable IJeiRuntime runtime;
@@ -61,20 +62,29 @@ public class ItemJEI implements NeoAddonJEI {
 
         @Override
         protected void show(List<ItemStack> show) {
-            Objects.requireNonNull(runtime)
+            Objects
+                    .requireNonNull(runtime)
                     .getIngredientManager()
                     .addIngredientsAtRuntime(VanillaTypes.ITEM_STACK, show);
         }
 
         @Override
         protected void hide(List<ItemStack> hide) {
-            Objects.requireNonNull(runtime)
+            Objects
+                    .requireNonNull(runtime)
                     .getIngredientManager()
                     .removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hide);
         }
     };
 
-    public ItemJEI() {
+    private ItemJEI() {
+        JEIAddon.RUNTIME_AVAILABLE_EVENT.addListener(this::onRuntimeAvailable);
+        JEIAddon.RUNTIME_UNAVAILABLE_EVENT.addListener(this::onRuntimeUnavailable);
+    }
+
+    public static void init() {
+        if (instance != null) throw new IllegalStateException();
+        instance = new ItemJEI();
     }
 
     private Map<Item, List<ItemStack>> getItemCache() {
@@ -101,14 +111,10 @@ public class ItemJEI implements NeoAddonJEI {
         itemCache.clear();
     }
 
-    @Override
-    public void jeiReloaded(ClientGameStageManager instance, BaseStages stages) {
-        updater.fullReconfigure(stages);
-    }
-
     private List<ItemStack> getItems(HolderSet<Item> itemSet) {
         var itemCache = getItemCache();
-        return itemSet.stream()
+        return itemSet
+                .stream()
                 .map(Objects::requireNonNull)
                 .map(Holder::value)
                 .map(itemCache::get)
@@ -117,13 +123,14 @@ public class ItemJEI implements NeoAddonJEI {
                 .toList();
     }
 
-    @Override
-    public void onRuntimeAvailable(IJeiRuntime runtime) {
-        this.runtime = runtime;
+    public void onRuntimeAvailable(JEIAddon.RuntimeAvailableEvent event) {
+        this.runtime = event.runtime();
+        if (ClientGameStageManager.initialized()) {
+            updater.fullReconfigure(ClientGameStageManager.stages());
+        }
     }
 
-    @Override
-    public void onRuntimeUnavailable() {
+    public void onRuntimeUnavailable(JEIAddon.RuntimeUnavailableEvent event) {
         clearCache();
         this.runtime = null;
     }

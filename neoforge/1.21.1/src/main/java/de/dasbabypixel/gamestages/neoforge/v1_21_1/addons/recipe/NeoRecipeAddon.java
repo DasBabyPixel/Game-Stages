@@ -10,9 +10,9 @@ import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeRestr
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.VRecipeAddon;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.EventRegistry;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonJEI;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonKJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonProbeJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.jei.JEIIntegration;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.ServerRegisterEventJS;
 import dev.latvian.mods.kubejs.script.SourceLine;
 import dev.latvian.mods.kubejs.script.TypeWrapperRegistry;
@@ -23,8 +23,8 @@ import java.util.Objects;
 @NullMarked
 public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
     public NeoRecipeAddon() {
-//        PRE_COMPILE_SERVER_PREPARE_EVENT.addListener(this::handle);
         INIT_RESOURCES_EVENT.addListener(this::handle);
+        JEIIntegration.INIT_JEI_SUPPORT_EVENT.addListener(this::initJEISupport);
     }
 
     @Override
@@ -47,9 +47,8 @@ public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
         return new KJS();
     }
 
-    @Override
-    public NeoAddonJEI createJEISupport() {
-        return new RecipeJEI();
+    public void initJEISupport(JEIIntegration.InitJEISupportEvent event) {
+        RecipeJEI.init();
     }
 
     @Override
@@ -69,7 +68,8 @@ public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
                 var recipesContent = flattener.flatten(((RecipeCollectionWrapper) args[1]).content(), CommonRecipeCollection.TYPE);
                 var predicate = (PreparedRestrictionPredicate) args[0];
                 var source = Objects.requireNonNull(SourceLine.of(cx)).toString();
-                return event.stageManager()
+                return event
+                        .stageManager()
                         .addRestriction(new CommonRecipeRestrictionEntry(predicate, RestrictionEntryOrigin.string(source), recipesContent));
             }, RecipeCollectionWrapper.class, CommonRecipeRestrictionEntry.class, PreparedRestrictionPredicate.class, RecipeCollectionWrapper[].class);
         }

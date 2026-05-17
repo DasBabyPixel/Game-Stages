@@ -21,12 +21,10 @@ import java.util.stream.Stream;
 
 @NullMarked
 public class RecipeManagerPlugin implements IRecipeManagerPlugin {
-    private final IIngredientManager ingredientManager;
     private final EnumMap<RecipeIngredientRole, RecipeMap> recipeMaps = new EnumMap<>(RecipeIngredientRole.class);
     private final Map<RecipeType<?>, List<Buildable<?>>> recipesByCategory = new HashMap<>();
 
     public RecipeManagerPlugin(IIngredientManager ingredientManager) {
-        this.ingredientManager = ingredientManager;
         for (var role : RecipeIngredientRole.values()) {
             recipeMaps.put(Objects.requireNonNull(role), new RecipeMap(role, ingredientManager));
         }
@@ -51,17 +49,12 @@ public class RecipeManagerPlugin implements IRecipeManagerPlugin {
     public <V> List<RecipeType<?>> getRecipeTypes(IFocus<V> focus) {
         var role = focus.getRole();
         var ingredient = focus.getTypedValue();
-        System.out.println("getRecipeTypes for " + role + " with " + ingredient);
-        var l = Objects.requireNonNull(recipeMaps.get(role)).getRecipeTypes(ingredient);
-        System.out.println(l);
-        return l;
+        return Objects.requireNonNull(recipeMaps.get(role)).getRecipeTypes(ingredient);
     }
 
     @Override
     public <T, V> List<T> getRecipes(IRecipeCategory<T> recipeCategory, IFocus<V> focus) {
         var type = recipeCategory.getRecipeType();
-        System.out.println("getForType " + recipeCategory.getRecipeType()
-                .getUid() + " role " + focus.getRole() + " with " + focus.getTypedValue());
         var stages = stages();
         if (notReady(stages)) return List.of();
         var role = focus.getRole();
@@ -82,10 +75,10 @@ public class RecipeManagerPlugin implements IRecipeManagerPlugin {
     @SuppressWarnings("unchecked")
     @Override
     public <T> List<T> getRecipes(IRecipeCategory<T> recipeCategory) {
-        System.out.println("getForType " + recipeCategory.getRecipeType().getUid());
         var stages = stages();
         if (notReady(stages)) return List.of();
-        return build(recipesByCategory.getOrDefault(recipeCategory.getRecipeType(), List.of())
+        return build(recipesByCategory
+                .getOrDefault(recipeCategory.getRecipeType(), List.of())
                 .stream()
                 .map(s -> (Buildable<T>) s), stages).toList();
     }

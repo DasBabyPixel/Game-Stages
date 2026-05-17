@@ -5,6 +5,7 @@ import de.dasbabypixel.gamestages.common.data.restriction.RestrictionPredicate;
 import org.jspecify.annotations.NullMarked;
 import org.logicng.formulas.Formula;
 import org.logicng.formulas.FormulaFactory;
+import org.logicng.formulas.Variable;
 
 import java.util.List;
 import java.util.Objects;
@@ -17,8 +18,8 @@ public record GameStage(String name) implements RestrictionPredicate, PreparedRe
     }
 
     @Override
-    public Formula convertToLogicNG(FormulaFactory factory) {
-        return Objects.requireNonNull(factory.variable(name));
+    public Variable convertToLogicNG(FormulaFactory factory) {
+        return Objects.requireNonNull(factory.variable("stage_" + name));
     }
 
     @Override

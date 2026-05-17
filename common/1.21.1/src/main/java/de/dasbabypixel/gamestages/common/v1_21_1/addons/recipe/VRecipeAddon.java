@@ -3,6 +3,8 @@ package de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe;
 import de.dasbabypixel.gamestages.common.addon.AddonManager;
 import de.dasbabypixel.gamestages.common.addon.ContentRegistry;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
+import de.dasbabypixel.gamestages.common.data.manager.immutable.PreCompileIndex;
 import de.dasbabypixel.gamestages.common.data.manager.mutable.ServerMutableGameStageManager;
 import de.dasbabypixel.gamestages.common.data.manager.mutable.compiler.ManagerCompilerTask;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
@@ -41,7 +43,8 @@ public abstract class VRecipeAddon implements VAddon {
     }
 
     private void handle(RegisterCustomContentEvent event) {
-        event.contentRegistry()
+        event
+                .contentRegistry()
                 .prepare(CommonRecipeCollection.TYPE)
                 .set(ContentRegistry.NAME, "recipe")
                 .set(ContentRegistry.FLATTENER_FACTORY, new RecipeFlattenerFactory())
@@ -50,9 +53,10 @@ public abstract class VRecipeAddon implements VAddon {
     }
 
     @SuppressWarnings("DataFlowIssue")
-    private PreparedRestrictionPredicate resolveItemStackPredicate(ManagerCompilerTask manager, ItemStack itemStack, @Nullable Ingredient ingredient) {
-        var msg = AddonManager.instance()
-                .sendMessage(VRecipeAddon.instance(), RecipeMessages.ORIGIN_ID, ResolveItemStackPredicate.ID, ResolveItemStackPredicate::new, manager, itemStack, ingredient);
+    private PreparedRestrictionPredicate resolveItemStackPredicate(ManagerCompilerTask task, ItemStack itemStack, @Nullable Ingredient ingredient) {
+        var msg = AddonManager
+                .instance()
+                .sendMessage(VRecipeAddon.instance(), RecipeMessages.ORIGIN_ID, ResolveItemStackPredicate.ID, ResolveItemStackPredicate::new, task, itemStack, ingredient);
         return msg == null ? True.INSTANCE.prepare() : msg.predicate();
     }
 
@@ -151,6 +155,12 @@ public abstract class VRecipeAddon implements VAddon {
     protected abstract CommonRecipeRestrictionEntry createDefaultEntry(PreparedRestrictionPredicate predicate, CommonRecipeCollection recipes);
 
     public abstract void handle(CommonRecipeRestrictionPacket packet);
+
+    public static CommonRecipeRestrictionEntry.@Nullable PreCompiled getEntry(AbstractGameStageManager<?> manager, RecipeHolder<?> holder) {
+        var index = manager.get(PreCompileIndex.ATTRIBUTE).typeIndex(CommonRecipeCollection.TYPE);
+        var preCompiled = index.preCompiledByContent().get(holder.id());
+        return (CommonRecipeRestrictionEntry.PreCompiled) preCompiled;
+    }
 
     public static CommonRecipeRestrictionEntry.@Nullable Compiled getEntry(@Nullable BaseStages stages, RecipeHolder<?> holder) {
         if (stages == null) return null;

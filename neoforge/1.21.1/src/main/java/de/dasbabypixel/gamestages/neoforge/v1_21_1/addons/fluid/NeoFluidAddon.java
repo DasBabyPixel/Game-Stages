@@ -9,9 +9,9 @@ import de.dasbabypixel.gamestages.common.v1_21_1.addons.fluid.VFluidAddon;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonFluidCollection;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.EventRegistry;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonJEI;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonKJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonProbeJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.jei.JEIIntegration;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.ServerRegisterEventJS;
 import dev.latvian.mods.kubejs.script.SourceLine;
 import dev.latvian.mods.kubejs.script.TypeWrapperRegistry;
@@ -21,6 +21,10 @@ import java.util.Objects;
 
 @NullMarked
 public class NeoFluidAddon extends VFluidAddon implements NeoAddon {
+    public NeoFluidAddon() {
+        JEIIntegration.INIT_JEI_SUPPORT_EVENT.addListener(this::initJEISupport);
+    }
+
     @Override
     public void handle(CommonFluidRestrictionPacket packet) {
         var entry = new NeoFluidRestrictionEntry(packet.predicate(), RestrictionEntryOrigin.string(packet.origin()), packet.targetCollection());
@@ -33,9 +37,8 @@ public class NeoFluidAddon extends VFluidAddon implements NeoAddon {
         return new KJS();
     }
 
-    @Override
-    public NeoAddonJEI createJEISupport() {
-        return new FluidJEI();
+    private void initJEISupport(JEIIntegration.InitJEISupportEvent event) {
+        FluidJEI.init();
     }
 
     @Override
@@ -55,7 +58,8 @@ public class NeoFluidAddon extends VFluidAddon implements NeoAddon {
                 var fluidsContent = flattener.flatten(((FluidCollectionWrapper) Objects.requireNonNull(args[1])).content(), CommonFluidCollection.TYPE);
                 var predicate = (PreparedRestrictionPredicate) Objects.requireNonNull(args[0]);
                 var source = Objects.requireNonNull(SourceLine.of(cx)).toString();
-                return event.stageManager()
+                return event
+                        .stageManager()
                         .addRestriction(new NeoFluidRestrictionEntry(predicate, RestrictionEntryOrigin.string(source), fluidsContent));
             }, FluidCollectionWrapper.class, NeoFluidRestrictionEntry.class, PreparedRestrictionPredicate.class, FluidCollectionWrapper[].class);
         }

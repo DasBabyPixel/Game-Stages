@@ -2,21 +2,26 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.integration.ex
 
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.serialization.Codec;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.builder.IRecipeSlotBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
+import mezz.jei.api.helpers.ICodecHelper;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.ingredients.IIngredientRenderer;
 import mezz.jei.api.recipe.IFocusGroup;
+import mezz.jei.api.recipe.IRecipeManager;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
+import mezz.jei.library.gui.recipes.OutputSlotTooltipCallback;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -32,6 +37,7 @@ import thedarkcolour.exdeorum.compat.XeiUtil;
 import thedarkcolour.exdeorum.compat.jei.ExDeorumJeiPlugin;
 import thedarkcolour.exdeorum.data.TranslationKeys;
 import thedarkcolour.exdeorum.material.DefaultMaterials;
+import thedarkcolour.exdeorum.material.SieveMaterial;
 
 import java.util.List;
 
@@ -42,22 +48,25 @@ public class SieveCategory implements IRecipeCategory<JEISieveRecipe> {
     private final IDrawable icon;
     private final Component title;
     private final MutableInt rows;
+    private final RecipeType<JEISieveRecipe> type;
+    private int lastRows;
 
-    public SieveCategory(IGuiHelper helper, ItemLike icon, Component title, MutableInt rows) {
+    private SieveCategory(IGuiHelper helper, ItemLike icon, Component title, MutableInt rows, RecipeType<JEISieveRecipe> type) {
         this.slot = helper.getSlotDrawable();
         this.row = helper.createDrawable(ExDeorumJeiPlugin.EX_DEORUM_JEI_TEXTURE, 0, 0, 162, 18);
+        this.type = type;
         this.icon = helper.createDrawableItemStack(new ItemStack(icon));
         this.title = title;
         this.rows = rows;
     }
 
-    public SieveCategory(IGuiHelper helper) {
-        this(helper, DefaultMaterials.OAK_SIEVE, Component.translatable(TranslationKeys.SIEVE_CATEGORY_TITLE), JEISieveRecipe.SIEVE_ROWS);
+    public static SieveCategory sieve(IGuiHelper helper, ItemLike icon, String translationKey, MutableInt rows, RecipeType<JEISieveRecipe> type) {
+        return new SieveCategory(helper, icon, Component.translatable(translationKey), rows, type);
     }
 
     @Override
     public RecipeType<JEISieveRecipe> getRecipeType() {
-        return JEISieveRecipe.RECIPE_TYPE;
+        return type;
     }
 
     @Override
@@ -72,12 +81,17 @@ public class SieveCategory implements IRecipeCategory<JEISieveRecipe> {
 
     @Override
     public int getHeight() {
-        return XeiUtil.SIEVE_ROW_START + XeiUtil.SIEVE_ROW_HEIGHT * rows.intValue();
+        return XeiUtil.SIEVE_ROW_START + XeiUtil.SIEVE_ROW_HEIGHT * (lastRows = rows.intValue());
     }
 
     @Override
     public IDrawable getIcon() {
         return this.icon;
+    }
+
+    @Override
+    public @Nullable ResourceLocation getRegistryName(JEISieveRecipe recipe) {
+        return recipe.identifier();
     }
 
     @Override
@@ -87,7 +101,8 @@ public class SieveCategory implements IRecipeCategory<JEISieveRecipe> {
 
         for (int i = 0; i < recipe.results().size(); i++) {
             var result = recipe.results().get(i);
-            var slot = builder.addSlot(RecipeIngredientRole.OUTPUT, 1 + (i % 9) * 18, 1 + XeiUtil.SIEVE_ROW_START + 18 * (i / 9))
+            var slot = builder
+                    .addSlot(RecipeIngredientRole.OUTPUT, 1 + (i % 9) * 18, 1 + XeiUtil.SIEVE_ROW_START + 18 * (i / 9))
                     .addItemStack(result.item());
 
             addTooltips(slot, result.byHandOnly(), result.provider(), result.holder());
@@ -99,7 +114,7 @@ public class SieveCategory implements IRecipeCategory<JEISieveRecipe> {
         this.slot.draw(graphics, 58, 0);
         this.slot.draw(graphics, 86, 0);
 
-        int rows = this.rows.intValue();
+        int rows = lastRows;
 
         for (int i = 0; i < rows; i++) {
             this.row.draw(graphics, 0, 28 + i * 18);
@@ -107,14 +122,22 @@ public class SieveCategory implements IRecipeCategory<JEISieveRecipe> {
     }
 
     @SuppressWarnings("DataFlowIssue")
-    public static void addTooltips(IRecipeSlotBuilder slot, boolean byHandOnly, NumberProvider provider, RecipeHolder<?> holder) {
+    public void addTooltips(IRecipeSlotBuilder slot, boolean byHandOnly, NumberProvider provider, RecipeHolder<?> holder) {
         if (byHandOnly) {
             slot.setCustomRenderer(VanillaTypes.ITEM_STACK, AsteriskItemRenderer.INSTANCE);
         }
         slot.addRichTooltipCallback((slotView, tooltip) -> {
             XeiUtil.addSieveDropTooltip(byHandOnly, provider, tooltip::add);
-            tooltip.add(Component.literal("Recipe ID: " + holder.id()).withStyle(ChatFormatting.GRAY));
         });
+
+        var recipeType = this.getRecipeType();
+        OutputSlotTooltipCallback callback = new OutputSlotTooltipCallback(holder.id(), recipeType);
+        slot.addRichTooltipCallback(callback);
+    }
+
+    @Override
+    public Codec<JEISieveRecipe> getCodec(ICodecHelper codecHelper, IRecipeManager recipeManager) {
+        return IRecipeCategory.super.getCodec(codecHelper, recipeManager);
     }
 
     enum AsteriskItemRenderer implements IIngredientRenderer<ItemStack> {

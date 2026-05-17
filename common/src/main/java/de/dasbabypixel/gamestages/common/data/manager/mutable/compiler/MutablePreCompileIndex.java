@@ -22,7 +22,7 @@ public final class MutablePreCompileIndex {
     private final Map<GameContentType<?>, MutableTypeIndex<?>> typeIndexMap = new HashMap<>();
 
     public PreCompileIndex compile() {
-        var typeIndexMap = new HashMap<GameContentType<?>, TypeIndex<?>>();
+        var typeIndexMap = new HashMap<GameContentType<?>, TypeIndex>();
         for (var entry : this.typeIndexMap.entrySet()) {
             Objects.requireNonNull(entry);
             typeIndexMap.put(entry.getKey(), entry.getValue().compile());

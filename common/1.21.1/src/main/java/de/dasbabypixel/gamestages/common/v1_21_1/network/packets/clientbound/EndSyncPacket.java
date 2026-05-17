@@ -32,7 +32,7 @@ public record EndSyncPacket() implements GameStagesPacket {
     public static final Type<EndSyncPacket> TYPE = new CustomPacketPayload.Type<>(CommonVGameStageMod.location("end_sync"));
     public static final StreamCodec<ByteBuf, EndSyncPacket> STREAM_CODEC = StreamCodec.of((o, endSyncPacket) -> {
     }, byteBuf -> new EndSyncPacket());
-    private static final Logger LOGGER = LoggerFactory.getLogger(EndSyncPacket.class);
+    private static final Logger LOGGER = Objects.requireNonNull(LoggerFactory.getLogger(EndSyncPacket.class));
 
     @Override
     public void handle() {
@@ -41,6 +41,7 @@ public record EndSyncPacket() implements GameStagesPacket {
         var compiledManager = buildingManager.finishBuildingInstance();
         var oldManager = ClientGameStageManager.initialized() ? ClientGameStageManager.currentManager() : null;
         ClientGameStageManager.update(compiledManager);
+        CLIENT_REPLACE_MANAGER_EVENT.call(new ClientReplaceManagerEvent(oldManager, compiledManager));
         var player = Objects.requireNonNull(CommonInstances.platformPlayerProvider.clientSelfPlayer());
         var stages = player.getGameStages();
         CLIENT_RECOMPILE_PRE_EVENT.call(new ClientRecompilePreEvent(compiledManager, stages));
@@ -54,7 +55,6 @@ public record EndSyncPacket() implements GameStagesPacket {
             });
         }
         CLIENT_RECOMPILE_POST_EVENT.call(new ClientRecompilePostEvent(compiledManager, stages));
-        CLIENT_REPLACE_MANAGER_EVENT.call(new ClientReplaceManagerEvent(oldManager, compiledManager));
     }
 
     @Override

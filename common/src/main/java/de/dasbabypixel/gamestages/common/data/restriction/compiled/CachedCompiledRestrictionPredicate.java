@@ -26,7 +26,8 @@ final class CachedCompiledRestrictionPredicate implements CompiledRestrictionPre
         this.stages = stages;
         this.original = original;
         this.logicNG = logicNG;
-        this.formula = Objects.requireNonNull(logicNG.simplifier()
+        this.formula = Objects.requireNonNull(logicNG
+                .simplifier()
                 .apply(original.convertToLogicNG(logicNG.formulaFactory()), true));
     }
 
@@ -48,13 +49,13 @@ final class CachedCompiledRestrictionPredicate implements CompiledRestrictionPre
     @Override
     public boolean test() {
         if (cached) return cachedValue;
-        cached = true;
         var oldValue = cachedValue;
         var assignment = new Assignment(true);
         for (var unlockedStage : this.stages.getUnlockedStages()) {
-            assignment.addLiteral(Objects.requireNonNull(logicNG.formulaFactory().variable(unlockedStage.name())));
+            assignment.addLiteral(unlockedStage.convertToLogicNG(logicNG.formulaFactory()));
         }
         cachedValue = formula.evaluate(assignment);
+        cached = true;
         if (cachedOldValue && cachedValue == oldValue) {
             return cachedValue;
         }

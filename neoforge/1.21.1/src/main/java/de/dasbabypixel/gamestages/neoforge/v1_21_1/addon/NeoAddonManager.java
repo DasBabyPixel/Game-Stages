@@ -14,7 +14,6 @@ public class NeoAddonManager extends VAddonManager<NeoAddon> {
     private static @Nullable NeoAddonManager INSTANCE;
 
     private NeoAddonManager() {
-        INSTANCE = this;
     }
 
     @Override
@@ -27,7 +26,7 @@ public class NeoAddonManager extends VAddonManager<NeoAddon> {
     }
 
     public static void init() {
-        new NeoAddonManager();
+        INSTANCE = new NeoAddonManager();
     }
 
     public static void done() {

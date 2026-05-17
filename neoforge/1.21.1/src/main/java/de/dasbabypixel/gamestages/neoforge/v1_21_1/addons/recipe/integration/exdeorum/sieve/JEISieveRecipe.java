@@ -1,28 +1,33 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.integration.exdeorum.sieve;
 
-import mezz.jei.api.recipe.RecipeType;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.storage.loot.providers.number.NumberProvider;
-import org.apache.commons.lang3.mutable.MutableInt;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import thedarkcolour.exdeorum.recipe.RecipeUtil;
+import thedarkcolour.exdeorum.recipe.sieve.SieveRecipe;
 
 import java.util.List;
 
 @NullMarked
 public class JEISieveRecipe {
-    public static final RecipeType<JEISieveRecipe> RECIPE_TYPE = RecipeType.create("exdeorum", "stages_sieve", JEISieveRecipe.class);
-    public static final MutableInt SIEVE_ROWS = new MutableInt();
+    private final @Nullable ResourceLocation identifier;
     private final Ingredient ingredient;
     private final ItemStack mesh;
     private final List<Result> results;
 
-    public JEISieveRecipe(Ingredient ingredient, ItemStack mesh, List<Result> results) {
+    public JEISieveRecipe(@Nullable ResourceLocation identifier, Ingredient ingredient, ItemStack mesh, List<Result> results) {
+        this.identifier = identifier;
         this.ingredient = ingredient;
         this.mesh = mesh;
         this.results = results;
+    }
+
+    public @Nullable ResourceLocation identifier() {
+        return identifier;
     }
 
     public Ingredient ingredient() {
@@ -37,19 +42,14 @@ public class JEISieveRecipe {
         return results;
     }
 
-
-    private static <T> RecipeType<T> recipeType(String path, Class<? extends T> type) {
-        return RecipeType.create("exdeorum", "stages_" + path, type);
-    }
-
     public static class Result {
-        private final RecipeHolder<?> holder;
+        private final RecipeHolder<? extends SieveRecipe> holder;
         private final ItemStack item;
         private final NumberProvider provider;
         private final boolean byHandOnly;
         private final double expectedCount;
 
-        public Result(RecipeHolder<?> holder, ItemStack item, NumberProvider provider, boolean byHandOnly) {
+        public Result(RecipeHolder<? extends SieveRecipe> holder, ItemStack item, NumberProvider provider, boolean byHandOnly) {
             this.holder = holder;
             this.item = item;
             this.provider = provider;
@@ -73,7 +73,7 @@ public class JEISieveRecipe {
             return expectedCount;
         }
 
-        public RecipeHolder<?> holder() {
+        public RecipeHolder<? extends SieveRecipe> holder() {
             return holder;
         }
     }

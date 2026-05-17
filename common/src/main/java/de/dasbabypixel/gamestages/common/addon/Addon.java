@@ -112,10 +112,10 @@ public interface Addon {
                                      @Nullable ClientGameStageManager newManager) {
     }
 
-    record ClientRecompilePreEvent(ClientGameStageManager newManager, BaseStages stages) {
+    record ClientRecompilePreEvent(ClientGameStageManager newManager, ClientPlayerStages stages) {
     }
 
-    record ClientRecompilePostEvent(ClientGameStageManager newManager, BaseStages stages) {
+    record ClientRecompilePostEvent(ClientGameStageManager newManager, ClientPlayerStages stages) {
     }
 
     record FinishStartupEvent() {

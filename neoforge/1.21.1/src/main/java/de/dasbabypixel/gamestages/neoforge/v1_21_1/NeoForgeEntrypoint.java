@@ -29,7 +29,6 @@ import de.dasbabypixel.gamestages.neoforge.integration.Mods;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.EventRegistryImpl;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.item.datadriven.NeoDataDrivenTypes;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.RecipeJEI;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.client.ClientReloadHandler;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.commands.StageArgumentType;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.commands.StagesCommand;
@@ -59,7 +58,6 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.neoforged.fml.event.lifecycle.InterModProcessEvent;
 import net.neoforged.fml.loading.FMLEnvironment;
-import net.neoforged.neoforge.client.event.RecipesUpdatedEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -127,7 +125,6 @@ public class NeoForgeEntrypoint {
         NeoForge.EVENT_BUS.addListener(this::handleChunkUnload);
         NeoForge.EVENT_BUS.addListener(this::handleBlockPlace);
         if (FMLEnvironment.dist.isClient()) {
-            NeoForge.EVENT_BUS.addListener(this::handleRecipes);
             ClientReloadHandler.registerListeners();
             container.registerConfig(ModConfig.Type.CLIENT, GameStagesClientConfig.CONFIG_SPEC);
         }
@@ -263,13 +260,6 @@ public class NeoForgeEntrypoint {
             assert registry != null;
             registry.register(location("stage"), ArgumentTypeInfos.registerByClass(StageArgumentType.class, new StageArgumentType.Info()));
         });
-    }
-
-    private void handleRecipes(RecipesUpdatedEvent event) {
-        LOGGER.info("Received recipe update");
-        LOGGER.info("Received recipe update");
-        LOGGER.info("Received recipe update");
-        RecipeJEI.recipeManager = event.getRecipeManager();
     }
 
     private void handleRegisterCommands(RegisterCommandsEvent event) {

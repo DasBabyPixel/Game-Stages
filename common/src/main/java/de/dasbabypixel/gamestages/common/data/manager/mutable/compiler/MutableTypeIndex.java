@@ -24,7 +24,7 @@ public class MutableTypeIndex<Type extends TypedGameContent> {
         return (Set<PC>) entries;
     }
 
-    public TypeIndex<Type> compile() {
-        return new TypeIndex<>(preCompiledByContent, entries);
+    public TypeIndex compile() {
+        return new TypeIndex(preCompiledByContent, entries);
     }
 }

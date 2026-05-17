@@ -6,13 +6,14 @@ import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeColle
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeRestrictionEntry;
 import de.dasbabypixel.gamestages.neoforge.integration.Mod;
 import de.dasbabypixel.gamestages.neoforge.integration.Mods;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonJEI;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.integration.exdeorum.ExDeorumJEIIntegration;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.client.ContentVisibilityUpdater;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.config.GameStagesClientConfig;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.jei.JEIAddon;
 import mezz.jei.api.recipe.IRecipeManager;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.runtime.IJeiRuntime;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
@@ -28,11 +29,11 @@ import java.util.Map;
 import java.util.Objects;
 
 @NullMarked
-public class RecipeJEI implements NeoAddonJEI {
+public class RecipeJEI {
+    private static @Nullable RecipeJEI instance;
     private static final Mod EX_DEORUM = Mods.mod("exdeorum");
-    private static final Logger LOGGER = LoggerFactory.getLogger(RecipeJEI.class);
+    private static final Logger LOGGER = Objects.requireNonNull(LoggerFactory.getLogger(RecipeJEI.class));
     private static final RecipeConverter DEFAULT_CONVERTER = RecipeJEI::convert;
-    public static @Nullable RecipeManager recipeManager;
     private final Map<net.minecraft.world.item.crafting.RecipeType<?>, RecipeConverter> converterMap = new HashMap<>();
     private @Nullable Context context;
     private final ContentVisibilityUpdater<RecipeAndType<?>, CommonRecipeRestrictionEntry.Compiled> updater = new ContentVisibilityUpdater<>(CommonRecipeCollection.TYPE) {
@@ -87,19 +88,21 @@ public class RecipeJEI implements NeoAddonJEI {
         }
     };
 
-    public RecipeJEI() {
+    public static void init() {
+        if (instance != null) throw new IllegalStateException();
+        instance = new RecipeJEI();
+    }
+
+    private RecipeJEI() {
         if (EX_DEORUM.isLoaded()) {
             ExDeorumJEIIntegration.init();
         }
+        JEIAddon.RUNTIME_AVAILABLE_EVENT.addListener(this::onRuntimeAvailable);
+        JEIAddon.RUNTIME_UNAVAILABLE_EVENT.addListener(this::onRuntimeUnavailable);
     }
 
-    @Override
-    public void jeiReloaded(ClientGameStageManager instance, BaseStages stages) {
-        updater.fullReconfigure(stages);
-    }
-
-    @Override
-    public void onRuntimeAvailable(IJeiRuntime runtime) {
+    public void onRuntimeAvailable(JEIAddon.RuntimeAvailableEvent event) {
+        var runtime = event.runtime();
         var recipeTypeByJEI = new HashMap<RecipeType<?>, net.minecraft.world.item.crafting.RecipeType<?>>();
         var recipeTypeByMinecraft = new HashMap<net.minecraft.world.item.crafting.RecipeType<?>, RecipeType<?>>();
 
@@ -111,29 +114,23 @@ public class RecipeJEI implements NeoAddonJEI {
                 recipeTypeByJEI.put(type, minecraftType);
                 recipeTypeByMinecraft.put(minecraftType, type);
             }
-            var recipes = runtime.getRecipeManager().createRecipeLookup(type).includeHidden().get().toList();
         }
 
         this.context = new Context(runtime, recipeTypeByJEI, recipeTypeByMinecraft);
 
         reload(this.context);
+
+        if (ClientGameStageManager.initialized()) {
+            updater.fullReconfigure(ClientGameStageManager.stages());
+        }
     }
 
-    @Override
-    public void onRuntimeUnavailable() {
+    public void onRuntimeUnavailable(JEIAddon.RuntimeUnavailableEvent event) {
         this.context = null;
     }
 
     private void reload(Context context) {
-        var runtime = context.runtime();
         converterMap.clear();
-
-        if (EX_DEORUM.isLoaded()) {
-            if (GameStagesClientConfig.CONFIG.exdeorumOverrideJEI.isTrue()) {
-                runtime.getRecipeManager().hideRecipeCategory(ExDeorumJEIIntegration.SIEVE);
-                runtime.getRecipeManager().hideRecipeCategory(ExDeorumJEIIntegration.COMPRESSED_SIEVE);
-            }
-        }
     }
 
     @SuppressWarnings("unchecked")
@@ -169,13 +166,18 @@ public class RecipeJEI implements NeoAddonJEI {
         void convert(Context context, List<RecipeAndType<?>> list, net.minecraft.world.item.crafting.RecipeType<?> minecraftType, List<RecipeHolder<?>> recipeHolders);
     }
 
+    public static RecipeManager recipeManager() {
+        return Objects.requireNonNull(Minecraft.getInstance().getConnection()).getRecipeManager();
+    }
+
     private class Converter {
         private final HashMap<net.minecraft.world.item.crafting.RecipeType<?>, List<RecipeHolder<?>>> cache = new HashMap<>();
 
         public void add(CommonRecipeCollection recipeCollection) {
+            var recipeManager = recipeManager();
             var recipeIds = recipeCollection.recipes();
             for (var recipeId : recipeIds) {
-                var recipeOptional = Objects.requireNonNull(recipeManager).byKey(recipeId);
+                var recipeOptional = recipeManager.byKey(recipeId);
                 if (recipeOptional.isEmpty()) {
                     LOGGER.error("No recipe for {}", recipeId, new Exception());
                 }
@@ -204,8 +206,8 @@ public class RecipeJEI implements NeoAddonJEI {
                            Map<RecipeType<?>, net.minecraft.world.item.crafting.RecipeType<?>> recipeTypeByJEI,
                            Map<net.minecraft.world.item.crafting.RecipeType<?>, RecipeType<?>> recipeTypeByMinecraft) {
         private Context {
-            recipeTypeByJEI = Map.copyOf(recipeTypeByJEI);
-            recipeTypeByMinecraft = Map.copyOf(recipeTypeByMinecraft);
+            recipeTypeByJEI = Objects.requireNonNull(Map.copyOf(recipeTypeByJEI));
+            recipeTypeByMinecraft = Objects.requireNonNull(Map.copyOf(recipeTypeByMinecraft));
         }
 
         public net.minecraft.world.item.crafting.@Nullable RecipeType<?> getByJEI(RecipeType<?> recipeType) {
