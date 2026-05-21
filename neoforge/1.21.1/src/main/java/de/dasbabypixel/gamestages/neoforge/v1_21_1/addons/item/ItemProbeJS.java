@@ -1,67 +1,68 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.item;
 
-import com.google.common.collect.Multimap;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenTypedData;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenTypes;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonProbeJS;
-import moe.wolfgirl.probejs.lang.java.clazz.ClassPath;
-import moe.wolfgirl.probejs.lang.typescript.ScriptDump;
-import moe.wolfgirl.probejs.lang.typescript.code.member.TypeDecl;
-import moe.wolfgirl.probejs.lang.typescript.code.type.BaseType;
-import moe.wolfgirl.probejs.lang.typescript.code.type.Types;
+import moe.wolfgirl.probejs.plugin.builtins.alias.RecordTypes;
+import moe.wolfgirl.probejs.plugin.builtins.alias.RegistryTypes;
+import moe.wolfgirl.probejs.plugin.builtins.alias.SpecialTypes;
+import moe.wolfgirl.probejs.typescript.base.AliasRegistrar;
+import moe.wolfgirl.probejs.typescript.document.Types;
+import moe.wolfgirl.probejs.typescript.document.base.Type;
+import net.minecraft.world.item.Item;
 import org.jspecify.annotations.NullMarked;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import static moe.wolfgirl.probejs.lang.typescript.code.type.Types.or;
-import static moe.wolfgirl.probejs.lang.typescript.code.type.Types.primitive;
-import static moe.wolfgirl.probejs.lang.typescript.code.type.Types.type;
+import static moe.wolfgirl.probejs.typescript.document.Types.clazz;
+import static moe.wolfgirl.probejs.typescript.document.Types.literal;
+import static moe.wolfgirl.probejs.typescript.document.Types.union;
+import static moe.wolfgirl.probejs.typescript.document.Types.wrapped;
+
 
 @NullMarked
 public class ItemProbeJS implements NeoAddonProbeJS {
-    private static final VarHandle CONVERTIBLES;
-
     static {
-        try {
-            var lookup = MethodHandles.privateLookupIn(ScriptDump.class, MethodHandles.lookup());
-            CONVERTIBLES = Objects.requireNonNull(lookup.findVarHandle(ScriptDump.class, "convertibles", Multimap.class));
-        } catch (IllegalAccessException | NoSuchFieldException e) {
-            throw new RuntimeException(e);
-        }
+        RecordTypes.SKIP_RECORDS.add(DataDrivenTypedData.class);
+        RecordTypes.SKIP_RECORDS.add(ItemCollectionWrapper.class);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public void assignType(ScriptDump scriptDump) {
-        var item = or(primitive("`${Special.Item}`"), primitive("`.${Special.Item}`"), primitive("`#${Special.ItemTag}`"), primitive("`@${Special.Mod}`"), type(ItemCollectionWrapper.class).asArray());
-        scriptDump.assignType(ItemCollectionWrapper.class, item);
-
-        var dataDrivenTypedDataList = new ArrayList<BaseType>();
-        for (var type : DataDrivenTypes.instance().types()) {
-            var builder = Types.object();
-            builder.member("type", Types.literal(type.type()));
-            switch (type.type()) {
-                case "sequential" -> {
-                    builder.member("values", Types.type(DataDrivenTypedData.class));
-                    builder.member("else", Types.type(ItemKJS.RegisteredItemStackEntries.Entry.class));
-                }
-                case "predicate" -> {
-                    builder.member("condition", Types.OBJECT);
-                    builder.member("return", Types.type(ItemKJS.RegisteredItemStackEntries.Entry.class));
-                }
-                default -> {
-                    continue;
-                }
-            }
-            dataDrivenTypedDataList.add(Objects.requireNonNull(builder.build()));
+    public void addTypeAlias(AliasRegistrar registrar) {
+        {
+            var item = clazz(Item.class).markAsInput();
+            var itemExplicit = wrapped("`.${%s}`", item);
+            var itemTag = wrapped("`#${%s}`", RegistryTypes.tag("Item"));
+            var mod = wrapped("`@${%s}`", SpecialTypes.MOD_ID);
+            var recursive = Objects.requireNonNull(clazz(ItemCollectionWrapper.class).asInput()).asArray();
+            var itemWrapper = union(item, itemExplicit, itemTag, mod, recursive);
+            registrar.addInputAlias(ItemCollectionWrapper.class, itemWrapper.markAsInput());
         }
 
-        Multimap<ClassPath, TypeDecl> convertibles = (Multimap<ClassPath, TypeDecl>) Objects.requireNonNull(CONVERTIBLES.get(scriptDump));
-        convertibles.removeAll(new ClassPath(DataDrivenTypedData.class));
+        var dataDrivenTypedDataList = new ArrayList<Type>();
+        for (var type : DataDrivenTypes.instance().types()) {
+            var skip = new AtomicBoolean(false);
+            var ot = Types.object(builder -> {
+                Objects.requireNonNull(builder);
+                builder.param("type", literal(type.type()));
+                switch (type.type()) {
+                    case "sequential" -> {
+                        builder.param("values", clazz(DataDrivenTypedData.class));
+                        builder.param("else", clazz(ItemKJS.RegisteredItemStackEntries.Entry.class));
+                    }
+                    case "predicate" -> {
+                        builder.param("condition", Types.OBJECT);
+                        builder.param("return", clazz(ItemKJS.RegisteredItemStackEntries.Entry.class));
+                    }
+                    default -> skip.setPlain(true);
+                }
+            });
+            if (skip.getPlain()) continue;
+            dataDrivenTypedDataList.add(Objects.requireNonNull(ot));
+        }
 
-        scriptDump.assignType(DataDrivenTypedData.class, Types.or(Objects.requireNonNull(dataDrivenTypedDataList.toArray(BaseType[]::new))));
+        registrar.addInputAlias(DataDrivenTypedData.class, union(Objects.requireNonNull(dataDrivenTypedDataList.toArray(Type[]::new))));
     }
 }

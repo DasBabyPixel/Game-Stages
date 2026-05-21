@@ -5,7 +5,7 @@ plugins {
 }
 
 loaderVersionBase.minecraftVersionRange.addAll(listOf("1.21", "1.21.1"))
-loaderVersionNeo.neoVersion = "21.1.209"
+loaderVersionNeo.neoVersion = "21.1.230"
 loaderVersionNeo.parchment("1.21.1", "2024.11.17")
 
 neoForge {
@@ -38,9 +38,10 @@ dependencies {
 
     val jeiVersion = "19.27.0.340"
 
-    implementation("curse.maven:kubejs-238086:7198768")
+    implementation("curse.maven:kubejs-238086:8083208")
     implementation("curse.maven:rhino-416294:7104526")
-    implementation("curse.maven:probejs-585406:7105159")
+//    implementation("curse.maven:probejs-585406:7105159")
+    implementation("curse.maven:probejs-585406:8122173")
     implementation("curse.maven:jei-238222:7420587")
 //    compileOnly("mezz.jei:jei-1.21.1-neoforge-api:$jeiVersion")
 //    runtimeOnly("mezz.jei:jei-1.21.1-neoforge:$jeiVersion")
