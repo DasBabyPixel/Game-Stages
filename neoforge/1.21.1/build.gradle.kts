@@ -41,7 +41,7 @@ dependencies {
     implementation("curse.maven:kubejs-238086:7198768")
     implementation("curse.maven:rhino-416294:7104526")
     implementation("curse.maven:probejs-585406:7105159")
-    implementation("curse.maven:jei-238222:7181665")
+    implementation("curse.maven:jei-238222:7420587")
 //    compileOnly("mezz.jei:jei-1.21.1-neoforge-api:$jeiVersion")
 //    runtimeOnly("mezz.jei:jei-1.21.1-neoforge:$jeiVersion")
     implementation("curse.maven:jade-324717:6853386")

@@ -11,19 +11,26 @@ import thedarkcolour.exdeorum.recipe.RecipeUtil;
 import thedarkcolour.exdeorum.recipe.sieve.SieveRecipe;
 
 import java.util.List;
+import java.util.Set;
 
 @NullMarked
-public class JEISieveRecipe {
+public class JEISieveRecipe<T extends SieveRecipe> {
     private final @Nullable ResourceLocation identifier;
     private final Ingredient ingredient;
     private final ItemStack mesh;
-    private final List<Result> results;
+    private final Set<Object> resultIngredientUids;
+    private final List<Result<T>> results;
 
-    public JEISieveRecipe(@Nullable ResourceLocation identifier, Ingredient ingredient, ItemStack mesh, List<Result> results) {
+    public JEISieveRecipe(@Nullable ResourceLocation identifier, Ingredient ingredient, ItemStack mesh, Set<Object> resultIngredientUids, List<Result<T>> results) {
         this.identifier = identifier;
         this.ingredient = ingredient;
         this.mesh = mesh;
+        this.resultIngredientUids = resultIngredientUids;
         this.results = results;
+    }
+
+    public Set<Object> resultIngredientUids() {
+        return resultIngredientUids;
     }
 
     public @Nullable ResourceLocation identifier() {
@@ -38,18 +45,18 @@ public class JEISieveRecipe {
         return mesh;
     }
 
-    public List<Result> results() {
+    public List<Result<T>> results() {
         return results;
     }
 
-    public static class Result {
-        private final RecipeHolder<? extends SieveRecipe> holder;
+    public static class Result<T extends SieveRecipe> {
+        private final RecipeHolder<T> holder;
         private final ItemStack item;
         private final NumberProvider provider;
         private final boolean byHandOnly;
         private final double expectedCount;
 
-        public Result(RecipeHolder<? extends SieveRecipe> holder, ItemStack item, NumberProvider provider, boolean byHandOnly) {
+        public Result(RecipeHolder<T> holder, ItemStack item, NumberProvider provider, boolean byHandOnly) {
             this.holder = holder;
             this.item = item;
             this.provider = provider;
@@ -73,7 +80,7 @@ public class JEISieveRecipe {
             return expectedCount;
         }
 
-        public RecipeHolder<? extends SieveRecipe> holder() {
+        public RecipeHolder<T> holder() {
             return holder;
         }
     }

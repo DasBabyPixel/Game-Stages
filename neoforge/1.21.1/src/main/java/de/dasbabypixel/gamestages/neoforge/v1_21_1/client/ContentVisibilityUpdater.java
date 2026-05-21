@@ -12,151 +12,159 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @NullMarked
-public abstract class ContentVisibilityUpdater<Data, Entry extends CompiledRestrictionEntry<? extends Entry, ?>> {
+public abstract class ContentVisibilityUpdater<WrapperData, RawData, Entry extends CompiledRestrictionEntry<? extends Entry, ?>> {
     private final GameContentType<?> type;
-    private final Set<Data> visible = new HashSet<>();
-    private final Set<Data> invisible = new HashSet<>();
+    private final Set<RawData> invisible = new HashSet<>();
+    private Map<RawData, WrapperData> wrapperByRawMap = Map.of();
+    private Map<CompiledRestrictionPredicate, Set<WrapperData>> affectedByPredicateMap = Map.of();
 
     public ContentVisibilityUpdater(GameContentType<?> type) {
         this.type = type;
-        Addon.CLIENT_RECOMPILE_PRE_EVENT.addListener(this::preRecompile);
         Addon.CLIENT_RECOMPILE_POST_EVENT.addListener(this::postRecompile);
     }
 
-    private void preRecompile(Addon.ClientRecompilePreEvent event) {
-    }
-
     private void postRecompile(Addon.ClientRecompilePostEvent event) {
-        reconfigure(event.stages(), false);
+        var stages = event.stages();
 
-        var compileIndex = event.stages().get(BaseStages.CompileIndex.ATTRIBUTE);
-        registerUpdateNotifier(event.stages(), compileIndex);
-    }
+        var compileIndex = stages.get(BaseStages.CompileIndex.ATTRIBUTE);
 
-    public void fullReconfigure(BaseStages stages) {
-        invisible.clear();
-        visible.clear();
-        reconfigure(stages, true);
-    }
-
-    private void reconfigure(BaseStages stages, boolean allVisible) {
-        Collected<Data> collected;
-        if (stages.has(BaseStages.CompileIndex.ATTRIBUTE)) {
-            var compileIndex = stages.get(BaseStages.CompileIndex.ATTRIBUTE);
-            var collector = new Collector<Data>();
-            collect(stages, compileIndex, collector);
-
-            // We need to show all previously invisible, otherwise they could stay invisible
-            collector.hideCache.forEach(invisible::remove);
-            collector.showCache.addAll(invisible);
-
-            collected = new Collected<>(collector.showCache, collector.hideCache);
-        } else {
-            collected = new Collected<>(List.of(), List.of());
+        var collector = new Collector();
+        preCollect();
+        collect(stages, compileIndex, collector);
+        {
+            var byRaw = new HashMap<RawData, WrapperData>();
+            for (var rawData : collector.dataSet) {
+                var relevantPredicates = List.copyOf(Objects.requireNonNull(collector.affectedByDataMap.get(rawData)));
+                var wrapper = createWrapper(rawData, relevantPredicates);
+                byRaw.put(rawData, wrapper);
+            }
+            wrapperByRawMap = Map.copyOf(byRaw);
         }
 
-        visible.clear();
-        invisible.clear();
-
-        visible.addAll(collected.showCache);
-        invisible.addAll(collected.hideCache);
-
-        if (!allVisible && !collected.showCache.isEmpty()) {
-            show(collected.showCache);
+        {
+            var a = new HashMap<CompiledRestrictionPredicate, Set<WrapperData>>();
+            for (var e : collector.affectedByPredicateMap.entrySet()) {
+                Objects.requireNonNull(e);
+                a.put(e.getKey(), toSet(e.getValue()));
+            }
+            affectedByPredicateMap = Map.copyOf(a);
         }
-        if (!collected.hideCache.isEmpty()) {
-            hide(collected.hideCache);
+
+        // Following scenario:
+        // Some content is hidden by a restriction.
+        // That restriction is deleted, then stages are compiled again.
+        // The content won't show up in the collected content, because it's not affected anymore.
+        // It is still hidden in this updater though. We need to unhide that content.
+        // This content is exactly the old/current "invisible" collection
+        if (!invisible.isEmpty()) {
+            var toShow = new HashSet<>(invisible);
+            invisible.clear();
+            show(List.copyOf(toShow));
+        }
+
+        update(toSet(collector.dataSet));
+
+        registerUpdateNotifiers();
+    }
+
+    protected void preCollect() {
+    }
+
+    protected void postCollect() {
+    }
+
+    private WrapperData wrapper(RawData raw) {
+        return Objects.requireNonNull(wrapperByRawMap.get(raw));
+    }
+
+    private Set<WrapperData> toSet(Collection<? extends RawData> data) {
+        return Set.copyOf(data.stream().map(this::wrapper).collect(Collectors.toSet()));
+    }
+
+    public void viewerStartup() {
+        // Full reload. All are assumed visible again for the viewer, so we need to re-hide all invisible
+        if (!invisible.isEmpty()) {
+            hide(List.copyOf(invisible));
         }
     }
 
-    private void collect(BaseStages stages, BaseStages.CompileIndex compileIndex, Collector<Data> collector) {
-        collect(stages, compileIndex, type, collector);
+    private void update(Collection<WrapperData> affected) {
+        invalidateCache(affected);
+        var newlyVisible = new ArrayList<RawData>();
+        var newlyInvisible = new ArrayList<RawData>();
+        for (var data : affected) {
+            var raw = extract(data);
+            if (shouldBeVisible(data)) {
+                if (invisible.contains(raw)) newlyVisible.add(raw);
+            } else {
+                if (!invisible.contains(raw)) newlyInvisible.add(raw);
+            }
+        }
+        update(List.copyOf(newlyVisible), List.copyOf(newlyInvisible));
+    }
+
+    protected void invalidateCache(Collection<WrapperData> affected) {
+    }
+
+    private void update(List<RawData> newlyVisible, List<RawData> newlyInvisible) {
+        if (!newlyVisible.isEmpty()) {
+            newlyVisible.forEach(invisible::remove);
+        }
+        if (!newlyInvisible.isEmpty()) {
+            invisible.addAll(newlyInvisible);
+        }
+        if (!newlyVisible.isEmpty()) show(newlyVisible);
+        if (!newlyInvisible.isEmpty()) hide(newlyInvisible);
     }
 
     @SuppressWarnings("unchecked")
-    private void collect(BaseStages stages, BaseStages.CompileIndex compileIndex, GameContentType<?> type, Collector<Data> collector) {
-        for (var compiled : compileIndex.typeIndex(type).contentListByEntry().keySet()) {
-            collect(stages, compileIndex, (Entry) compiled, collector);
+    private void collect(BaseStages stages, BaseStages.CompileIndex compileIndex, Collector collector) {
+        for (var compiled : compileIndex.typeIndex(type).entries()) {
+            Entry entry = (Entry) compiled;
+            collect(stages, compileIndex, entry, collector);
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private void registerUpdateNotifier(BaseStages stages, BaseStages.CompileIndex compileIndex) {
-        var typeIndex = compileIndex.typeIndex(type);
-        var entries = (List<Entry>) List.copyOf(typeIndex.contentListByEntry().keySet());
-        var byPredicate = new HashMap<CompiledRestrictionPredicate, List<Data>>();
-        registerUpdateNotifier(stages, compileIndex, entries, new UpdateRegistrar<>() {
-            @Override
-            public void register(CompiledRestrictionPredicate predicate, Data data) {
-                byPredicate.computeIfAbsent(predicate, i -> new ArrayList<>()).add(data);
-            }
-
-            @Override
-            public void register(CompiledRestrictionPredicate predicate, Collection<? extends Data> data) {
-                byPredicate.computeIfAbsent(predicate, i -> new ArrayList<>()).addAll(data);
-            }
-        });
-
-        for (var e : byPredicate.entrySet()) {
+    private void registerUpdateNotifiers() {
+        for (var e : affectedByPredicateMap.entrySet()) {
             Objects.requireNonNull(e);
             var list = Objects.requireNonNull(e.getValue());
-            e.getKey().addNotifier(newTest -> {
-                if (newTest) {
-                    list.forEach(invisible::remove);
-                    visible.addAll(list);
-                    show(list);
-                } else {
-                    list.forEach(visible::remove);
-                    invisible.addAll(list);
-                    hide(list);
-                }
-            });
+            e.getKey().addNotifier(newTest -> update(list));
         }
     }
 
-    protected abstract void collect(BaseStages stages, BaseStages.CompileIndex compileIndex, Entry compiledEntry, Collector<Data> collector);
+    protected abstract boolean shouldBeVisible(WrapperData data);
 
-    protected abstract void registerUpdateNotifier(BaseStages stages, BaseStages.CompileIndex compileIndex, List<Entry> compiledEntries, UpdateRegistrar<Data> registrar);
+    /**
+     * Collects all Data that are associated with visibility logic.
+     * It does not yet matter whether the data is actually visible,
+     * this just collects all which can become visible/invisible at some point.
+     */
+    protected abstract void collect(BaseStages stages, BaseStages.CompileIndex compileIndex, Entry compiledEntry, Collector collector);
 
-    protected abstract void show(List<Data> show);
+    protected abstract void show(List<RawData> show);
 
-    protected abstract void hide(List<Data> hide);
+    protected abstract void hide(List<RawData> hide);
 
-    public interface UpdateRegistrar<Data> {
-        void register(CompiledRestrictionPredicate predicate, Data data);
+    protected abstract RawData extract(WrapperData wrapperData);
 
-        void register(CompiledRestrictionPredicate predicate, Collection<? extends Data> data);
-    }
+    protected abstract WrapperData createWrapper(RawData rawData, List<CompiledRestrictionPredicate> relevantEntries);
 
-    public record Collected<Data>(List<Data> showCache, List<Data> hideCache) {
-        public Collected {
-            showCache = List.copyOf(showCache);
-            hideCache = List.copyOf(hideCache);
-        }
-    }
+    public final class Collector {
+        private final Set<RawData> dataSet = new HashSet<>();
+        private final Map<CompiledRestrictionPredicate, Set<RawData>> affectedByPredicateMap = new HashMap<>();
+        private final Map<RawData, Set<CompiledRestrictionPredicate>> affectedByDataMap = new HashMap<>();
 
-    public static final class Collector<Data> {
-        private final List<Data> showCache = new ArrayList<>();
-        private final List<Data> hideCache = new ArrayList<>();
-
-        public void show(Data data) {
-            showCache.add(data);
-        }
-
-        public void showAll(Collection<? extends Data> data) {
-            showCache.addAll(data);
-        }
-
-        public void hide(Data data) {
-            hideCache.add(data);
-        }
-
-        public void hideAll(Collection<? extends Data> data) {
-            hideCache.addAll(data);
+        public void add(CompiledRestrictionPredicate predicate, RawData data) {
+            dataSet.add(data);
+            affectedByPredicateMap.computeIfAbsent(predicate, e -> new HashSet<>()).add(data);
+            affectedByDataMap.computeIfAbsent(data, e -> new HashSet<>()).add(predicate);
         }
     }
 }

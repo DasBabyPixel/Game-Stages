@@ -121,10 +121,12 @@ public class BaseStages extends ReplaceableImmutableAttributeHolder<BaseStages> 
 
     public record TypeIndex(GameContentType<?> type,
                             Map<CompiledRestrictionEntry<?, ?>, List<Object>> contentListByEntry,
+                            List<CompiledRestrictionEntry<?, ?>> entries,
                             Map<Object, CompiledRestrictionEntry<?, ?>> entryByContent) {
         public TypeIndex {
-            contentListByEntry = Objects.requireNonNull(Map.copyOf(contentListByEntry));
-            entryByContent = Objects.requireNonNull(Map.copyOf(entryByContent));
+            entries = List.copyOf(entries);
+            contentListByEntry = Map.copyOf(contentListByEntry);
+            entryByContent = Map.copyOf(entryByContent);
         }
     }
 
@@ -146,7 +148,7 @@ public class BaseStages extends ReplaceableImmutableAttributeHolder<BaseStages> 
         }
 
         public TypeIndex compile() {
-            return new TypeIndex(type, contentListByEntry, entryByContent);
+            return new TypeIndex(type, contentListByEntry, List.copyOf(contentListByEntry.keySet()), entryByContent);
         }
     }
 }

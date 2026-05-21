@@ -21,7 +21,8 @@
     "recipe.MCInventoryMenuMixin",
     "recipe.MCRecipeCacheMixin",
     "recipe.MCRecipeManagerMixin",
-    "recipe.integration.jei.JEIIngredientLookupStateMixin",
+    "recipe.integration.jei.JEIBookmarkListMixin",
+    "recipe.integration.jei.JEIBookmarkOverlayMixin",
     "sourcetracking.MCEntityTypeMixin"
   ],
   "injectors": {

@@ -42,11 +42,6 @@ final class CachedCompiledRestrictionPredicate implements CompiledRestrictionPre
     }
 
     @Override
-    public BaseStages stages() {
-        return stages;
-    }
-
-    @Override
     public boolean test() {
         if (cached) return cachedValue;
         var oldValue = cachedValue;

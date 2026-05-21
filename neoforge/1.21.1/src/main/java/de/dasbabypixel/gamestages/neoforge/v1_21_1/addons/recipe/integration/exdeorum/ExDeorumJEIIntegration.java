@@ -1,6 +1,7 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.integration.exdeorum;
 
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.integration.exdeorum.sieve.SieveCompat;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.jei.RecipeJEI;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.config.GameStagesClientConfig;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.jei.JEIAddon;
 import org.jspecify.annotations.NullMarked;
@@ -13,7 +14,7 @@ public class ExDeorumJEIIntegration {
         return !override;
     }
 
-    public static void init() {
+    public static void init(RecipeJEI recipeJEI) {
         SieveCompat.init();
 
         JEIAddon.REGISTER_CATEGORIES_EVENT.addListener(/* call very early */-100, ExDeorumJEIIntegration::registerCategories);

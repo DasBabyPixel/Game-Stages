@@ -12,6 +12,7 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.EventRegistry;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonKJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonProbeJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.jei.RecipeJEI;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.jei.JEIIntegration;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.ServerRegisterEventJS;
 import dev.latvian.mods.kubejs.script.SourceLine;

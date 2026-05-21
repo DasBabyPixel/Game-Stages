@@ -23,14 +23,19 @@ public class RecipeMap {
     private final IIngredientManager ingredientManager;
     private final Map<Object, Set<RecipeType<?>>> categoriesByIngredientUidMap = new HashMap<>();
     private final Map<Object, Set<RecipeType<?>>> categoriesByCatalystUidMap = new HashMap<>();
-    private final Map<RecipeType<?>, Map<Object, List<Buildable<?>>>> ingredientUidToRecipes = new HashMap<>();
+    private final Map<RecipeType<?>, Map<Object, List<JEIUpdatableRecipe<?>>>> ingredientUidToRecipes = new HashMap<>();
 
     public RecipeMap(RecipeIngredientRole role, IIngredientManager ingredientManager) {
         this.role = role;
         this.ingredientManager = ingredientManager;
     }
 
-    public <T, R extends Buildable<T>> void addRecipe(RecipeType<T> type, R recipe, ITypedIngredient<?> ingredient) {
+    public <V> void registerCategoryCatalyst(ITypedIngredient<V> catalyst, RecipeType<?> type) {
+        var uid = ingredientManager.getIngredientHelper(catalyst.getType()).getUid(catalyst, UidContext.Recipe);
+        categoriesByCatalystUidMap.computeIfAbsent(uid, i -> new HashSet<>()).add(type);
+    }
+
+    public <R extends JEIUpdatableRecipe<?>> void addRecipe(RecipeType<R> type, R recipe, ITypedIngredient<?> ingredient) {
         var uid = getIngredientUid(ingredient);
         var map = ingredientUidToRecipes.computeIfAbsent(type, i -> new HashMap<>());
         map.computeIfAbsent(uid, i -> new ArrayList<>()).add(recipe);
@@ -38,7 +43,7 @@ public class RecipeMap {
     }
 
     @SuppressWarnings("Convert2Diamond")
-    public <R extends Buildable<T>, T> void addRecipe(RecipeType<T> type, R recipe, IIngredientSupplier ingredientSupplier) {
+    public <R extends JEIUpdatableRecipe<?>> void addRecipe(RecipeType<R> type, R recipe, IIngredientSupplier ingredientSupplier) {
         var ingredients = ingredientSupplier.getIngredients(role);
         var uids = new HashSet<Object>();
         for (var ingredient : ingredients) {
@@ -67,14 +72,13 @@ public class RecipeMap {
         return Stream.concat(categories.stream(), catalystCategories.stream()).toList();
     }
 
-    @SuppressWarnings("unchecked")
-    public <T, V> Stream<Buildable<T>> getPossibleRecipes(RecipeType<T> recipeType, ITypedIngredient<V> ingredient) {
+    public <T, V> Stream<JEIUpdatableRecipe<?>> getPossibleRecipes(RecipeType<T> recipeType, ITypedIngredient<V> ingredient) {
         var ingredientUid = getIngredientUid(ingredient);
         var map = ingredientUidToRecipes.get(recipeType);
         if (map == null) return Stream.of();
         var list = map.get(ingredientUid);
         if (list == null) return Stream.of();
-        return list.stream().map(s -> (Buildable<T>) s);
+        return list.stream();
     }
 
     public boolean isCatalystForCategory(RecipeType<?> recipeType, ITypedIngredient<?> ingredient) {
