@@ -4,6 +4,6 @@ import de.dasbabypixel.gamestages.common.addons.item.datadriven.settings.Compile
 import org.jspecify.annotations.NullMarked;
 
 @NullMarked
-public record VCompiledItemStackRestrictionEntrySettings(
-        VCompiledHiddenName hiddenName) implements CompiledItemStackRestrictionEntrySettings {
+public record VCompiledItemStackRestrictionEntrySettings(VCompiledHiddenName hiddenName,
+                                                         VCompiledJEIConfig jeiConfig) implements CompiledItemStackRestrictionEntrySettings {
 }

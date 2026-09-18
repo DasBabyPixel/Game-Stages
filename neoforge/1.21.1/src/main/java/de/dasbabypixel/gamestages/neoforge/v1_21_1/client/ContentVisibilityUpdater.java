@@ -37,10 +37,12 @@ public abstract class ContentVisibilityUpdater<WrapperData, RawData, Entry exten
         var collector = new Collector();
         preCollect();
         collect(stages, compileIndex, collector);
+        postCollect();
         {
             var byRaw = new HashMap<RawData, WrapperData>();
             for (var rawData : collector.dataSet) {
                 var relevantPredicates = List.copyOf(Objects.requireNonNull(collector.affectedByDataMap.get(rawData)));
+                assert relevantPredicates != null;
                 var wrapper = createWrapper(rawData, relevantPredicates);
                 byRaw.put(rawData, wrapper);
             }
@@ -65,7 +67,9 @@ public abstract class ContentVisibilityUpdater<WrapperData, RawData, Entry exten
         if (!invisible.isEmpty()) {
             var toShow = new HashSet<>(invisible);
             invisible.clear();
-            show(List.copyOf(toShow));
+            var show = List.copyOf(toShow);
+            assert show != null;
+            show(show);
         }
 
         update(toSet(collector.dataSet));
@@ -90,7 +94,7 @@ public abstract class ContentVisibilityUpdater<WrapperData, RawData, Entry exten
     public void viewerStartup() {
         // Full reload. All are assumed visible again for the viewer, so we need to re-hide all invisible
         if (!invisible.isEmpty()) {
-            hide(List.copyOf(invisible));
+            hide(Objects.requireNonNull(List.copyOf(invisible)));
         }
     }
 

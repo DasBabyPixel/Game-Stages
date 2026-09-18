@@ -25,7 +25,7 @@ public final class CommonRecipeRestrictionEntry extends AbstractRecipeRestrictio
 
     @Override
     public PreCompiled compile(ManagerCompilerTask task) {
-        return new PreCompiled(this, predicate(), (CommonRecipeCollection) targetRecipes(), hideInJEI());
+        return new PreCompiled(predicate(), (CommonRecipeCollection) targetRecipes(), hideInJEI(), origin());
     }
 
     public record Compiled(CommonRecipeCollection gameContent, PreCompiled preCompiled,
@@ -33,9 +33,9 @@ public final class CommonRecipeRestrictionEntry extends AbstractRecipeRestrictio
                            boolean hideInJEI) implements CompiledRestrictionEntry<Compiled, PreCompiled> {
     }
 
-    public record PreCompiled(CommonRecipeRestrictionEntry entry, PreparedRestrictionPredicate predicate,
-                              CommonRecipeCollection gameContent,
-                              boolean hideInJEI) implements RestrictionEntry.PreCompiled<PreCompiled, Compiled> {
+    public record PreCompiled(PreparedRestrictionPredicate predicate, CommonRecipeCollection gameContent,
+                              boolean hideInJEI,
+                              RestrictionEntryOrigin origin) implements RestrictionEntry.PreCompiled<PreCompiled, Compiled> {
         @Override
         public Compiled compile(PlayerCompilationTask task) {
             return new Compiled(gameContent, this, task.predicateCompiler().compile(predicate), hideInJEI);

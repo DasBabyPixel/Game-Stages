@@ -17,7 +17,6 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import mezz.jei.library.gui.recipes.OutputSlotTooltipCallback;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -153,12 +152,16 @@ public class SieveCategory<T extends SieveRecipe> implements IRecipeCategory<JEI
                 ClientXeiUtil.renderItemWithAsterisk(graphics, ingredient);
                 RenderSystem.disableDepthTest();
             }
-
         }
 
-        public List<Component> getTooltip(ItemStack ingredient, TooltipFlag tooltipFlag) {
-            Minecraft minecraft = Minecraft.getInstance();
-            Player player = minecraft.player;
+        @SuppressWarnings("removal")
+        @Override
+        public List<Component> getTooltip(ItemStack itemStack, TooltipFlag tooltipFlag) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public List<Component> getTooltip(ItemStack ingredient, Item.TooltipContext tooltipContext, @Nullable Player player, TooltipFlag tooltipFlag) {
             return ingredient.getTooltipLines(Item.TooltipContext.EMPTY, player, tooltipFlag);
         }
     }

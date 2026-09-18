@@ -24,8 +24,6 @@ public interface RestrictionEntry<T extends RestrictionEntry<T, P, C>, P extends
     }
 
     interface PreCompiled<P extends RestrictionEntry.PreCompiled<P, C>, C extends CompiledRestrictionEntry<C, P>> extends CompilableResource<PlayerCompilationTask, C> {
-        RestrictionEntry<?, P, C> entry();
-
         TypedGameContent gameContent();
 
         CustomPacket createPacket(ServerGameStageManager manager);
@@ -33,8 +31,6 @@ public interface RestrictionEntry<T extends RestrictionEntry<T, P, C>, P extends
         @Override
         C compile(PlayerCompilationTask playerCompilationTask);
 
-        default RestrictionEntryOrigin origin() {
-            return entry().origin();
-        }
+        RestrictionEntryOrigin origin();
     }
 }

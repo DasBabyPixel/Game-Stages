@@ -17,6 +17,7 @@ import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Implements;
 import org.spongepowered.asm.mixin.Interface;
@@ -25,7 +26,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-import javax.annotation.Nullable;
 import java.util.Optional;
 
 @NullMarked
@@ -45,12 +45,8 @@ public class MCCraftingMenuMixin {
     @Shadow
     private ResultContainer resultSlots;
 
-    public void stages$refresh() {
-        this.access.execute((p_344363_, p_344364_) -> slotChangedCraftingGrid((CraftingMenu) (Object) this, p_344363_, this.player, this.craftSlots, this.resultSlots, null));
-    }
-
     @Shadow
-    protected static void slotChangedCraftingGrid(AbstractContainerMenu menu, Level level, Player player, CraftingContainer craftSlots, ResultContainer resultSlots, @Nullable RecipeHolder<CraftingRecipe> recipe) {
+    public static void slotChangedCraftingGrid(AbstractContainerMenu menu, @Nullable Level level, Player player, CraftingContainer craftSlots, ResultContainer resultSlots, @Nullable RecipeHolder<CraftingRecipe> recipe) {
         throw new UnsupportedOperationException();
     }
 
@@ -64,5 +60,9 @@ public class MCCraftingMenuMixin {
         } finally {
             recipes.clearStages();
         }
+    }
+
+    public void stages$refresh() {
+        this.access.execute((p_344363_, p_344364_) -> slotChangedCraftingGrid((CraftingMenu) (Object) this, p_344363_, this.player, this.craftSlots, this.resultSlots, null));
     }
 }

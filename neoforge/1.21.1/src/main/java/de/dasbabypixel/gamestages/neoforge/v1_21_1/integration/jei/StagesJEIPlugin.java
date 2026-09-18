@@ -19,7 +19,6 @@ import mezz.jei.api.registration.IRuntimeRegistration;
 import mezz.jei.api.registration.ISubtypeRegistration;
 import mezz.jei.api.registration.IVanillaCategoryExtensionRegistration;
 import mezz.jei.api.runtime.IJeiRuntime;
-import mezz.jei.api.runtime.config.IJeiConfigManager;
 import net.minecraft.resources.ResourceLocation;
 import org.jspecify.annotations.NullMarked;
 
@@ -28,6 +27,10 @@ import org.jspecify.annotations.NullMarked;
 public class StagesJEIPlugin implements IModPlugin {
     static {
         NeoAddonManager.registerAddon("jei", () -> JEIAddon.ADDON);
+    }
+
+    public static void initAddons() {
+        JEIIntegration.INIT_JEI_SUPPORT_EVENT.call(new JEIIntegration.InitJEISupportEvent());
     }
 
     @Override
@@ -101,15 +104,7 @@ public class StagesJEIPlugin implements IModPlugin {
     }
 
     @Override
-    public void onConfigManagerAvailable(IJeiConfigManager configManager) {
-    }
-
-    @Override
     public ResourceLocation getPluginUid() {
         return CommonVGameStageMod.location("game_stages");
-    }
-
-    public static void initAddons() {
-        JEIIntegration.INIT_JEI_SUPPORT_EVENT.call(new JEIIntegration.InitJEISupportEvent());
     }
 }

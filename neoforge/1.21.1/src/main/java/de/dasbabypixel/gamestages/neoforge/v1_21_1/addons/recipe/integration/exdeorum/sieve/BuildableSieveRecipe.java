@@ -9,7 +9,7 @@ import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.ingredients.subtypes.UidContext;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.runtime.IIngredientManager;
-import mezz.jei.library.ingredients.TypedIngredient;
+import mezz.jei.common.ingredients.TypedIngredient;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -188,12 +188,13 @@ public class BuildableSieveRecipe<T extends SieveRecipe> implements IIngredientS
             }
             return l;
         } else if (role == RecipeIngredientRole.CATALYST) {
-            return List.of(Objects.requireNonNull(TypedIngredient.createAndFilterInvalid(ingredientManager, VanillaTypes.ITEM_STACK, mesh, true)));
+            ITypedIngredient<ItemStack> ingredient = Objects.requireNonNull(TypedIngredient.createAndFilterInvalid(ingredientManager, VanillaTypes.ITEM_STACK, mesh, true));
+            return List.of(ingredient);
         } else if (role == RecipeIngredientRole.INPUT) {
             var l = new ArrayList<ITypedIngredient<?>>();
             for (var item : ingredient.getItems()) {
-                var i = Objects.requireNonNull(TypedIngredient.createAndFilterInvalid(ingredientManager, VanillaTypes.ITEM_STACK, item, true));
-                l.add(i);
+                var ingredient = Objects.requireNonNull(TypedIngredient.createAndFilterInvalid(ingredientManager, VanillaTypes.ITEM_STACK, item, true));
+                l.add(ingredient);
             }
             return l;
         }

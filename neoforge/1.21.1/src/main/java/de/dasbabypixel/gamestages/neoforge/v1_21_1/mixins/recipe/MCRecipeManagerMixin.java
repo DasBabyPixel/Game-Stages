@@ -14,11 +14,23 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 @NullMarked
 @Mixin(RecipeManager.class)
 public class MCRecipeManagerMixin {
+    @Redirect(method = "getRecipesFor", at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;filter(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;"))
+    private <H extends RecipeHolder<T>, T extends Recipe<I>, I extends RecipeInput> Stream<H> getRecipesFor(Stream<H> instance, Predicate<? super H> predicate) {
+        var recipes = RecipeThreadLocal.get();
+        var stages = recipes.stagesOrRecord();
+        return instance.filter(recipeHolder -> {
+            var entry = VRecipeAddon.getEntry(stages, recipeHolder);
+            if (entry == null) return true;
+            return entry.predicate().test();
+        }).filter(predicate);
+    }
+
     @Redirect(method = "getRecipeFor(Lnet/minecraft/world/item/crafting/RecipeType;Lnet/minecraft/world/item/crafting/RecipeInput;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/crafting/RecipeHolder;)Ljava/util/Optional;", at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;findFirst()Ljava/util/Optional;"))
     private <T extends RecipeHolder<H>, H extends Recipe<?>> Optional<T> getRecipeFor(Stream<T> stream) {
         var recipes = RecipeThreadLocal.get();

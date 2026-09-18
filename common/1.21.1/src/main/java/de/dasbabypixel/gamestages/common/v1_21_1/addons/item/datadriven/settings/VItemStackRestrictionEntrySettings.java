@@ -12,17 +12,33 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public final class VItemStackRestrictionEntrySettings implements ItemStackRestrictionEntrySettings {
     public static final CompilableAttribute<ServerMutableGameStageManager, VItemStackRestrictionEntrySettings, ServerGameStageManager> DEFAULT_SETTINGS_ATTRIBUTE = CompilableAttribute.noop();
-    public static final StreamCodec<ByteBuf, VItemStackRestrictionEntrySettings> STREAM_CODEC = StreamCodec.composite(VHiddenName.STREAM_CODEC, VItemStackRestrictionEntrySettings::hiddenName, VItemStackRestrictionEntrySettings::new);
+    public static final StreamCodec<ByteBuf, VItemStackRestrictionEntrySettings> STREAM_CODEC = StreamCodec.composite(VHiddenName.STREAM_CODEC, VItemStackRestrictionEntrySettings::hiddenName, VJEIConfig.STREAM_CODEC, VItemStackRestrictionEntrySettings::jeiConfig, VItemStackRestrictionEntrySettings::new);
     public static final VItemStackRestrictionEntrySettings DEFAULT_SETTINGS = createFreshDefaults();
     private final VHiddenName hiddenName;
+    private final VJEIConfig jeiConfig;
 
-    public VItemStackRestrictionEntrySettings(VHiddenName hiddenName) {
+    public VItemStackRestrictionEntrySettings(VHiddenName hiddenName, VJEIConfig jeiConfig) {
         this.hiddenName = hiddenName;
+        this.jeiConfig = jeiConfig;
+    }
+
+    private static VItemStackRestrictionEntrySettings createFreshDefaults() {
+        var hiddenName = new VHiddenName(new VHiddenName.FunctionReference("builtin:default"), true);
+        var jeiConfig = new VJEIConfig(true);
+        return new VItemStackRestrictionEntrySettings(hiddenName, jeiConfig);
+    }
+
+    public static VItemStackRestrictionEntrySettings create(ServerMutableGameStageManager manager) {
+        return manager.get(DEFAULT_SETTINGS_ATTRIBUTE).copy();
     }
 
     @Override
     public VCompiledItemStackRestrictionEntrySettings compile(CompilerData compilerData) {
-        return new VCompiledItemStackRestrictionEntrySettings(hiddenName.compile(compilerData));
+        return new VCompiledItemStackRestrictionEntrySettings(hiddenName.compile(compilerData), jeiConfig.compile(compilerData));
+    }
+
+    public VJEIConfig jeiConfig() {
+        return jeiConfig;
     }
 
     public VHiddenName hiddenName() {
@@ -30,15 +46,6 @@ public final class VItemStackRestrictionEntrySettings implements ItemStackRestri
     }
 
     public VItemStackRestrictionEntrySettings copy() {
-        return new VItemStackRestrictionEntrySettings(hiddenName.copy());
-    }
-
-    private static VItemStackRestrictionEntrySettings createFreshDefaults() {
-        var hiddenName = new VHiddenName(new VHiddenName.FunctionReference("builtin:default"), true);
-        return new VItemStackRestrictionEntrySettings(hiddenName);
-    }
-
-    public static VItemStackRestrictionEntrySettings create(ServerMutableGameStageManager manager) {
-        return manager.get(DEFAULT_SETTINGS_ATTRIBUTE).copy();
+        return new VItemStackRestrictionEntrySettings(hiddenName.copy(), jeiConfig.copy());
     }
 }

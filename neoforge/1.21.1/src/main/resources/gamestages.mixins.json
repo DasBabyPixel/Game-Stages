@@ -21,6 +21,9 @@
     "recipe.MCInventoryMenuMixin",
     "recipe.MCRecipeCacheMixin",
     "recipe.MCRecipeManagerMixin",
+    "recipe.MCSmithingMenuMixin",
+    "recipe.MCStonecutterMenuMixin",
+    "recipe.integration.exdeorum.EDSieveLogicMixin",
     "recipe.integration.jei.JEIBookmarkListMixin",
     "recipe.integration.jei.JEIBookmarkOverlayMixin",
     "sourcetracking.MCEntityTypeMixin"

@@ -3,6 +3,7 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.item;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenTypedData;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenTypes;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonProbeJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.item.jsapi.ItemStackRestrictionEntryJS;
 import moe.wolfgirl.probejs.plugin.builtins.alias.RecordTypes;
 import moe.wolfgirl.probejs.plugin.builtins.alias.RegistryTypes;
 import moe.wolfgirl.probejs.plugin.builtins.alias.SpecialTypes;
@@ -50,11 +51,11 @@ public class ItemProbeJS implements NeoAddonProbeJS {
                 switch (type.type()) {
                     case "sequential" -> {
                         builder.param("values", clazz(DataDrivenTypedData.class));
-                        builder.param("else", clazz(ItemKJS.RegisteredItemStackEntries.Entry.class));
+                        builder.param("else", clazz(ItemStackRestrictionEntryJS.class));
                     }
                     case "predicate" -> {
                         builder.param("condition", Types.OBJECT);
-                        builder.param("return", clazz(ItemKJS.RegisteredItemStackEntries.Entry.class));
+                        builder.param("return", clazz(ItemStackRestrictionEntryJS.class));
                     }
                     default -> skip.setPlain(true);
                 }

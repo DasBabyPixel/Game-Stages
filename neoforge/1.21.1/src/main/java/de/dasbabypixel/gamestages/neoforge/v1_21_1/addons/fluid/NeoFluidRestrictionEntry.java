@@ -23,7 +23,7 @@ public class NeoFluidRestrictionEntry extends CommonFluidRestrictionEntry<NeoFlu
 
     @Override
     public PreCompiled compile(ManagerCompilerTask task) {
-        return new PreCompiled(this, predicate(), (CommonFluidCollection) targetFluids(), hideInJEI());
+        return new PreCompiled(predicate(), (CommonFluidCollection) targetFluids(), hideInJEI(), origin());
     }
 
     public record Compiled(PreCompiled preCompiled, CommonFluidCollection gameContent,
@@ -31,9 +31,9 @@ public class NeoFluidRestrictionEntry extends CommonFluidRestrictionEntry<NeoFlu
                            boolean hideInJEI) implements CompiledRestrictionEntry<Compiled, PreCompiled> {
     }
 
-    public record PreCompiled(NeoFluidRestrictionEntry entry, PreparedRestrictionPredicate predicate,
-                              CommonFluidCollection gameContent,
-                              boolean hideInJEI) implements RestrictionEntry.PreCompiled<PreCompiled, Compiled> {
+    public record PreCompiled(PreparedRestrictionPredicate predicate, CommonFluidCollection gameContent,
+                              boolean hideInJEI,
+                              RestrictionEntryOrigin origin) implements RestrictionEntry.PreCompiled<PreCompiled, Compiled> {
         @Override
         public Compiled compile(PlayerCompilationTask task) {
             return new Compiled(this, gameContent, task.predicateCompiler().compile(predicate), hideInJEI);

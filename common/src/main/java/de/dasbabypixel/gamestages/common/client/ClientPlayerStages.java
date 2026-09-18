@@ -1,5 +1,6 @@
 package de.dasbabypixel.gamestages.common.client;
 
+import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.addon.Addon.ClientPostSyncUnlockedStagesEvent;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.GameStage;
@@ -44,5 +45,7 @@ public class ClientPlayerStages extends BaseStages {
         LOGGER.info("Syncing unlocked stages took {}ms", TimeUnit.NANOSECONDS.toMillis(took));
         // TODO do we need to test eagerly?
         CLIENT_POST_SYNC_UNLOCKED_STAGES_EVENT.call(new ClientPostSyncUnlockedStagesEvent(this));
+
+        CommonInstances.platformPlayerProvider.refreshMenu(Objects.requireNonNull(CommonInstances.platformPlayerProvider.clientSelfPlayer()));
     }
 }

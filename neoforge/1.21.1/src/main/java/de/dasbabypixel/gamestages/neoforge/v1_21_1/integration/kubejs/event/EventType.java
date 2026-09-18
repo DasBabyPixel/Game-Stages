@@ -9,6 +9,7 @@ import dev.latvian.mods.rhino.type.TypeInfo;
 import dev.latvian.mods.rhino.util.HideFromJS;
 import net.minecraft.util.Unit;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Array;
@@ -31,6 +32,10 @@ public final class EventType<Event extends EventJSBase<Event>> {
     public EventType(Class<? extends Event> cls) {
         this.cls = cls;
         this.type = Objects.requireNonNull(TypeInfo.of(cls));
+    }
+
+    private static <E extends EventJSBase<E>> EventJSBase.ContextFunction<E, Unit> wrap(EventJSBase.Function<E> function) {
+        return (event, cx, unused, args) -> function.invoke(event, cx, args);
     }
 
     @HideFromJS
@@ -105,9 +110,12 @@ public final class EventType<Event extends EventJSBase<Event>> {
             varArgArrayType = array;
         } else varArgArrayType = null;
         var invoker = new BaseFunction() {
+            @NullUnmarked
             @SuppressWarnings("unchecked")
             @Override
             public @Nullable Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                Objects.requireNonNull(cx);
+                Objects.requireNonNull(args);
                 if (varArgs) {
                     var newArgs = new Object[parameters.length];
                     for (var i = 0; i < parameters.length - 1; i++) {
@@ -125,7 +133,8 @@ public final class EventType<Event extends EventJSBase<Event>> {
                     args = newArgs;
                 } else {
                     for (var i = 0; i < args.length; i++) {
-                        args[i] = Objects.requireNonNull(cx.jsToJava(args[i], Objects.requireNonNull(parameters[i])
+                        args[i] = Objects.requireNonNull(cx.jsToJava(args[i], Objects
+                                .requireNonNull(parameters[i])
                                 .jsType()));
                     }
                 }
@@ -157,10 +166,6 @@ public final class EventType<Event extends EventJSBase<Event>> {
 
     public List<PreEventExecutor<Event>> postExecutors() {
         return postExecutors;
-    }
-
-    private static <E extends EventJSBase<E>> EventJSBase.ContextFunction<E, Unit> wrap(EventJSBase.Function<E> function) {
-        return (event, cx, unused, args) -> function.invoke(event, cx, args);
     }
 
     public interface PreEventExecutor<Event extends EventJSBase<Event>> {

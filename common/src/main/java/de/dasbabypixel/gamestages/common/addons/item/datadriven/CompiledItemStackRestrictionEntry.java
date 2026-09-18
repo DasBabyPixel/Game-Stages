@@ -6,8 +6,6 @@ import org.jspecify.annotations.NullMarked;
 
 @NullMarked
 public interface CompiledItemStackRestrictionEntry {
-    ItemStackRestrictionEntry entry();
-
     CompiledItemStackRestrictionEntrySettings settings();
 
     CompiledRestrictionPredicate predicate();

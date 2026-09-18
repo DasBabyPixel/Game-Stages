@@ -5,7 +5,7 @@ plugins {
 }
 
 loaderVersionBase.minecraftVersionRange.addAll(listOf("1.21", "1.21.1"))
-loaderVersionNeo.neoVersion = "21.1.230"
+loaderVersionNeo.neoVersion = "21.1.250"
 loaderVersionNeo.parchment("1.21.1", "2024.11.17")
 
 neoForge {
@@ -40,20 +40,21 @@ dependencies {
 
     implementation("curse.maven:kubejs-238086:8083208")
     implementation("curse.maven:rhino-416294:7104526")
-//    implementation("curse.maven:probejs-585406:7105159")
-    implementation("curse.maven:probejs-585406:8122173")
-    implementation("curse.maven:jei-238222:7420587")
+//    implementation("curse.maven:probejs-585406:8122173")
+    implementation("curse.maven:probejs-585406:8304356")
+    implementation("curse.maven:jei-238222:8895652")
 //    compileOnly("mezz.jei:jei-1.21.1-neoforge-api:$jeiVersion")
 //    runtimeOnly("mezz.jei:jei-1.21.1-neoforge:$jeiVersion")
-    implementation("curse.maven:jade-324717:6853386")
-    implementation("curse.maven:sodium-394468:6382651")
-    implementation("curse.maven:sodium-extra-447673:5913377")
-    implementation("curse.maven:reeses-sodium-options-511319:6091021")
-    implementation("curse.maven:borderless-378979:6577897")
-    implementation("curse.maven:ftb-quests-forge-289412:6975870")
-    implementation("curse.maven:ftb-library-forge-404465:6975628")
-    implementation("curse.maven:architectury-api-419699:5786327")
-    implementation("curse.maven:ftb-xmod-compat-889915:6979171")
-    implementation("curse.maven:ftb-teams-forge-404468:6930910")
-    implementation("curse.maven:ex-deorum-901420:7160864")
+    compileOnly("curse.maven:jade-324717:6853386")
+    implementation("curse.maven:sodium-394468:8756580")
+    implementation("curse.maven:sodium-extra-447673:8892306")
+//    implementation("curse.maven:reeses-sodium-options-511319:8891797")
+    compileOnly("curse.maven:borderless-378979:6577897")
+    compileOnly("curse.maven:ftb-quests-forge-289412:6975870")
+    compileOnly("curse.maven:ftb-library-forge-404465:6975628")
+    compileOnly("curse.maven:architectury-api-419699:5786327")
+    compileOnly("curse.maven:ftb-xmod-compat-889915:6979171")
+    compileOnly("curse.maven:ftb-teams-forge-404468:6930910")
+    compileOnly("curse.maven:ex-deorum-901420:7160864")
+    compileOnly("curse.maven:polymorph-388800:8849478")
 }

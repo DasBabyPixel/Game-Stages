@@ -2,6 +2,7 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.entity;
 
 import de.dasbabypixel.gamestages.common.entity.ClientPlayer;
 import de.dasbabypixel.gamestages.common.entity.PlatformPlayerProvider;
+import de.dasbabypixel.gamestages.common.entity.Player;
 import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.StageRefreshableMenu;
 import net.minecraft.client.Minecraft;
@@ -34,8 +35,8 @@ public class PlatformPlayerProviderImpl implements PlatformPlayerProvider {
     }
 
     @Override
-    public void refreshMenu(ServerPlayer player) {
-        var p = ((net.minecraft.server.level.ServerPlayer) player);
+    public void refreshMenu(Player player) {
+        var p = ((net.minecraft.world.entity.player.Player) player);
         var menu = p.containerMenu;
         if (menu instanceof StageRefreshableMenu r) {
             r.refresh();

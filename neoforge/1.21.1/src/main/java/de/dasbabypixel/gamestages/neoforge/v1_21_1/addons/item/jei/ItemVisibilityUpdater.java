@@ -41,6 +41,7 @@ public class ItemVisibilityUpdater extends ContentVisibilityUpdater<ItemVisibili
             var resolved = resolver.resolveRestrictionEntry(item);
 
             if (resolved != null) {
+                resolved.settings();
                 var predicate = resolved.predicate();
                 collector.add(predicate, item);
             }

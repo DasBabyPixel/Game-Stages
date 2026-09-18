@@ -23,7 +23,6 @@ val prepareComponents = tasks.register<Sync>("prepareComponents") {
     })
     into(temporaryDir)
 
-    configureProcessResources()
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 tasks.processResources {

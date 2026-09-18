@@ -20,18 +20,12 @@ import java.util.Optional;
 public class MCAbstractFurnaceBlockEntityMixin {
     @Redirect(method = "serverTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/crafting/RecipeManager$CachedCheck;getRecipeFor(Lnet/minecraft/world/item/crafting/RecipeInput;Lnet/minecraft/world/level/Level;)Ljava/util/Optional;"))
     private static <T extends Recipe<I>, I extends RecipeInput> Optional<RecipeHolder<T>> stages$serverTick(RecipeManager.CachedCheck<I, T> instance, I i, Level level, @Local(argsOnly = true) AbstractFurnaceBlockEntity blockEntity) {
-        var stages = blockEntity.stages();
-        if (stages != null) {
-            // TODO replace with scoped values
-            var l = RecipeThreadLocal.get();
-            l.stages(stages);
-            try {
-                return instance.getRecipeFor(i, level);
-            } finally {
-                l.clearStages();
-            }
+        var l = RecipeThreadLocal.get();
+        l.stages(blockEntity.stages());
+        try {
+            return instance.getRecipeFor(i, level);
+        } finally {
+            l.clearStages();
         }
-        // TODO multiple similar recipes could be registered, this just returns one at random...
-        return instance.getRecipeFor(i, level);
     }
 }
