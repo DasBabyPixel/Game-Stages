@@ -12,6 +12,7 @@ import de.dasbabypixel.gamestages.neoforge.integration.Mods;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.ReloadHandler;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.entity.IBlockEntity;
 import dev.latvian.mods.kubejs.core.ReloadableServerResourcesKJS;
+import dev.latvian.mods.kubejs.script.ConsoleJS;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -42,16 +43,16 @@ public class StagesCommand {
         // @formatter:off
         cmd.then(Commands.literal("add")
                 .then(Commands.argument("target", EntityArgument.players())
-                        .then(Commands.argument("stage", new StageArgumentType(true))
-                                .suggests(StageArgumentType.suggestMissingPlayers("target"))
+                        .then(Commands.argument("stage", new StagesArgumentType(true))
+                                .suggests(StagesArgumentType.suggestMissingPlayers("target"))
                                 .executes(StagesCommand::addTargetStage)
                         )
                 )
         );
         cmd.then(Commands.literal("remove")
                 .then(Commands.argument("target", EntityArgument.players())
-                        .then(Commands.argument("stage", new StageArgumentType(false))
-                                .suggests(StageArgumentType.suggestExistingPlayers("target"))
+                        .then(Commands.argument("stage", new StagesArgumentType(false))
+                                .suggests(StagesArgumentType.suggestExistingPlayers("target"))
                                 .executes(StagesCommand::removeTargetStage)
                         )
                 )
@@ -89,15 +90,38 @@ public class StagesCommand {
         var server = ctx.getSource().getServer();
         var time1 = System.nanoTime();
         if (Mods.KUBEJS.isLoaded()) {
-            var scriptManager = Objects.requireNonNull(((ReloadableServerResourcesKJS) server.getServerResources()
+            var scriptManager = Objects.requireNonNull(((ReloadableServerResourcesKJS) server
+                    .getServerResources()
                     .managers()).kjs$getServerScriptManager());
+            ConsoleJS.SERVER.startCapturingErrors();
             scriptManager.reload();
+            if (!ConsoleJS.SERVER.errors.isEmpty()) {
+                ConsoleJS.SERVER.stopCapturingErrors();
+                ctx.getSource().sendFailure(ConsoleJS.SERVER.errorsComponent("/kubejs errors server"));
+                return 0;
+            }
         }
-        ReloadHandler.fullReload(server.getServerResources().managers(), server.registryAccess());
+        var result = ReloadHandler.fullReload(server.getServerResources().managers(), server.registryAccess(), true);
+        if (Mods.KUBEJS.isLoaded()) {
+            ConsoleJS.SERVER.stopCapturingErrors();
+            if (!ConsoleJS.SERVER.errors.isEmpty()) {
+                ctx.getSource().sendFailure(ConsoleJS.SERVER.errorsComponent("/kubejs errors server"));
+                return 0;
+            }
+        }
         var took = System.nanoTime() - time1;
-        ctx.getSource()
-                .sendSuccess(() -> Component.literal("Reload finished in " + TimeUnit.NANOSECONDS.toMillis(took) + "ms"), true);
-        return Command.SINGLE_SUCCESS;
+        switch (result) {
+            case ReloadHandler.ReloadResult.Failure ignored -> {
+                ctx.getSource().sendFailure(Component.literal("Reload failed"));
+                return 0;
+            }
+            case ReloadHandler.ReloadResult.Successful ignored -> {
+                ctx
+                        .getSource()
+                        .sendSuccess(() -> Component.literal("Reload finished in " + TimeUnit.NANOSECONDS.toMillis(took) + "ms"), true);
+                return Command.SINGLE_SUCCESS;
+            }
+        }
     }
 
     private static @Nullable BaseStages stagesOf(CommandSourceStack source) throws CommandSyntaxException {
@@ -128,8 +152,9 @@ public class StagesCommand {
         var player = Objects.requireNonNull(context.getSource().getPlayer());
         var stack = player.getItemInHand(InteractionHand.MAIN_HAND);
         var entry = VItemAddon.getEntry(player.getGameStages(), stack, stack);
-        var msg = entry == null ? "No restriction" : (entry.predicate().predicate() + " -> " + entry.predicate()
-                                                                                               .test());
+        var msg = entry == null ? "No restriction" : (entry.predicate().predicate() + " -> " + entry
+                .predicate()
+                .test());
         context.getSource().sendSuccess(() -> Component.literal(msg), true);
         return Command.SINGLE_SUCCESS;
     }
@@ -149,41 +174,43 @@ public class StagesCommand {
 
     private static int addTargetStage(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         var players = EntityArgument.getPlayers(context, "target");
-        var stage = StageArgumentType.getStage(context, "stage");
-        var cnt = 0;
-        for (var player : players) {
-            Objects.requireNonNull(player);
+        var stages = StagesArgumentType.getStage(context, "stage");
+        for (var stage : stages) {
             var time1 = System.nanoTime();
-            if (player.getGameStages().add(stage)) {
-                cnt++;
-                var took = System.nanoTime() - time1;
-                context.getSource()
-                        .sendSuccess(() -> Component.literal("Took " + TimeUnit.NANOSECONDS.toMicros(took) + "µs for " + player.getName()), true);
+            var cnt = 0;
+            for (var player : players) {
+                Objects.requireNonNull(player);
+                if (player.getGameStages().add(stage)) {
+                    cnt++;
+                }
             }
+            var fcnt = cnt;
+            var took = System.nanoTime() - time1;
+            context
+                    .getSource()
+                    .sendSuccess(() -> Component.literal("Added stage " + stage + " to " + fcnt + " players in " + TimeUnit.NANOSECONDS.toMicros(took) + "µs"), true);
         }
-        var fcnt = cnt;
-        context.getSource()
-                .sendSuccess(() -> Component.literal("Added stage " + stage + " to " + fcnt + " players"), true);
         return Command.SINGLE_SUCCESS;
     }
 
     private static int removeTargetStage(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         var players = EntityArgument.getPlayers(context, "target");
-        var stage = StageArgumentType.getStage(context, "stage");
-        var cnt = 0;
-        for (var player : players) {
-            Objects.requireNonNull(player);
+        var stages = StagesArgumentType.getStage(context, "stage");
+        for (var stage : stages) {
             var time1 = System.nanoTime();
-            if (player.getGameStages().remove(stage)) {
-                cnt++;
-                var took = System.nanoTime() - time1;
-                context.getSource()
-                        .sendSuccess(() -> Component.literal("Took " + TimeUnit.NANOSECONDS.toMicros(took) + "µs for " + player.getName()), true);
+            var cnt = 0;
+            for (var player : players) {
+                Objects.requireNonNull(player);
+                if (player.getGameStages().remove(stage)) {
+                    cnt++;
+                }
             }
+            var fcnt = cnt;
+            var took = System.nanoTime() - time1;
+            context
+                    .getSource()
+                    .sendSuccess(() -> Component.literal("Removed stage " + stage + " from " + fcnt + " players in " + TimeUnit.NANOSECONDS.toMicros(took) + "µs"), true);
         }
-        var fcnt = cnt;
-        context.getSource()
-                .sendSuccess(() -> Component.literal("Removed stage " + stage + " from " + fcnt + " players"), true);
         return Command.SINGLE_SUCCESS;
     }
 }

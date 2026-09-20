@@ -21,12 +21,14 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.neoforged.fml.loading.FMLEnvironment;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 
 @NullMarked
-public class StageArgumentType implements ArgumentType<StageArgumentType.Provider> {
+public class StagesArgumentType implements ArgumentType<StagesArgumentType.Provider> {
     public static final SuggestionProvider<CommandSourceStack> SUGGEST_ALL = (context, builder) -> {
         var manager = manager(context);
         return SharedSuggestionProvider.suggest(manager.gameStages().stream().map(GameStage::name), builder);
@@ -34,23 +36,8 @@ public class StageArgumentType implements ArgumentType<StageArgumentType.Provide
     private static final DynamicCommandExceptionType UNKNOWN_STAGE = new DynamicCommandExceptionType(arg1 -> Component.literal("Unknown stage: " + arg1));
     private final boolean enforceExistence;
 
-    public StageArgumentType(boolean enforceExistence) {
+    public StagesArgumentType(boolean enforceExistence) {
         this.enforceExistence = enforceExistence;
-    }
-
-    @Override
-    public Provider parse(StringReader reader) throws CommandSyntaxException {
-        var stageName = reader.readString();
-
-        return context -> {
-            var stage = new GameStage(stageName);
-            if (!enforceExistence) return stage;
-            var manager = manager(context);
-            if (manager.gameStages().contains(stage)) {
-                return stage;
-            }
-            throw UNKNOWN_STAGE.createWithContext(reader, stageName);
-        };
     }
 
     public static SuggestionProvider<CommandSourceStack> suggestMissingPlayers(String playersArgumentName) {
@@ -91,15 +78,50 @@ public class StageArgumentType implements ArgumentType<StageArgumentType.Provide
         }
     }
 
-    public static GameStage getStage(CommandContext<?> ctx, String name) throws CommandSyntaxException {
+    public static List<GameStage> getStage(CommandContext<?> ctx, String name) throws CommandSyntaxException {
         return Objects.requireNonNull(Objects.requireNonNull(ctx.getArgument(name, Provider.class)).getStage(ctx));
     }
 
-    public interface Provider {
-        GameStage getStage(CommandContext<?> context) throws CommandSyntaxException;
+    public static boolean isAllowedInUnquotedString(final char c) {
+        return c >= '0' && c <= '9' || c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c == '_' || c == '-' || c == '.' || c == '+' || c == '*';
     }
 
-    public static class Info implements ArgumentTypeInfo<StageArgumentType, Info.ITemplate> {
+    public String readUnquotedString(StringReader reader) {
+        final int start = reader.getCursor();
+        while (reader.canRead() && isAllowedInUnquotedString(reader.peek())) {
+            reader.skip();
+        }
+        return Objects.requireNonNull(reader.getString()).substring(start, reader.getCursor());
+    }
+
+    @Override
+    public Provider parse(@Nullable StringReader reader) throws CommandSyntaxException {
+        assert reader != null;
+        var stagePattern = readUnquotedString(reader);
+
+        return context -> {
+            if (stagePattern.endsWith("*")) {
+                var prefix = stagePattern.substring(0, stagePattern.length() - 1);
+                var manager = manager(context);
+                return List.copyOf(manager.gameStages().stream().filter(s -> s.name().startsWith(prefix)).toList());
+            } else {
+                var stage = new GameStage(stagePattern);
+                if (!enforceExistence) return List.of(stage);
+
+                var manager = manager(context);
+                if (manager.gameStages().contains(stage)) {
+                    return List.of(stage);
+                }
+            }
+            throw Objects.requireNonNull(UNKNOWN_STAGE.createWithContext(reader, stagePattern));
+        };
+    }
+
+    public interface Provider {
+        List<GameStage> getStage(CommandContext<?> context) throws CommandSyntaxException;
+    }
+
+    public static class Info implements ArgumentTypeInfo<StagesArgumentType, Info.ITemplate> {
         @Override
         public void serializeToNetwork(ITemplate iTemplate, FriendlyByteBuf friendlyByteBuf) {
             friendlyByteBuf.writeBoolean(iTemplate.enforceExistence);
@@ -116,11 +138,11 @@ public class StageArgumentType implements ArgumentType<StageArgumentType.Provide
         }
 
         @Override
-        public ITemplate unpack(StageArgumentType stageArgumentType) {
+        public ITemplate unpack(StagesArgumentType stageArgumentType) {
             return new ITemplate(stageArgumentType.enforceExistence);
         }
 
-        public class ITemplate implements ArgumentTypeInfo.Template<StageArgumentType> {
+        public class ITemplate implements ArgumentTypeInfo.Template<StagesArgumentType> {
             private final boolean enforceExistence;
 
             public ITemplate(boolean enforceExistence) {
@@ -128,12 +150,12 @@ public class StageArgumentType implements ArgumentType<StageArgumentType.Provide
             }
 
             @Override
-            public StageArgumentType instantiate(CommandBuildContext commandBuildContext) {
-                return new StageArgumentType(enforceExistence);
+            public StagesArgumentType instantiate(CommandBuildContext commandBuildContext) {
+                return new StagesArgumentType(enforceExistence);
             }
 
             @Override
-            public ArgumentTypeInfo<StageArgumentType, ?> type() {
+            public ArgumentTypeInfo<StagesArgumentType, ?> type() {
                 return Info.this;
             }
         }

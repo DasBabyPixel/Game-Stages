@@ -22,7 +22,7 @@ public class MCMinecraftServerMixin {
         future.thenRunAsync(() -> {
             var resources = Objects.requireNonNull(server).getServerResources().managers();
             var registryAccess = server.registryAccess();
-            ReloadHandler.fullReload(resources, registryAccess);
+            ReloadHandler.fullReload(resources, registryAccess, false);
         }, server);
     }
 }

@@ -30,7 +30,7 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.EventRegistryImpl;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.item.datadriven.NeoDataDrivenTypes;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.client.ClientReloadHandler;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.commands.StageArgumentType;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.commands.StagesArgumentType;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.commands.StagesCommand;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.config.GameStagesClientConfig;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.data.Attachments;
@@ -264,7 +264,7 @@ public class NeoForgeEntrypoint {
         });
         event.register(Registries.COMMAND_ARGUMENT_TYPE, registry -> {
             assert registry != null;
-            registry.register(location("stage"), ArgumentTypeInfos.registerByClass(StageArgumentType.class, new StageArgumentType.Info()));
+            registry.register(location("stage"), ArgumentTypeInfos.registerByClass(StagesArgumentType.class, new StagesArgumentType.Info()));
         });
     }
 
@@ -354,7 +354,7 @@ public class NeoForgeEntrypoint {
 
     private void handleServerAboutToStart(ServerAboutToStartEvent event) {
         var server = event.getServer();
-        ReloadHandler.fullReload(server.getServerResources().managers(), server.registryAccess());
+        ReloadHandler.fullReload(server.getServerResources().managers(), server.registryAccess(), false);
 
         var dataDirectory = Objects.requireNonNull(event.getServer().storageSource
                 .getLevelDirectory()

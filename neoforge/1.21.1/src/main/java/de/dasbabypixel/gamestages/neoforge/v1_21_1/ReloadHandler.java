@@ -13,6 +13,7 @@ import de.dasbabypixel.gamestages.neoforge.integration.Mods;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon.RegisterEventData;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.listener.KJSListeners;
+import dev.latvian.mods.kubejs.script.ConsoleJS;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
@@ -47,7 +48,7 @@ public class ReloadHandler {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, ReloadHandler::handlePlayerJoin);
     }
 
-    public static void fullReload(ReloadableServerResources serverResources, RegistryAccess registryAccess) {
+    public static ReloadResult fullReload(ReloadableServerResources serverResources, RegistryAccess registryAccess, boolean mayAbort) {
         var version = VERSION_COUNTER.incrementAndGet();
         PENDING_DUPLICATES.clear();
         INIT_RESOURCES_EVENT.call(new NeoAddon.InitResourcesEvent(serverResources, registryAccess));
@@ -62,6 +63,9 @@ public class ReloadHandler {
             BEFORE_REGISTER_EVENT.call(new RegisterEventData(manager));
             KJSListeners.postRegisterEvent(manager);
             AFTER_REGISTER_EVENT.call(new RegisterEventData(manager));
+            if (mayAbort && !ConsoleJS.SERVER.errors.isEmpty()) {
+                return new ReloadResult.Failure();
+            }
         }
 
         RELOAD_POST_EVENT.call(new ReloadPostEvent(manager));
@@ -84,6 +88,7 @@ public class ReloadHandler {
         }
         GlobalServerState.updateManager(immutableManager);
         pushFullUpdate(immutableManager);
+        return new ReloadResult.Successful();
     }
 
     private static void handlePlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
@@ -117,6 +122,14 @@ public class ReloadHandler {
         }
         if (GlobalServerState.initialized()) {
             GlobalServerState.state().stagesCache().recompileComposite(manager);
+        }
+    }
+
+    public sealed interface ReloadResult {
+        record Successful() implements ReloadResult {
+        }
+
+        record Failure() implements ReloadResult {
         }
     }
 }

@@ -1,6 +1,10 @@
 package de.dasbabypixel.gamestages.common.data.manager.mutable;
 
+import de.dasbabypixel.gamestages.common.CommonInstances;
+import de.dasbabypixel.gamestages.common.data.GameContent;
+import de.dasbabypixel.gamestages.common.data.GameContentType;
 import de.dasbabypixel.gamestages.common.data.GameStage;
+import de.dasbabypixel.gamestages.common.data.TypedGameContent;
 import de.dasbabypixel.gamestages.common.data.attribute.AbstractCompilableAttributeHolder;
 import de.dasbabypixel.gamestages.common.data.attribute.AttributeCompiler;
 import de.dasbabypixel.gamestages.common.data.attribute.CompilableAttribute;
@@ -14,8 +18,10 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -32,12 +38,14 @@ public abstract class SimpleMutableGameStageManager<H extends SimpleMutableGameS
         var compiler = builder.compiler().get(ManagerCompilerTask.ATTRIBUTE);
         return Objects.requireNonNull(Set.copyOf(compiler.preCompileIndex().preCompiledRestrictions()));
     });
+    private final Map<GameContentType<?>, List<TypedGameContent>> restrictedByType = new HashMap<>();
 
     public SimpleMutableGameStageManager() {
         init(GAME_STAGES, new HashSet<>());
         init(RESTRICTIONS, new ArrayList<>());
         init(LogicNG.MUTABLE_MANAGER_ATTRIBUTE, new LogicNG());
-        init(GameContentFlattener.Attribute.MUTABLE_MANAGER_ATTRIBUTE, Objects.requireNonNull(GameContentFlattener.Attribute.Factory.FACTORY)
+        init(GameContentFlattener.Attribute.MUTABLE_MANAGER_ATTRIBUTE, Objects
+                .requireNonNull(GameContentFlattener.Attribute.Factory.FACTORY)
                 .get());
     }
 
@@ -70,7 +78,16 @@ public abstract class SimpleMutableGameStageManager<H extends SimpleMutableGameS
 
     public <T extends RestrictionEntry<T, ?, ?>> T addRestriction(T restriction) {
         restrictions().add(restriction);
+        restrictedByType
+                .computeIfAbsent(restriction.gameContent().type(), ignored -> new ArrayList<>())
+                .add(restriction.gameContent());
         return restriction;
+    }
+
+    public GameContent restrictedContent(GameContentType<?> type) {
+        var list = restrictedByType.get(type);
+        if (list == null) return CommonInstances.gameContentProvider.emptyContent();
+        return CommonInstances.gameContentProvider.union(list);
     }
 
     public void addAll(Collection<? extends GameStage> gameStages) {

@@ -10,6 +10,7 @@ import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestric
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.ItemStackRestrictionEntryReference;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.data.SequentialData;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.data.ValueData;
+import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
@@ -75,6 +76,9 @@ public class ItemKJS implements NeoAddonKJS {
         type.addFunctionVarArgs("restrictItems", this::restrictItems, ItemCollectionWrapper.class, ItemsRestrictionEntryJS.class, PreparedRestrictionPredicate.class, ItemCollectionWrapper[].class);
         type.addFunction("registerItemStackEntry", this::registerItemStackEntry, ItemStackRestrictionEntryJS.class, PreparedRestrictionPredicate.class);
         type.addFunctionVarArgs("restrictItemStacks", this::restrictItemStacks, ItemCollectionWrapper.class, ItemStacksRestrictionEntryJS.class, dataDrivenTypedDataType, ItemCollectionWrapper[].class);
+        type.addFunction("restrictedItems", (event, cx, args) -> event
+                .stageManager()
+                .restrictedContent(CommonItemCollection.TYPE), GameContent.class);
     }
 
     private ItemStackRestrictionEntryJS registerItemStackEntry(ServerRegisterEventJS event, KubeJSContext cx, Object[] args) {
