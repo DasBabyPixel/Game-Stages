@@ -1,5 +1,7 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.mixins.recipe;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.StageRefreshableMenu;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.RecipeThreadLocal;
 import net.minecraft.world.Container;
@@ -23,7 +25,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
@@ -56,25 +57,25 @@ public abstract class MCStonecutterMenuMixin {
         setupRecipeList(container, input);
     }
 
-    @Redirect(method = "setupRecipeList", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/crafting/RecipeManager;getRecipesFor(Lnet/minecraft/world/item/crafting/RecipeType;Lnet/minecraft/world/item/crafting/RecipeInput;Lnet/minecraft/world/level/Level;)Ljava/util/List;"))
-    private <T extends Recipe<I>, I extends RecipeInput> List<RecipeHolder<T>> setupRecipeList(RecipeManager instance, RecipeType<T> recipeType, I input, Level level) {
+    @WrapOperation(method = "setupRecipeList", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/crafting/RecipeManager;getRecipesFor(Lnet/minecraft/world/item/crafting/RecipeType;Lnet/minecraft/world/item/crafting/RecipeInput;Lnet/minecraft/world/level/Level;)Ljava/util/List;"))
+    private <T extends Recipe<I>, I extends RecipeInput> List<RecipeHolder<T>> setupRecipeList(RecipeManager instance, RecipeType<T> recipeType, I input, Level level, Operation<List<RecipeHolder<T>>> original) {
         var recipes = RecipeThreadLocal.get();
-        recipes.stages(stages_recipe$player.getGameStages());
+        recipes.pushStages(stages_recipe$player.getGameStages());
         try {
-            return instance.getRecipesFor(recipeType, input, level);
+            return original.call(instance, recipeType, input, level);
         } finally {
-            recipes.clearStages();
+            recipes.popStages();
         }
     }
 
-    @Redirect(method = "quickMoveStack", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/crafting/RecipeManager;getRecipeFor(Lnet/minecraft/world/item/crafting/RecipeType;Lnet/minecraft/world/item/crafting/RecipeInput;Lnet/minecraft/world/level/Level;)Ljava/util/Optional;"))
-    private <T extends Recipe<I>, I extends RecipeInput> Optional<RecipeHolder<T>> quickMoveStack(RecipeManager instance, RecipeType<T> recipeType, I input, Level level) {
+    @WrapOperation(method = "quickMoveStack", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/crafting/RecipeManager;getRecipeFor(Lnet/minecraft/world/item/crafting/RecipeType;Lnet/minecraft/world/item/crafting/RecipeInput;Lnet/minecraft/world/level/Level;)Ljava/util/Optional;"))
+    private <T extends Recipe<I>, I extends RecipeInput> Optional<RecipeHolder<T>> quickMoveStack(RecipeManager instance, RecipeType<T> recipeType, I input, Level level, Operation<Optional<RecipeHolder<T>>> original) {
         var recipes = RecipeThreadLocal.get();
-        recipes.stages(stages_recipe$player.getGameStages());
+        recipes.pushStages(stages_recipe$player.getGameStages());
         try {
-            return instance.getRecipeFor(recipeType, input, level);
+            return original.call(instance, recipeType, input, level);
         } finally {
-            recipes.clearStages();
+            recipes.popStages();
         }
     }
 }

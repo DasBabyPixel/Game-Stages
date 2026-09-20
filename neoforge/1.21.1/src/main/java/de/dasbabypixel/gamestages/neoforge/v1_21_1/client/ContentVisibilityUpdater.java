@@ -1,10 +1,12 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.client;
 
 import de.dasbabypixel.gamestages.common.addon.Addon;
+import de.dasbabypixel.gamestages.common.addon.ClientEvents;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.GameContentType;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
+import net.neoforged.fml.util.thread.EffectiveSide;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
@@ -27,9 +29,17 @@ public abstract class ContentVisibilityUpdater<WrapperData, RawData, Entry exten
     public ContentVisibilityUpdater(GameContentType<?> type) {
         this.type = type;
         Addon.CLIENT_RECOMPILE_POST_EVENT.addListener(this::postRecompile);
+        ClientEvents.CLIENT_DISABLE.addListener(this::onDisable);
+    }
+
+    private void onDisable(ClientEvents.ClientDisableEvent event) {
+        invisible.clear();
+        wrapperByRawMap = Map.of();
+        affectedByPredicateMap = Map.of();
     }
 
     private void postRecompile(Addon.ClientRecompilePostEvent event) {
+        if (!Objects.requireNonNull(EffectiveSide.get()).isClient()) throw new IllegalStateException();
         var stages = event.stages();
 
         var compileIndex = stages.get(BaseStages.CompileIndex.ATTRIBUTE);
@@ -41,9 +51,7 @@ public abstract class ContentVisibilityUpdater<WrapperData, RawData, Entry exten
         {
             var byRaw = new HashMap<RawData, WrapperData>();
             for (var rawData : collector.dataSet) {
-                var relevantPredicates = List.copyOf(Objects.requireNonNull(collector.affectedByDataMap.get(rawData)));
-                assert relevantPredicates != null;
-                var wrapper = createWrapper(rawData, relevantPredicates);
+                var wrapper = createWrapper(rawData, List.copyOf(Objects.requireNonNull(collector.affectedByDataMap.get(rawData))));
                 byRaw.put(rawData, wrapper);
             }
             wrapperByRawMap = Map.copyOf(byRaw);
@@ -67,9 +75,7 @@ public abstract class ContentVisibilityUpdater<WrapperData, RawData, Entry exten
         if (!invisible.isEmpty()) {
             var toShow = new HashSet<>(invisible);
             invisible.clear();
-            var show = List.copyOf(toShow);
-            assert show != null;
-            show(show);
+            show(List.copyOf(toShow));
         }
 
         update(toSet(collector.dataSet));
@@ -92,6 +98,7 @@ public abstract class ContentVisibilityUpdater<WrapperData, RawData, Entry exten
     }
 
     public void viewerStartup() {
+        if (!Objects.requireNonNull(EffectiveSide.get()).isClient()) throw new IllegalStateException();
         // Full reload. All are assumed visible again for the viewer, so we need to re-hide all invisible
         if (!invisible.isEmpty()) {
             hide(Objects.requireNonNull(List.copyOf(invisible)));

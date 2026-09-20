@@ -1,5 +1,7 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.mixins.recipe;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.VRecipeAddon;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.RecipeThreadLocal;
@@ -17,7 +19,6 @@ import org.jspecify.annotations.NullMarked;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Optional;
@@ -26,16 +27,16 @@ import java.util.Optional;
 @Mixin(CrafterBlock.class)
 public class MCCrafterBlockMixin {
     @SuppressWarnings("UnnecessaryLocalVariable")
-    @Redirect(method = "dispenseFrom", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/CrafterBlock;getPotentialResults(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/crafting/CraftingInput;)Ljava/util/Optional;"))
-    private Optional<RecipeHolder<CraftingRecipe>> getPotentialResults(Level level, CraftingInput input, @Local CrafterBlockEntity crafter) {
+    @WrapOperation(method = "dispenseFrom", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/CrafterBlock;getPotentialResults(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/crafting/CraftingInput;)Ljava/util/Optional;"))
+    private Optional<RecipeHolder<CraftingRecipe>> getPotentialResults(Level level, CraftingInput input, Operation<Optional<RecipeHolder<CraftingRecipe>>> original, @Local CrafterBlockEntity crafter) {
         IBlockEntity be = crafter;
         var stages = be.stages();
         var recipes = RecipeThreadLocal.get();
-        recipes.stages(stages);
+        recipes.pushStages(stages);
         try {
-            return CrafterBlock.getPotentialResults(level, input);
+            return original.call(level, input);
         } finally {
-            recipes.clearStages();
+            recipes.popStages();
         }
     }
 

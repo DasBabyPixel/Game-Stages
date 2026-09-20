@@ -1,5 +1,7 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.mixins.recipe;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.StageRefreshableMenu;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.RecipeThreadLocal;
 import net.minecraft.world.entity.player.Inventory;
@@ -20,7 +22,6 @@ import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.List;
 
@@ -39,14 +40,14 @@ public abstract class MCSmithingMenuMixin extends ItemCombinerMenu {
         createResult();
     }
 
-    @Redirect(method = "createResult", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/crafting/RecipeManager;getRecipesFor(Lnet/minecraft/world/item/crafting/RecipeType;Lnet/minecraft/world/item/crafting/RecipeInput;Lnet/minecraft/world/level/Level;)Ljava/util/List;"))
-    private <T extends Recipe<I>, I extends RecipeInput> List<RecipeHolder<T>> createResult(RecipeManager instance, RecipeType<T> recipeType, I input, Level level) {
+    @WrapOperation(method = "createResult", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/crafting/RecipeManager;getRecipesFor(Lnet/minecraft/world/item/crafting/RecipeType;Lnet/minecraft/world/item/crafting/RecipeInput;Lnet/minecraft/world/level/Level;)Ljava/util/List;"))
+    private <T extends Recipe<I>, I extends RecipeInput> List<RecipeHolder<T>> createResult(RecipeManager instance, RecipeType<T> recipeType, I input, Level level, Operation<List<RecipeHolder<T>>> original) {
         var recipes = RecipeThreadLocal.get();
-        recipes.stages(player.getGameStages());
+        recipes.pushStages(player.getGameStages());
         try {
-            return instance.getRecipesFor(recipeType, input, level);
+            return original.call(instance, recipeType, input, level);
         } finally {
-            recipes.clearStages();
+            recipes.popStages();
         }
     }
 }

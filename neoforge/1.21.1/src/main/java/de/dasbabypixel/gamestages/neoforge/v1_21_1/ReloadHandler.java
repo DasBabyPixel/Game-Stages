@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static de.dasbabypixel.gamestages.common.addon.Addon.RELOAD_POST_EVENT;
@@ -38,7 +39,7 @@ import static de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon.INIT_RE
 
 @NullMarked
 public class ReloadHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ReloadHandler.class);
+    private static final Logger LOGGER = Objects.requireNonNull(LoggerFactory.getLogger(ReloadHandler.class));
     private static final List<String> PENDING_DUPLICATES = new ArrayList<>();
     private static final AtomicInteger VERSION_COUNTER = new AtomicInteger();
 

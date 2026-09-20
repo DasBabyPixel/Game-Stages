@@ -1,5 +1,7 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.mixins.recipe;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.StageRefreshableMenu;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.RecipeThreadLocal;
@@ -24,7 +26,6 @@ import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.Optional;
 
@@ -50,15 +51,15 @@ public class MCCraftingMenuMixin {
         throw new UnsupportedOperationException();
     }
 
-    @Redirect(method = "slotChangedCraftingGrid", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/crafting/RecipeManager;getRecipeFor(Lnet/minecraft/world/item/crafting/RecipeType;Lnet/minecraft/world/item/crafting/RecipeInput;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/crafting/RecipeHolder;)Ljava/util/Optional;"))
-    private static <T extends Recipe<RecipeInput>, I extends RecipeInput> Optional<RecipeHolder<T>> getRecipeForRedirect(RecipeManager instance, RecipeType<T> recipeType, I input, Level level, RecipeHolder<T> lastRecipe, @Local(argsOnly = true) Player player) {
+    @WrapOperation(method = "slotChangedCraftingGrid", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/crafting/RecipeManager;getRecipeFor(Lnet/minecraft/world/item/crafting/RecipeType;Lnet/minecraft/world/item/crafting/RecipeInput;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/crafting/RecipeHolder;)Ljava/util/Optional;"))
+    private static <T extends Recipe<RecipeInput>, I extends RecipeInput> Optional<RecipeHolder<T>> getRecipeForWrap(RecipeManager instance, RecipeType<T> recipeType, I input, Level level, RecipeHolder<T> lastRecipe, Operation<Optional<RecipeHolder<T>>> original, @Local(argsOnly = true) Player player) {
         var stages = player.getGameStages();
         var recipes = RecipeThreadLocal.get();
-        recipes.stages(stages);
+        recipes.pushStages(stages);
         try {
-            return instance.getRecipeFor(recipeType, input, level, lastRecipe);
+            return original.call(instance, recipeType, input, level, lastRecipe);
         } finally {
-            recipes.clearStages();
+            recipes.popStages();
         }
     }
 

@@ -52,7 +52,7 @@ public abstract class MCBlockEntityMixin implements IBlockEntity {
     }
 
     public @Nullable BaseStages stages$stages() {
-        if (level.isClientSide)
+        if (level != null && level.isClientSide)
             throw new UnsupportedOperationException("Accessing BlockEntity stages from the client not supported");
         return stages$stages;
     }

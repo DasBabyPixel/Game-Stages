@@ -2,6 +2,7 @@ package de.dasbabypixel.gamestages.common.data.manager.immutable;
 
 import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.addon.Addon;
+import de.dasbabypixel.gamestages.common.addon.ClientEvents;
 import de.dasbabypixel.gamestages.common.client.ClientPlayerStages;
 import de.dasbabypixel.gamestages.common.data.attribute.AttributeEntry;
 import org.jspecify.annotations.NullMarked;
@@ -26,10 +27,12 @@ public final class ClientGameStageManager extends AbstractGameStageManager<Clien
     public static void activate() {
         if (active) throw new IllegalStateException();
         active = true;
+        ClientEvents.CLIENT_ENABLE.call(new ClientEvents.ClientEnableEvent());
     }
 
     public static void deactivate() {
         if (!active) throw new IllegalStateException();
+        ClientEvents.CLIENT_DISABLE.call(new ClientEvents.ClientDisableEvent());
         active = false;
         if (currentManager != null) {
             Addon.CLIENT_REPLACE_MANAGER_EVENT.call(new Addon.ClientReplaceManagerEvent(currentManager, null));

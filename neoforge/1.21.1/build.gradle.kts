@@ -18,18 +18,19 @@ neoForge {
     }
 }
 
+//neoForge {
+//    runs.configureEach {
+//        this.logLevel = org.slf4j.event.Level.DEBUG
+//    }
+//}
+
 tasks.named<RunGameTask>("runServer") {
     gameDirectory.set(file("run/server"))
 }
 
 repositories {
-    maven("https://maven.blamejared.com/") {
-        // location of the maven that hosts JEI files since January 2023
-        name = "Jared's maven"
-    }
-    maven("https://modmaven.dev") {
-        // location of a maven mirror for JEI files, as a fallback
-        name = "ModMaven"
+    maven("https://reposilite.dasbabypixel.de/gamestages") {
+        name = "gamestages"
     }
 }
 
@@ -40,21 +41,24 @@ dependencies {
 
     implementation("curse.maven:kubejs-238086:8083208")
     implementation("curse.maven:rhino-416294:7104526")
-//    implementation("curse.maven:probejs-585406:8122173")
     implementation("curse.maven:probejs-585406:8304356")
     implementation("curse.maven:jei-238222:8895652")
 //    compileOnly("mezz.jei:jei-1.21.1-neoforge-api:$jeiVersion")
 //    runtimeOnly("mezz.jei:jei-1.21.1-neoforge:$jeiVersion")
     compileOnly("curse.maven:jade-324717:6853386")
-    implementation("curse.maven:sodium-394468:8756580")
-    implementation("curse.maven:sodium-extra-447673:8892306")
-//    implementation("curse.maven:reeses-sodium-options-511319:8891797")
-    compileOnly("curse.maven:borderless-378979:6577897")
-    compileOnly("curse.maven:ftb-quests-forge-289412:6975870")
-    compileOnly("curse.maven:ftb-library-forge-404465:6975628")
-    compileOnly("curse.maven:architectury-api-419699:5786327")
-    compileOnly("curse.maven:ftb-xmod-compat-889915:6979171")
-    compileOnly("curse.maven:ftb-teams-forge-404468:6930910")
-    compileOnly("curse.maven:ex-deorum-901420:7160864")
-    compileOnly("curse.maven:polymorph-388800:8849478")
+
+    implementation("curse.maven:sodium-394468:6382651")
+    implementation("curse.maven:sodium-extra-447673:5913377")
+    implementation("curse.maven:reeses-sodium-options-511319:6091021")
+    implementation("curse.maven:borderless-378979:6577897")
+    implementation("curse.maven:ftb-quests-forge-289412:6975870")
+    implementation("curse.maven:ftb-library-forge-404465:6975628")
+    implementation("curse.maven:architectury-api-419699:5786327")
+    implementation("curse.maven:ftb-xmod-compat-889915:6979171")
+    implementation("curse.maven:ftb-teams-forge-404468:6930910")
+    implementation("curse.maven:ex-deorum-901420:7160864")
+    implementation("curse.maven:polymorph-388800:6794589")
+
+//    implementation("curse.maven:placebo-283644:8463693")
+//    implementation("curse.maven:fastworkbench-288885:6751534")
 }

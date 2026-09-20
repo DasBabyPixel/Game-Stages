@@ -96,8 +96,6 @@ public class SieveCategory<T extends SieveRecipe> implements IRecipeCategory<JEI
         builder.addSlot(RecipeIngredientRole.INPUT, 59, 1).addIngredients(recipe.ingredient());
         builder.addSlot(RecipeIngredientRole.CATALYST, 87, 1).addItemStack(recipe.mesh());
 
-        System.out.println("Setup recipes " + recipe);
-
         var results = recipe.results();
         for (int i = 0; i < results.size(); i++) {
             var result = results.get(i);

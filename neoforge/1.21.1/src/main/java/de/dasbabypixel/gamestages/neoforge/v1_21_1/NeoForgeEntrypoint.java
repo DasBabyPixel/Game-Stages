@@ -88,14 +88,15 @@ import static de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod.loca
 @NullMarked
 public class NeoForgeEntrypoint {
     public static final Logger LOGGER = LoggerFactory.getLogger(NeoForgeEntrypoint.class);
-    public static final Registry<CommonGameContentType<?>> GAME_CONTENT_TYPE_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonGameContentType.REGISTRY_KEY).sync(true)
+    public static final Registry<CommonGameContentType<?>> GAME_CONTENT_TYPE_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonGameContentType.REGISTRY_KEY)
+            .sync(true)
             .create();
-    public static final Registry<RestrictionPredicateSerializer<?>> RESTRICTION_PREDICATE_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonCodecs.RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY).sync(true)
+    public static final Registry<RestrictionPredicateSerializer<?>> RESTRICTION_PREDICATE_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonCodecs.RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY)
+            .sync(true)
             .create();
-    public static final Registry<PreparedRestrictionPredicateSerializer<?>> PREPARED_RESTRICTION_PREDICATE_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonCodecs.PREPARED_RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY).sync(true)
+    public static final Registry<PreparedRestrictionPredicateSerializer<?>> PREPARED_RESTRICTION_PREDICATE_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonCodecs.PREPARED_RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY)
+            .sync(true)
             .create();
-    private boolean addonsFrozen = false;
-    private @Nullable ContentRegistryImpl contentRegistry;
 
     static {
         CommonInstances.platformPacketDistributor = new PlatformPacketDistributorImpl();
@@ -105,6 +106,9 @@ public class NeoForgeEntrypoint {
 
         CommonVGameStageMod.init();
     }
+
+    private boolean addonsFrozen = false;
+    private @Nullable ContentRegistryImpl contentRegistry;
 
     public NeoForgeEntrypoint(ModContainer container, IEventBus modBus) {
         modBus.addListener(NeoNetworkHandler::register);
@@ -138,8 +142,9 @@ public class NeoForgeEntrypoint {
             public String toString(Ingredient ingredient) {
                 if (ingredient.isCustom()) {
                     var c = Objects.requireNonNull(ingredient.getCustomIngredient());
-                    return Objects.requireNonNull(NeoForgeRegistries.INGREDIENT_TYPES)
-                            .getKey(c.getType()) + "[" + c.getItems().toList() + "]";
+                    return Objects.requireNonNull(NeoForgeRegistries.INGREDIENT_TYPES).getKey(c.getType()) + "[" + c
+                            .getItems()
+                            .toList() + "]";
                 } else {
                     return Arrays.toString(ingredient.getValues());
                 }
@@ -159,8 +164,9 @@ public class NeoForgeEntrypoint {
 
         NeoAddonManager.init();
         InterModComms.getMessages(BuildConstants.MOD_ID, "register_addon"::equals).forEach(msg -> {
-            var r = (NeoAddonManager.Registration) Objects.requireNonNull(Objects.requireNonNull(Objects.requireNonNull(msg)
-                    .messageSupplier()).get());
+            var r = (NeoAddonManager.Registration) Objects.requireNonNull(Objects
+                    .requireNonNull(Objects.requireNonNull(msg).messageSupplier())
+                    .get());
             NeoAddonManager.instance().addAddon(Objects.requireNonNull(r.id()), Objects.requireNonNull(r.addon()));
         });
         NeoAddonManager.done();
@@ -347,15 +353,19 @@ public class NeoForgeEntrypoint {
     }
 
     private void handleServerAboutToStart(ServerAboutToStartEvent event) {
-    }
-
-    private void handleServerStarted(ServerStartedEvent event) {
         var server = event.getServer();
         ReloadHandler.fullReload(server.getServerResources().managers(), server.registryAccess());
-        var dataDirectory = Objects.requireNonNull(event.getServer().storageSource.getLevelDirectory()
+
+        var dataDirectory = Objects.requireNonNull(event.getServer().storageSource
+                .getLevelDirectory()
                 .path()
                 .resolve("gamestages"));
         GlobalServerState.init(dataDirectory);
+    }
+
+    private void handleServerStarted(ServerStartedEvent event) {
+//        var server = event.getServer();
+//        ReloadHandler.fullReload(server.getServerResources().managers(), server.registryAccess());
     }
 
     private void handleServerStopped(ServerStoppedEvent event) {
