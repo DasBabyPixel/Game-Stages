@@ -2,7 +2,6 @@ package de.dasbabypixel.gamestages.common.v1_21_1.addons.item;
 
 import de.dasbabypixel.gamestages.common.addons.item.AbstractItemRestrictionEntry;
 import de.dasbabypixel.gamestages.common.addons.item.ItemAddon;
-import de.dasbabypixel.gamestages.common.addons.item.ItemCollection;
 import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolver;
 import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolverFactories;
 import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolverFactory;
@@ -22,8 +21,8 @@ import org.jspecify.annotations.NullMarked;
 public final class CommonItemRestrictionEntry extends AbstractItemRestrictionEntry<CommonItemRestrictionEntry, CommonItemRestrictionEntry.PreCompiled, CommonItemRestrictionEntry.Compiled> {
     private final DataDrivenNetwork.NetworkData<?> dataDrivenNetworkData;
 
-    public CommonItemRestrictionEntry(RestrictionEntryOrigin origin, ItemCollection targetItems, DataDrivenNetwork.NetworkData<?> dataDrivenNetworkData) {
-        super(origin, targetItems);
+    public CommonItemRestrictionEntry(RestrictionEntryOrigin origin, ItemContentWrapper gameContent, DataDrivenNetwork.NetworkData<?> dataDrivenNetworkData) {
+        super(origin, gameContent);
         this.dataDrivenNetworkData = dataDrivenNetworkData;
     }
 
@@ -32,8 +31,13 @@ public final class CommonItemRestrictionEntry extends AbstractItemRestrictionEnt
     }
 
     @Override
+    public ItemContentWrapper gameContent() {
+        return (ItemContentWrapper) super.gameContent();
+    }
+
+    @Override
     public PreCompiled compile(ManagerCompilerTask task) {
-        var items = (CommonItemCollection) targetItems();
+        var items = gameContent();
         var preCompiledItemStackResolver = precompileItemStackResolver(task);
         return new PreCompiled(items, preCompiledItemStackResolver, origin(), dataDrivenNetworkData());
     }
@@ -54,12 +58,12 @@ public final class CommonItemRestrictionEntry extends AbstractItemRestrictionEnt
     public record Compiled(PreCompiled preCompiled,
                            ItemStackRestrictionResolver resolver) implements CompiledRestrictionEntry<Compiled, PreCompiled> {
         @Override
-        public CommonItemCollection gameContent() {
+        public ItemContentWrapper gameContent() {
             return preCompiled().gameContent();
         }
     }
 
-    public record PreCompiled(CommonItemCollection gameContent,
+    public record PreCompiled(ItemContentWrapper gameContent,
                               ItemStackRestrictionResolverFactory.PreCompiled preCompiledItemStack,
                               RestrictionEntryOrigin origin,
                               DataDrivenNetwork.NetworkData<?> dataDrivenData) implements RestrictionEntry.PreCompiled<PreCompiled, Compiled> {

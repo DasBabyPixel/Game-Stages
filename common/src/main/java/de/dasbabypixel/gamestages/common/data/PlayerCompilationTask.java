@@ -1,5 +1,6 @@
 package de.dasbabypixel.gamestages.common.data;
 
+import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.data.attribute.SimpleAttributeHolder;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.PreCompileIndex;
@@ -31,6 +32,7 @@ public class PlayerCompilationTask extends SimpleAttributeHolder<PlayerCompilati
         this.stages = stages;
         this.manager = manager;
         this.predicateCompiler = new RestrictionPredicateCompiler(stages, manager);
+        this.init(GameContentFlattener.PLAYER_COMPILATION_ATTRIBUTE, new GameContentFlattenerImpl());
     }
 
     public AbstractGameStageManager<?> manager() {
@@ -60,8 +62,10 @@ public class PlayerCompilationTask extends SimpleAttributeHolder<PlayerCompilati
 
     private CompiledEntries compileEntries() {
         var preCompileIndex = manager.get(PreCompileIndex.ATTRIBUTE);
-        var typeIndexMap = new HashMap<GameContentType<?>, BaseStages.MutableTypeIndex>();
-        for (var type : GameContentType.TYPES) {
+        var typeIndexMap = new HashMap<GameContentRegistry.Entry<?, ?, ?, ?>, BaseStages.MutableTypeIndex>();
+        var flattener = get(GameContentFlattener.PLAYER_COMPILATION_ATTRIBUTE);
+
+        for (var type : CommonInstances.gameContentRegistry.entries()) {
             typeIndexMap.put(type, new BaseStages.MutableTypeIndex(type));
         }
         var compiledRestrictionEntries = new ArrayList<CompiledRestrictionEntry<?, ?>>();
@@ -69,22 +73,23 @@ public class PlayerCompilationTask extends SimpleAttributeHolder<PlayerCompilati
             var compiledEntry = restriction.compile(this);
 
             compiledRestrictionEntries.add(compiledEntry);
-            var type = restriction.gameContent().type();
-            var typeIndex = Objects.requireNonNull(typeIndexMap.get(type));
-            var contentList = Objects.requireNonNull(List.<Object>copyOf(compiledEntry.gameContent()
-                    .contentCollection()));
-            typeIndex.contentListByEntry().put(compiledEntry, contentList);
-            for (var content : contentList) {
-                if (typeIndex.entryByContent().containsKey(content)) throw new IllegalStateException();
-                typeIndex.entryByContent().put(content, compiledEntry);
+            var gameContentSimple = flattener.flatten(restriction.gameContent());
+            for (var entry : gameContentSimple.entries()) {
+                var typeIndex = Objects.requireNonNull(typeIndexMap.get(entry.typeEntry()));
+                var contentList = List.<Object>copyOf(entry.contentCollection());
+                typeIndex.contentListByEntry().put(compiledEntry, contentList);
+                for (var content : contentList) {
+                    if (typeIndex.entryByContent().containsKey(content)) throw new IllegalStateException();
+                    typeIndex.entryByContent().put(content, compiledEntry);
+                }
             }
 
             COMPILE_POST_EVENT.call(new CompilePostEvent(this, compiledEntry));
         }
-        var typeIndexMapC = new HashMap<GameContentType<?>, BaseStages.TypeIndex>();
+        var typeIndexMapC = new HashMap<GameContentRegistry.Entry<?, ?, ?, ?>, BaseStages.TypeIndex>();
         for (var index : typeIndexMap.values()) {
             var t = index.compile();
-            typeIndexMapC.put(t.type(), t);
+            typeIndexMapC.put(t.typeEntry(), t);
         }
         return new CompiledEntries(compiledRestrictionEntries, typeIndexMapC);
     }
@@ -99,6 +104,6 @@ public class PlayerCompilationTask extends SimpleAttributeHolder<PlayerCompilati
     }
 
     private record CompiledEntries(List<CompiledRestrictionEntry<?, ?>> compiledRestrictionEntries,
-                                   Map<GameContentType<?>, BaseStages.TypeIndex> typeIndexMap) {
+                                   Map<GameContentRegistry.Entry<?, ?, ?, ?>, BaseStages.TypeIndex> typeIndexMap) {
     }
 }

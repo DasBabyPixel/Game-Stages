@@ -13,18 +13,19 @@ import static net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8;
 
 @NullMarked
 public record CommonRecipeRestrictionPacket(PreparedRestrictionPredicate predicate,
-                                            CommonRecipeCollection targetCollection,
+                                            RecipeContentWrapper targetCollection,
                                             String origin) implements GameStagesPacket {
     public static final Type<CommonRecipeRestrictionPacket> TYPE = new Type<>(CommonVGameStageMod.location("recipe_restriction"));
     public static final StreamCodec<RegistryFriendlyByteBuf, CommonRecipeRestrictionPacket> STREAM_CODEC = StreamCodec.ofMember(CommonRecipeRestrictionPacket::encode, CommonRecipeRestrictionPacket::new);
+    private static final StreamCodec<? super RegistryFriendlyByteBuf, RecipeContentWrapper> STREAM_CODEC_DIRECT = CommonVGameStageMod.directStreamCodec(RecipeType.get(), RecipeContentWrapper::new, RecipeContentWrapper::gameContent);
 
     public CommonRecipeRestrictionPacket(RegistryFriendlyByteBuf byteBuf) {
-        this(PREPARED_RESTRICTION_PREDICATE_STREAM_CODEC.decode(byteBuf), CommonRecipeCollection.STREAM_CODEC.decode(byteBuf), STRING_UTF8.decode(byteBuf));
+        this(PREPARED_RESTRICTION_PREDICATE_STREAM_CODEC.decode(byteBuf), STREAM_CODEC_DIRECT.decode(byteBuf), STRING_UTF8.decode(byteBuf));
     }
 
     public void encode(RegistryFriendlyByteBuf byteBuf) {
         PREPARED_RESTRICTION_PREDICATE_STREAM_CODEC.encode(byteBuf, predicate);
-        CommonRecipeCollection.STREAM_CODEC.encode(byteBuf, targetCollection);
+        STREAM_CODEC_DIRECT.encode(byteBuf, targetCollection);
         STRING_UTF8.encode(byteBuf, origin);
     }
 

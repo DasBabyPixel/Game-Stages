@@ -2,6 +2,7 @@ package de.dasbabypixel.gamestages.common.addon;
 
 import de.dasbabypixel.gamestages.common.client.ClientPlayerStages;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
+import de.dasbabypixel.gamestages.common.data.GameContentRegistry;
 import de.dasbabypixel.gamestages.common.data.GameContentType;
 import de.dasbabypixel.gamestages.common.data.PlayerCompilationTask;
 import de.dasbabypixel.gamestages.common.data.attribute.CompilableAttributeHolder;
@@ -51,7 +52,7 @@ public interface Addon {
     /**
      * Called during initialization to register custom {@link GameContentType GameContentTypes}
      */
-    record RegisterCustomContentEvent(ContentRegistry contentRegistry) {
+    record RegisterCustomContentEvent(GameContentRegistry.Builder contentRegistry) {
     }
 
     /**
@@ -95,15 +96,15 @@ public interface Addon {
                                CompilableAttributeHolder.CompiledAttributesBuilder<? extends SimpleMutableGameStageManager<?, ?>, ? extends AbstractGameStageManager<?>> builder) {
     }
 
-    record PreCompileTypeEvent(ManagerCompilerTask task, GameContentType<?> type) {
+    record PreCompileTypeEvent(ManagerCompilerTask task, GameContentRegistry.Entry<?, ?, ?, ?> typeEntry) {
     }
 
-    record PostCompileTypeEvent(ManagerCompilerTask task, GameContentType<?> type) {
+    record PostCompileTypeEvent(ManagerCompilerTask task, GameContentRegistry.Entry<?, ?, ?, ?> typeEntry) {
     }
 
     record PreCompilePrepareEvent(ManagerCompilerTask task,
-                                  Map<GameContentType<?>, List<GameContentType<?>>> evaluationDependencies) {
-        public void addEvaluationDependency(GameContentType<?> content, GameContentType<?> dependency) {
+                                  Map<GameContentRegistry.Entry<?, ?, ?, ?>, List<GameContentRegistry.Entry<?, ?, ?, ?>>> evaluationDependencies) {
+        public void addEvaluationDependency(GameContentRegistry.Entry<?, ?, ?, ?> content, GameContentRegistry.Entry<?, ?, ?, ?> dependency) {
             evaluationDependencies.computeIfAbsent(content, ignored -> new ArrayList<>()).add(dependency);
         }
     }

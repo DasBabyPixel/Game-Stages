@@ -2,8 +2,8 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.item.jei;
 
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
-import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemCollection;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemRestrictionEntry;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.ItemType;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.client.ContentVisibilityUpdater;
 import mezz.jei.api.constants.VanillaTypes;
 import net.minecraft.core.Holder;
@@ -21,7 +21,7 @@ public class ItemVisibilityUpdater extends ContentVisibilityUpdater<ItemVisibili
     private final ItemJEI itemJEI;
 
     public ItemVisibilityUpdater(ItemJEI itemJEI) {
-        super(CommonItemCollection.TYPE);
+        super(ItemType.get());
         this.itemJEI = itemJEI;
     }
 
@@ -32,7 +32,7 @@ public class ItemVisibilityUpdater extends ContentVisibilityUpdater<ItemVisibili
 
     @Override
     protected void collect(BaseStages stages, BaseStages.CompileIndex compileIndex, CommonItemRestrictionEntry.Compiled compiled, Collector collector) {
-        var itemSet = compiled.gameContent().items();
+        var itemSet = compiled.gameContent().gameContent().elements();
         var resolver = compiled.resolver();
 
         List<ItemStack> items = getItems(itemSet);

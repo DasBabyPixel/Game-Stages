@@ -1,7 +1,6 @@
 package de.dasbabypixel.gamestages.common.data.manager.mutable.compiler;
 
-import de.dasbabypixel.gamestages.common.data.GameContentType;
-import de.dasbabypixel.gamestages.common.data.TypedGameContent;
+import de.dasbabypixel.gamestages.common.data.GameContentRegistry;
 import de.dasbabypixel.gamestages.common.data.attribute.SimpleAttribute;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.PreCompileIndex;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.TypeIndex;
@@ -19,10 +18,10 @@ public final class MutablePreCompileIndex {
     public static final SimpleAttribute<ManagerCompilerTask, MutablePreCompileIndex> ATTRIBUTE = new SimpleAttribute<>();
 
     private final Set<RestrictionEntry.PreCompiled<?, ?>> entries = new HashSet<>();
-    private final Map<GameContentType<?>, MutableTypeIndex<?>> typeIndexMap = new HashMap<>();
+    private final Map<GameContentRegistry.Entry<?, ?, ?, ?>, MutableTypeIndex> typeIndexMap = new HashMap<>();
 
     public PreCompileIndex compile() {
-        var typeIndexMap = new HashMap<GameContentType<?>, TypeIndex>();
+        var typeIndexMap = new HashMap<GameContentRegistry.Entry<?, ?, ?, ?>, TypeIndex>();
         for (var entry : this.typeIndexMap.entrySet()) {
             Objects.requireNonNull(entry);
             typeIndexMap.put(entry.getKey(), entry.getValue().compile());
@@ -34,12 +33,11 @@ public final class MutablePreCompileIndex {
         return entries;
     }
 
-    @SuppressWarnings("unchecked")
-    public <Type extends TypedGameContent> MutableTypeIndex<Type> typeIndex(GameContentType<Type> type) {
-        return (MutableTypeIndex<Type>) typeIndexMap.computeIfAbsent(type, ignored -> new MutableTypeIndex<>());
+    public MutableTypeIndex typeIndex(GameContentRegistry.Entry<?, ?, ?, ?> type) {
+        return typeIndexMap.computeIfAbsent(type, ignored -> new MutableTypeIndex());
     }
 
-    public Map<GameContentType<?>, MutableTypeIndex<?>> typeIndexMap() {
+    public Map<GameContentRegistry.Entry<?, ?, ?, ?>, MutableTypeIndex> typeIndexMap() {
         return typeIndexMap;
     }
 }

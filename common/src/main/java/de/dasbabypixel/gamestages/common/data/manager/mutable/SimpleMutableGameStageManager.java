@@ -1,14 +1,15 @@
 package de.dasbabypixel.gamestages.common.data.manager.mutable;
 
-import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.data.GameContent;
-import de.dasbabypixel.gamestages.common.data.GameContentType;
+import de.dasbabypixel.gamestages.common.data.GameContentFlattener;
+import de.dasbabypixel.gamestages.common.data.GameContentFlattenerImpl;
+import de.dasbabypixel.gamestages.common.data.GameContentRegistry;
+import de.dasbabypixel.gamestages.common.data.GameContentUnion;
 import de.dasbabypixel.gamestages.common.data.GameStage;
 import de.dasbabypixel.gamestages.common.data.TypedGameContent;
 import de.dasbabypixel.gamestages.common.data.attribute.AbstractCompilableAttributeHolder;
 import de.dasbabypixel.gamestages.common.data.attribute.AttributeCompiler;
 import de.dasbabypixel.gamestages.common.data.attribute.CompilableAttribute;
-import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.data.logicng.LogicNG;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.manager.mutable.compiler.ManagerCompilerTask;
@@ -38,15 +39,13 @@ public abstract class SimpleMutableGameStageManager<H extends SimpleMutableGameS
         var compiler = builder.compiler().get(ManagerCompilerTask.ATTRIBUTE);
         return Objects.requireNonNull(Set.copyOf(compiler.preCompileIndex().preCompiledRestrictions()));
     });
-    private final Map<GameContentType<?>, List<TypedGameContent>> restrictedByType = new HashMap<>();
+    private final Map<GameContentRegistry.Entry<?, ?, ?, ?>, List<TypedGameContent<?, ?, ?>>> restrictedByType = new HashMap<>();
 
     public SimpleMutableGameStageManager() {
         init(GAME_STAGES, new HashSet<>());
         init(RESTRICTIONS, new ArrayList<>());
         init(LogicNG.MUTABLE_MANAGER_ATTRIBUTE, new LogicNG());
-        init(GameContentFlattener.Attribute.MUTABLE_MANAGER_ATTRIBUTE, Objects
-                .requireNonNull(GameContentFlattener.Attribute.Factory.FACTORY)
-                .get());
+        init(GameContentFlattener.MUTABLE_MANAGER_ATTRIBUTE, new GameContentFlattenerImpl());
     }
 
     @Override
@@ -78,16 +77,18 @@ public abstract class SimpleMutableGameStageManager<H extends SimpleMutableGameS
 
     public <T extends RestrictionEntry<T, ?, ?>> T addRestriction(T restriction) {
         restrictions().add(restriction);
-        restrictedByType
-                .computeIfAbsent(restriction.gameContent().type(), ignored -> new ArrayList<>())
-                .add(restriction.gameContent());
+        var flattener = get(GameContentFlattener.MUTABLE_MANAGER_ATTRIBUTE);
+        var simple = flattener.flatten(restriction.gameContent());
+        for (var entry : simple.entries()) {
+            restrictedByType.computeIfAbsent(entry.typeEntry(), ignored -> new ArrayList<>()).add(entry.direct());
+        }
         return restriction;
     }
 
-    public GameContent restrictedContent(GameContentType<?> type) {
+    public <DataType, Elements, Element> TypedGameContent<DataType, Elements, Element> restrictedContent(GameContentRegistry.Entry<?, DataType, Elements, Element> type) {
         var list = restrictedByType.get(type);
-        if (list == null) return CommonInstances.gameContentProvider.emptyContent();
-        return CommonInstances.gameContentProvider.union(list);
+        if (list == null) return GameContent.EMPTY.filterType(type);
+        return new GameContentUnion(List.copyOf(list)).filterType(type);
     }
 
     public void addAll(Collection<? extends GameStage> gameStages) {

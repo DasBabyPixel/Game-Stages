@@ -4,25 +4,19 @@ import de.dasbabypixel.gamestages.common.BuildConstants;
 import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.addon.Addon;
 import de.dasbabypixel.gamestages.common.addon.Addon.RegisterCustomContentEvent;
-import de.dasbabypixel.gamestages.common.addon.ContentRegistry;
-import de.dasbabypixel.gamestages.common.addon.ContentRegistryImpl;
 import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolverFactories;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenResolverFactory;
-import de.dasbabypixel.gamestages.common.data.GameContentType;
+import de.dasbabypixel.gamestages.common.data.GameContentRegistry;
 import de.dasbabypixel.gamestages.common.data.server.GlobalServerState;
 import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
 import de.dasbabypixel.gamestages.common.listener.PlayerJoinListener;
 import de.dasbabypixel.gamestages.common.listener.PlayerQuitListener;
 import de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod;
-import de.dasbabypixel.gamestages.common.v1_21_1.addon.VContentRegistry;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenTypes;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonCodecs;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonCodecs.PreparedRestrictionPredicateSerializer;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonCodecs.RestrictionPredicateSerializer;
-import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContent;
-import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContentSerializer;
-import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonGameContentType;
-import de.dasbabypixel.gamestages.common.v1_21_1.data.flattener.CommonGameContentFlattener;
+import de.dasbabypixel.gamestages.common.v1_21_1.data.GameContentSerializers;
 import de.dasbabypixel.gamestages.common.v1_21_1.data.graph.IngredientContent;
 import de.dasbabypixel.gamestages.neoforge.NeoForgeInstances;
 import de.dasbabypixel.gamestages.neoforge.integration.Mods;
@@ -47,6 +41,8 @@ import dev.ftb.mods.ftbteams.api.event.TeamEvent;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.bus.api.IEventBus;
@@ -55,6 +51,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.event.lifecycle.FMLConstructModEvent;
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.neoforged.fml.event.lifecycle.InterModProcessEvent;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -79,6 +76,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static de.dasbabypixel.gamestages.common.addon.Addon.FINISH_STARTUP_EVENT;
 import static de.dasbabypixel.gamestages.common.addon.Addon.REGISTER_CUSTOM_CONTENT_EVENT;
@@ -88,7 +86,7 @@ import static de.dasbabypixel.gamestages.common.v1_21_1.CommonVGameStageMod.loca
 @NullMarked
 public class NeoForgeEntrypoint {
     public static final Logger LOGGER = LoggerFactory.getLogger(NeoForgeEntrypoint.class);
-    public static final Registry<CommonGameContentType<?>> GAME_CONTENT_TYPE_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonGameContentType.REGISTRY_KEY)
+    public static final Registry<GameContentRegistry.Entry<?, ?, ?, ?>> GAME_CONTENT_TYPE_SERIALIZER_REGISTRY = new RegistryBuilder<>(GameContentSerializers.CONTENT_TYPE_REGISTRY_KEY)
             .sync(true)
             .create();
     public static final Registry<RestrictionPredicateSerializer<?>> RESTRICTION_PREDICATE_SERIALIZER_REGISTRY = new RegistryBuilder<>(CommonCodecs.RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY)
@@ -108,7 +106,6 @@ public class NeoForgeEntrypoint {
     }
 
     private boolean addonsFrozen = false;
-    private @Nullable ContentRegistryImpl contentRegistry;
 
     public NeoForgeEntrypoint(ModContainer container, IEventBus modBus) {
         modBus.addListener(NeoNetworkHandler::register);
@@ -117,6 +114,7 @@ public class NeoForgeEntrypoint {
         modBus.addListener(this::handleCommonSetup);
         modBus.addListener(this::handleInterModProcess);
         modBus.addListener(this::handleLoadComplete);
+        modBus.addListener(this::handleConstruct);
         Attachments.ATTACHMENT_TYPES.register(modBus);
 
         NeoForge.EVENT_BUS.addListener(this::handleRegisterCommands);
@@ -176,18 +174,19 @@ public class NeoForgeEntrypoint {
         }
     }
 
-    private synchronized ContentRegistryImpl contentRegistry() {
-        if (contentRegistry == null) {
-            loadAndFreezeAddons();
-            contentRegistry = new ContentRegistryImpl();
+    private void handleConstruct(FMLConstructModEvent event) {
+        // Runs after all mods have been constructed
+        event.enqueueWork(this::initContentRegistry);
+    }
 
-            REGISTER_CUSTOM_CONTENT_EVENT.call(new RegisterCustomContentEvent(contentRegistry));
+    private void initContentRegistry() {
+        loadAndFreezeAddons();
+        var contentRegistryBuilder = GameContentRegistry.builder();
 
-            for (var entry : contentRegistry.entries()) {
-                GameContentType.TYPES.add(entry.type());
-            }
-        }
-        return contentRegistry;
+        REGISTER_CUSTOM_CONTENT_EVENT.call(new RegisterCustomContentEvent(contentRegistryBuilder));
+
+        CommonInstances.gameContentRegistry = contentRegistryBuilder.build();
+        CommonVGameStageMod.gameContentSerializers = new GameContentSerializers(CommonInstances.gameContentRegistry.entries());
     }
 
     private void processMessages() {
@@ -217,10 +216,6 @@ public class NeoForgeEntrypoint {
 
     private void handleCommonSetup(FMLCommonSetupEvent event) {
         NeoDataDrivenTypes.register(DataDrivenTypes.instance(), ItemStackRestrictionResolverFactories.instance());
-
-        for (var entry : contentRegistry().entries()) {
-            CommonGameContentFlattener.addFlattener(entry.attribute(ContentRegistry.FLATTENER_FACTORY));
-        }
     }
 
     private void handleRegistries(NewRegistryEvent event) {
@@ -230,16 +225,23 @@ public class NeoForgeEntrypoint {
     }
 
     private void handleRegister(RegisterEvent event) {
-        event.register(CommonGameContent.REGISTRY_KEY, registry -> {
-            assert registry != null;
-            registry.register(location("mod"), CommonGameContentSerializer.MOD);
-            registry.register(location("filter_type"), CommonGameContentSerializer.FILTER_TYPE);
-            registry.register(location("except"), CommonGameContentSerializer.EXCEPT);
-            registry.register(location("only"), CommonGameContentSerializer.ONLY);
-            registry.register(location("union"), CommonGameContentSerializer.UNION);
+        CommonVGameStageMod.gameContentSerializers.register(new GameContentSerializers.RegisterHandler() {
+            @Override
+            public <T> void register(ResourceKey<? extends Registry<T>> registryKey, Consumer<GameContentSerializers.RegistryHelper<T>> consumer) {
+                event.register(registryKey, helper -> {
+                    Objects.requireNonNull(helper);
+                    consumer.accept(new GameContentSerializers.RegistryHelper<>() {
+                        @Override
+                        public void register(ResourceKey<T> key, T value) {
+                            helper.register(key, value);
+                        }
 
-            for (var entry : contentRegistry().entries()) {
-                registry.register(location(entry.attribute(ContentRegistry.NAME) + "_collection"), entry.attribute(VContentRegistry.GAME_CONTENT_SERIALIZER));
+                        @Override
+                        public void register(ResourceLocation location, T value) {
+                            helper.register(location, value);
+                        }
+                    });
+                });
             }
         });
         event.register(CommonCodecs.RESTRICTION_PREDICATE_SERIALIZER_REGISTRY_KEY, registry -> {
@@ -255,12 +257,6 @@ public class NeoForgeEntrypoint {
             assert registry != null;
             registry.register(location("composite"), PreparedRestrictionPredicateSerializer.COMPOSITE);
             registry.register(location("game_stage"), PreparedRestrictionPredicateSerializer.GAME_STAGE);
-        });
-        event.register(CommonGameContentType.REGISTRY_KEY, registry -> {
-            assert registry != null;
-            for (var entry : contentRegistry().entries()) {
-                registry.register(location(entry.attribute(ContentRegistry.NAME)), (CommonGameContentType<?>) entry.type());
-            }
         });
         event.register(Registries.COMMAND_ARGUMENT_TYPE, registry -> {
             assert registry != null;
@@ -349,7 +345,9 @@ public class NeoForgeEntrypoint {
     private void handlePlayerQuit(PlayerEvent.PlayerLoggedOutEvent event) {
         Objects.requireNonNull(event);
         var player = event.getEntity();
-        PlayerQuitListener.handleQuit((ServerPlayer) player);
+        if (player instanceof ServerPlayer serverPlayer) {
+            PlayerQuitListener.handleQuit(serverPlayer);
+        }
     }
 
     private void handleServerAboutToStart(ServerAboutToStartEvent event) {

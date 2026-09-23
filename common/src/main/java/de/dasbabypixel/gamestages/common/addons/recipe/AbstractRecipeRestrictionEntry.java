@@ -1,5 +1,6 @@
 package de.dasbabypixel.gamestages.common.addons.recipe;
 
+import de.dasbabypixel.gamestages.common.data.GameContentWrapper;
 import de.dasbabypixel.gamestages.common.data.restriction.AbstractRestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
@@ -9,14 +10,12 @@ import org.jspecify.annotations.NullMarked;
 
 @NullMarked
 public abstract class AbstractRecipeRestrictionEntry<T extends AbstractRecipeRestrictionEntry<T, P, C>, P extends RestrictionEntry.PreCompiled<P, C>, C extends CompiledRestrictionEntry<C, P>> extends AbstractRestrictionEntry<T, P, C> implements RecipeRestrictionEntry<T, P, C> {
-    private final RecipeCollection targetRecipes;
     private final PreparedRestrictionPredicate predicate;
     private boolean hideInJEI = true;
 
-    public AbstractRecipeRestrictionEntry(PreparedRestrictionPredicate predicate, RestrictionEntryOrigin origin, RecipeCollection targetRecipes) {
-        super(origin);
+    public AbstractRecipeRestrictionEntry(PreparedRestrictionPredicate predicate, RestrictionEntryOrigin origin, GameContentWrapper.Direct gameContent) {
+        super(origin, gameContent);
         this.predicate = predicate;
-        this.targetRecipes = targetRecipes;
     }
 
     public PreparedRestrictionPredicate predicate() {
@@ -24,8 +23,8 @@ public abstract class AbstractRecipeRestrictionEntry<T extends AbstractRecipeRes
     }
 
     @Override
-    public RecipeCollection targetRecipes() {
-        return targetRecipes;
+    public GameContentWrapper.Direct gameContent() {
+        return (GameContentWrapper.Direct) super.gameContent();
     }
 
     @Override

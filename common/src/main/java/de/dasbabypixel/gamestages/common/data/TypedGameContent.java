@@ -2,15 +2,28 @@ package de.dasbabypixel.gamestages.common.data;
 
 import org.jspecify.annotations.NullMarked;
 
-import java.util.Collection;
-
 @NullMarked
-public interface TypedGameContent extends GameContent {
-    GameContentType<?> type();
+public sealed interface TypedGameContent<TypeData, Elements, Element> extends GameContent permits GameContentDirect, GameContentFilterType {
+    GameContentRegistry.Entry<?, TypeData, Elements, Element> typeEntry();
 
-    Iterable<? extends Object> content();
+    TypeData typeData();
 
-    Collection<? extends Object> contentCollection();
+    @Override
+    default TypedGameContent<TypeData, Elements, Element> except(GameContent... other) {
+        return GameContent.super.except(other).filterType(typeEntry());
+    }
 
-    boolean isEmpty();
+    @Override
+    default TypedGameContent<TypeData, Elements, Element> only(GameContent... other) {
+        return GameContent.super.only(other).filterType(typeEntry());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    default <NTypeData, NElements, NElement> TypedGameContent<NTypeData, NElements, NElement> filterType(GameContentRegistry.Entry<?, NTypeData, NElements, NElement> type) {
+        if (type == typeEntry()) {
+            return (TypedGameContent<NTypeData, NElements, NElement>) this;
+        }
+        return type.empty();
+    }
 }

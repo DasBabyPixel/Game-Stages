@@ -1,10 +1,6 @@
 package de.dasbabypixel.gamestages.common.v1_21_1.addons.fluid;
 
-import de.dasbabypixel.gamestages.common.addon.ContentRegistry;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon;
-import de.dasbabypixel.gamestages.common.v1_21_1.addon.VContentRegistry;
-import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonFluidCollection;
-import de.dasbabypixel.gamestages.common.v1_21_1.data.flattener.FluidFlattenerFactory;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -20,13 +16,12 @@ public abstract class VFluidAddon implements VAddon {
         REGISTER_PACKETS_EVENT.addListener(this::handle);
     }
 
+    public static VFluidAddon instance() {
+        return Objects.requireNonNull(instance);
+    }
+
     private void handle(RegisterCustomContentEvent event) {
-        event.contentRegistry()
-                .prepare(CommonFluidCollection.TYPE)
-                .set(ContentRegistry.NAME, "fluid")
-                .set(ContentRegistry.FLATTENER_FACTORY, new FluidFlattenerFactory())
-                .set(VContentRegistry.GAME_CONTENT_SERIALIZER, CommonFluidCollection.SERIALIZER)
-                .register();
+        FluidType.register(event.contentRegistry());
     }
 
     private void handle(RegisterPacketsEvent event) {
@@ -35,8 +30,4 @@ public abstract class VFluidAddon implements VAddon {
     }
 
     public abstract void handle(CommonFluidRestrictionPacket packet);
-
-    public static VFluidAddon instance() {
-        return Objects.requireNonNull(instance);
-    }
 }

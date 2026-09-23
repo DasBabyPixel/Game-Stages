@@ -2,10 +2,8 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event;
 
 import dev.latvian.mods.kubejs.event.EventResult;
 import dev.latvian.mods.kubejs.event.KubeEvent;
-import dev.latvian.mods.kubejs.script.KubeJSContext;
 import dev.latvian.mods.rhino.BaseFunction;
 import dev.latvian.mods.rhino.util.HideFromJS;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -15,19 +13,23 @@ import java.util.Objects;
 import java.util.Set;
 
 @NullMarked
-public abstract class EventJSBase<Self extends EventJSBase<Self>> extends HashMap<String, BaseFunction> implements KubeEvent {
+public abstract class EventJSBase<Self extends EventJSBase<? extends Self>> extends HashMap<String, BaseFunction> implements KubeEvent {
     private final EventType<Self> type;
     private final Map<Object, @Nullable Object> extra = new HashMap<>();
 
-    @SuppressWarnings("unchecked")
     public EventJSBase(EventType<Self> type) {
         this.type = type;
         for (var preExecutor : type.preExecutors()) {
-            preExecutor.execute((Self) this);
+            preExecutor.execute(self());
         }
         for (var e : type.functions().values()) {
-            extra.put(e.invoker(), e.contextSupplier().apply((Self) this));
+            // TODO init contexts
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Self self() {
+        return (Self) this;
     }
 
     @Override
@@ -36,12 +38,14 @@ public abstract class EventJSBase<Self extends EventJSBase<Self>> extends HashMa
     }
 
     @Override
-    public boolean containsKey(Object key) {
+    public boolean containsKey(@Nullable Object key) {
+        Objects.requireNonNull(key);
         return keySet().contains(String.valueOf(key));
     }
 
     @Override
-    public BaseFunction get(Object key) {
+    public BaseFunction get(@Nullable Object key) {
+        Objects.requireNonNull(key);
         var keyString = String.valueOf(key);
         return Objects.requireNonNull(type.functions().get(keyString), "Unknown event function " + keyString).invoker();
     }
@@ -54,24 +58,13 @@ public abstract class EventJSBase<Self extends EventJSBase<Self>> extends HashMa
     @SuppressWarnings("unchecked")
     @Override
     @HideFromJS
-    public void afterPosted(EventResult result) {
+    public void afterPosted(@Nullable EventResult result) {
         for (var value : type.functions().values()) {
             var context = extra.get(value.invoker());
-            ((ContextFunction<Self, @NonNull Object>) value.function()).finish((Self) this, context);
+            // TODO invoke afterPosted callback for contexts
         }
         for (var postExecutor : type.postExecutors()) {
-            postExecutor.execute((Self) this);
-        }
-    }
-
-    public interface Function<E extends EventJSBase<E>> {
-        @Nullable Object invoke(E event, KubeJSContext cx, Object[] args);
-    }
-
-    public interface ContextFunction<E extends EventJSBase<E>, EventContext> {
-        @Nullable Object invoke(E event, KubeJSContext cx, @Nullable EventContext eventContext, Object[] args);
-
-        default void finish(E event, @Nullable EventContext eventContext) {
+            postExecutor.execute(self());
         }
     }
 }

@@ -1,7 +1,7 @@
 package de.dasbabypixel.gamestages.common.data.restriction;
 
+import de.dasbabypixel.gamestages.common.data.GameContentWrapper;
 import de.dasbabypixel.gamestages.common.data.PlayerCompilationTask;
-import de.dasbabypixel.gamestages.common.data.TypedGameContent;
 import de.dasbabypixel.gamestages.common.data.compilation.CompilableResource;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.ServerGameStageManager;
 import de.dasbabypixel.gamestages.common.data.manager.mutable.compiler.ManagerCompilerTask;
@@ -11,7 +11,7 @@ import org.jspecify.annotations.NullMarked;
 
 @NullMarked
 public interface RestrictionEntry<T extends RestrictionEntry<T, P, C>, P extends RestrictionEntry.PreCompiled<P, C>, C extends CompiledRestrictionEntry<C, P>> extends CompilableResource<ManagerCompilerTask, P> {
-    TypedGameContent gameContent();
+    GameContentWrapper gameContent();
 
     RestrictionEntryOrigin origin();
 
@@ -24,7 +24,7 @@ public interface RestrictionEntry<T extends RestrictionEntry<T, P, C>, P extends
     }
 
     interface PreCompiled<P extends RestrictionEntry.PreCompiled<P, C>, C extends CompiledRestrictionEntry<C, P>> extends CompilableResource<PlayerCompilationTask, C> {
-        TypedGameContent gameContent();
+        GameContentWrapper gameContent();
 
         CustomPacket createPacket(ServerGameStageManager manager);
 

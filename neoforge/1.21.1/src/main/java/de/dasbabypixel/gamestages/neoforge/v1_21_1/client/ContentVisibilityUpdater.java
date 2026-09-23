@@ -3,7 +3,7 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.client;
 import de.dasbabypixel.gamestages.common.addon.Addon;
 import de.dasbabypixel.gamestages.common.addon.ClientEvents;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
-import de.dasbabypixel.gamestages.common.data.GameContentType;
+import de.dasbabypixel.gamestages.common.data.GameContentRegistry;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
 import net.neoforged.fml.util.thread.EffectiveSide;
@@ -21,12 +21,12 @@ import java.util.stream.Collectors;
 
 @NullMarked
 public abstract class ContentVisibilityUpdater<WrapperData, RawData, Entry extends CompiledRestrictionEntry<? extends Entry, ?>> {
-    private final GameContentType<?> type;
+    private final GameContentRegistry.Entry<?, ?, ?, ?> type;
     private final Set<RawData> invisible = new HashSet<>();
     private Map<RawData, WrapperData> wrapperByRawMap = Map.of();
     private Map<CompiledRestrictionPredicate, Set<WrapperData>> affectedByPredicateMap = Map.of();
 
-    public ContentVisibilityUpdater(GameContentType<?> type) {
+    public ContentVisibilityUpdater(GameContentRegistry.Entry<?, ?, ?, ?> type) {
         this.type = type;
         Addon.CLIENT_RECOMPILE_POST_EVENT.addListener(this::postRecompile);
         ClientEvents.CLIENT_DISABLE.addListener(this::onDisable);

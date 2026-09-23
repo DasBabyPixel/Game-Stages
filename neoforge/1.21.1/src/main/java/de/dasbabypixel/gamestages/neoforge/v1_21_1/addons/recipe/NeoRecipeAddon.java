@@ -1,12 +1,14 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe;
 
-import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
+import de.dasbabypixel.gamestages.common.data.GameContentFlattener;
+import de.dasbabypixel.gamestages.common.data.GameContentWrapper;
 import de.dasbabypixel.gamestages.common.data.manager.mutable.ClientMutableGameStageManager;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
-import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeCollection;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeRestrictionEntry;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeRestrictionPacket;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.RecipeContentWrapper;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.RecipeType;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.VRecipeAddon;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.EventRegistry;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
@@ -14,12 +16,9 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonKJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonProbeJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.jei.RecipeJEI;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.jei.JEIIntegration;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.StagesKubeJSPlugin;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.ServerRegisterEventJS;
-import dev.latvian.mods.kubejs.script.SourceLine;
-import dev.latvian.mods.kubejs.script.TypeWrapperRegistry;
 import org.jspecify.annotations.NullMarked;
-
-import java.util.Objects;
 
 @NullMarked
 public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
@@ -29,7 +28,7 @@ public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
     }
 
     @Override
-    protected CommonRecipeRestrictionEntry createDefaultEntry(PreparedRestrictionPredicate predicate, CommonRecipeCollection recipes) {
+    protected CommonRecipeRestrictionEntry createDefaultEntry(PreparedRestrictionPredicate predicate, RecipeContentWrapper recipes) {
         return new CommonRecipeRestrictionEntry(predicate, RestrictionEntryOrigin.SERVER, recipes);
     }
 
@@ -40,7 +39,7 @@ public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
     }
 
     private void handle(InitResourcesEvent event) {
-        CommonRecipeCollection.recipeManager = event.serverResources().getRecipeManager();
+        ((RecipeType) RecipeType.get().type()).recipeManager = event.serverResources().getRecipeManager();
     }
 
     @Override
@@ -60,24 +59,25 @@ public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
     private static class KJS implements NeoAddonKJS {
         private final RecipeJSParser recipeParser = new RecipeJSParser();
 
-        @Override
-        public void registerEventExtensions(EventRegistry registry) {
-            var type = registry.get(ServerRegisterEventJS.class);
-            type.addFunctionVarArgs("recipes", (event, cx, args) -> args[0], RecipeCollectionWrapper.class, RecipeCollectionWrapper.class, RecipeCollectionWrapper[].class);
-            type.addFunctionVarArgs("restrictRecipes", (event, cx, args) -> {
-                var flattener = event.stageManager().get(GameContentFlattener.Attribute.MUTABLE_MANAGER_ATTRIBUTE);
-                var recipesContent = flattener.flatten(((RecipeCollectionWrapper) args[1]).content(), CommonRecipeCollection.TYPE);
-                var predicate = (PreparedRestrictionPredicate) args[0];
-                var source = Objects.requireNonNull(SourceLine.of(cx)).toString();
-                return event
-                        .stageManager()
-                        .addRestriction(new CommonRecipeRestrictionEntry(predicate, RestrictionEntryOrigin.string(source), recipesContent));
-            }, RecipeCollectionWrapper.class, CommonRecipeRestrictionEntry.class, PreparedRestrictionPredicate.class, RecipeCollectionWrapper[].class);
+        {
+            StagesKubeJSPlugin.register(RecipeType.get(), recipeParser::parse);
         }
 
         @Override
-        public void registerTypeWrappers(TypeWrapperRegistry registry) {
-            registry.register(RecipeCollectionWrapper.class, (TypeWrapperRegistry.ContextFromFunction<RecipeCollectionWrapper>) (context, o) -> new RecipeCollectionWrapper(recipeParser.parse(Objects.requireNonNull(context), Objects.requireNonNull(o))));
+        public void registerEventExtensions(EventRegistry registry) {
+            var type = registry.get(ServerRegisterEventJS.class);
+            var recipeType = StagesKubeJSPlugin.typedCollection(RecipeType.get());
+            var recipeTypeArray = recipeParser.param(recipeType.asArray());
+            type.addFunctionVarArgs("recipes", recipeParser::parse, recipeType, recipeTypeArray);
+            type.addFunctionVarArgs("restrictRecipes", (call, cx, args) -> {
+                var event = call.event();
+                var flattener = event.stageManager().get(GameContentFlattener.MUTABLE_MANAGER_ATTRIBUTE);
+                var recipesContent = new RecipeContentWrapper(flattener.flatten(((GameContentWrapper) args[1]).gameContent(), RecipeType.get()));
+                var predicate = (PreparedRestrictionPredicate) args[0];
+                return event
+                        .stageManager()
+                        .addRestriction(new CommonRecipeRestrictionEntry(predicate, cx.origin(), recipesContent));
+            }, CommonRecipeRestrictionEntry.class, PreparedRestrictionPredicate.class, recipeTypeArray);
         }
     }
 }

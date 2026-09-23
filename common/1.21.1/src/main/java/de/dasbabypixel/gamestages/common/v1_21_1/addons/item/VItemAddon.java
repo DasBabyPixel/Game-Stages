@@ -2,7 +2,6 @@ package de.dasbabypixel.gamestages.common.v1_21_1.addons.item;
 
 import de.dasbabypixel.gamestages.common.addon.Addon;
 import de.dasbabypixel.gamestages.common.addon.AddonManager;
-import de.dasbabypixel.gamestages.common.addon.ContentRegistry;
 import de.dasbabypixel.gamestages.common.addons.item.ItemAddon;
 import de.dasbabypixel.gamestages.common.addons.item.ItemStackRestrictionResolverFactories;
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.CompiledItemStackRestrictionEntry;
@@ -19,7 +18,6 @@ import de.dasbabypixel.gamestages.common.data.manager.mutable.compiler.ManagerCo
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
 import de.dasbabypixel.gamestages.common.network.CustomPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon;
-import de.dasbabypixel.gamestages.common.v1_21_1.addon.VContentRegistry;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.datadriven.settings.VItemStackRestrictionEntrySettings;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.CommonItemRestrictionPacket;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.CommonItemStackRestrictionEntryPacket;
@@ -50,6 +48,24 @@ public abstract class VItemAddon extends ItemAddon implements VAddon {
         RELOAD_PRE_EVENT.addListener(this::handle);
     }
 
+    public static @Nullable ItemStackRestrictionEntry getEntry(ManagerCompilerTask task, ItemStack nmsItemStack, de.dasbabypixel.gamestages.common.data.ItemStack ourItemStack) {
+        var index = task.get(MutablePreCompileItemIndex.ATTRIBUTE);
+        var entry = index.entryMap.get(nmsItemStack.getItemHolder());
+        if (entry == null) return null;
+        return entry.preCompiledItemStack().resolve(ourItemStack);
+    }
+
+    public static @Nullable CompiledItemStackRestrictionEntry getEntry(BaseStages stages, ItemStack nmsItemStack, de.dasbabypixel.gamestages.common.data.ItemStack ourItemStack) {
+        var data = stages.get(ItemAddonData.ATTRIBUTE);
+        var entry = data.itemMap.get(nmsItemStack.getItemHolder());
+        if (entry == null) return null;
+        return entry.resolver().resolveRestrictionEntry(ourItemStack);
+    }
+
+    public static VItemAddon instance() {
+        return Objects.requireNonNull(instance);
+    }
+
     @Override
     public void onRegister(AddonManager<? extends Addon> addonManager) {
         recipeIntegration.register(addonManager);
@@ -66,14 +82,14 @@ public abstract class VItemAddon extends ItemAddon implements VAddon {
     }
 
     private void handle(PostCompileTypeEvent event) {
-        if (event.type() != CommonItemCollection.TYPE) return;
+        if (event.typeEntry() != ItemType.get()) return;
         var task = event.task();
         var index = task.get(MutablePreCompileItemIndex.ATTRIBUTE);
         var preCompileIndex = task.preCompileIndex();
-        var typeIndex = preCompileIndex.typeIndex(CommonItemCollection.TYPE);
+        var typeIndex = preCompileIndex.typeIndex(ItemType.get());
         for (var restriction : typeIndex.<CommonItemRestrictionEntry.PreCompiled>entries()) {
             var gameContent = restriction.gameContent();
-            for (var item : gameContent.content()) {
+            for (var item : gameContent.gameContent().content()) {
                 index.entryMap.put(item, restriction);
             }
         }
@@ -92,7 +108,7 @@ public abstract class VItemAddon extends ItemAddon implements VAddon {
         var recompilationTask = event.playerCompilationTask();
         var itemMap = new HashMap<Holder<Item>, CommonItemRestrictionEntry.Compiled>();
         var compileIndex = recompilationTask.stages().get(BaseStages.CompileIndex.ATTRIBUTE);
-        var typeIndex = compileIndex.typeIndex(CommonItemCollection.TYPE);
+        var typeIndex = compileIndex.typeIndex(ItemType.get());
         for (var entry_ : typeIndex.entryByContent().entrySet()) {
             Objects.requireNonNull(entry_);
             var item = (Holder<Item>) entry_.getKey();
@@ -110,12 +126,7 @@ public abstract class VItemAddon extends ItemAddon implements VAddon {
     }
 
     private void handle(RegisterCustomContentEvent event) {
-        event.contentRegistry()
-                .prepare(CommonItemCollection.TYPE)
-                .set(ContentRegistry.NAME, "item")
-                .set(ContentRegistry.FLATTENER_FACTORY, new ItemFlattenerFactory())
-                .set(VContentRegistry.GAME_CONTENT_SERIALIZER, CommonItemCollection.SERIALIZER)
-                .register();
+        ItemType.register(event.contentRegistry());
     }
 
     private void handle(RegisterPacketsEvent event) {
@@ -133,27 +144,10 @@ public abstract class VItemAddon extends ItemAddon implements VAddon {
     }
 
     public void handle(CommonItemStackRestrictionEntryPacket packet) {
-        ClientMutableGameStageManager.buildingInstance()
+        ClientMutableGameStageManager
+                .buildingInstance()
                 .get(MutableStageManagerContext.MUTABLE_MANAGER_ATTRIBUTE)
                 .addRestrictionEntry(packet.reference(), packet.entry());
-    }
-
-    public static @Nullable ItemStackRestrictionEntry getEntry(ManagerCompilerTask task, ItemStack nmsItemStack, de.dasbabypixel.gamestages.common.data.ItemStack ourItemStack) {
-        var index = task.get(MutablePreCompileItemIndex.ATTRIBUTE);
-        var entry = index.entryMap.get(nmsItemStack.getItemHolder());
-        if (entry == null) return null;
-        return entry.preCompiledItemStack().resolve(ourItemStack);
-    }
-
-    public static @Nullable CompiledItemStackRestrictionEntry getEntry(BaseStages stages, ItemStack nmsItemStack, de.dasbabypixel.gamestages.common.data.ItemStack ourItemStack) {
-        var data = stages.get(ItemAddonData.ATTRIBUTE);
-        var entry = data.itemMap.get(nmsItemStack.getItemHolder());
-        if (entry == null) return null;
-        return entry.resolver().resolveRestrictionEntry(ourItemStack);
-    }
-
-    public static VItemAddon instance() {
-        return Objects.requireNonNull(instance);
     }
 
     public static class PreCompileItemIndex {

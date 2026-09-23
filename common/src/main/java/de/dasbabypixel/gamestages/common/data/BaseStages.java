@@ -104,7 +104,7 @@ public class BaseStages extends ReplaceableImmutableAttributeHolder<BaseStages> 
     }
 
     public record CompileIndex(Map<GameStage, CompiledRestrictionPredicate> compiledGameStages,
-                               Map<GameContentType<?>, TypeIndex> typeIndexMap,
+                               Map<GameContentRegistry.Entry<?, ?, ?, ?>, TypeIndex> typeIndexMap,
                                List<CompiledRestrictionEntry<?, ?>> compiledRestrictionEntries) {
         public static final ImmutableAttribute<BaseStages, CompileIndex> ATTRIBUTE = new SimpleImmutableAttribute<>();
 
@@ -114,12 +114,12 @@ public class BaseStages extends ReplaceableImmutableAttributeHolder<BaseStages> 
             compiledRestrictionEntries = Objects.requireNonNull(List.copyOf(compiledRestrictionEntries));
         }
 
-        public TypeIndex typeIndex(GameContentType<?> type) {
+        public TypeIndex typeIndex(GameContentRegistry.Entry<?, ?, ?, ?> type) {
             return Objects.requireNonNull(typeIndexMap.get(type));
         }
     }
 
-    public record TypeIndex(GameContentType<?> type,
+    public record TypeIndex(GameContentRegistry.Entry<?, ?, ?, ?> typeEntry,
                             Map<CompiledRestrictionEntry<?, ?>, List<Object>> contentListByEntry,
                             List<CompiledRestrictionEntry<?, ?>> entries,
                             Map<Object, CompiledRestrictionEntry<?, ?>> entryByContent) {
@@ -131,12 +131,12 @@ public class BaseStages extends ReplaceableImmutableAttributeHolder<BaseStages> 
     }
 
     public static final class MutableTypeIndex {
-        private final GameContentType<?> type;
+        private final GameContentRegistry.Entry<?, ?, ?, ?> typeEntry;
         private final Map<CompiledRestrictionEntry<?, ?>, List<Object>> contentListByEntry = new HashMap<>();
         private final Map<Object, CompiledRestrictionEntry<?, ?>> entryByContent = new HashMap<>();
 
-        public MutableTypeIndex(GameContentType<?> type) {
-            this.type = type;
+        public MutableTypeIndex(GameContentRegistry.Entry<?, ?, ?, ?> typeEntry) {
+            this.typeEntry = typeEntry;
         }
 
         public Map<CompiledRestrictionEntry<?, ?>, List<Object>> contentListByEntry() {
@@ -148,7 +148,7 @@ public class BaseStages extends ReplaceableImmutableAttributeHolder<BaseStages> 
         }
 
         public TypeIndex compile() {
-            return new TypeIndex(type, contentListByEntry, List.copyOf(contentListByEntry.keySet()), entryByContent);
+            return new TypeIndex(typeEntry, contentListByEntry, List.copyOf(contentListByEntry.keySet()), entryByContent);
         }
     }
 }

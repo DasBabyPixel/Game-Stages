@@ -1,7 +1,6 @@
 package de.dasbabypixel.gamestages.common.data.manager.immutable;
 
-import de.dasbabypixel.gamestages.common.data.GameContentType;
-import de.dasbabypixel.gamestages.common.data.TypedGameContent;
+import de.dasbabypixel.gamestages.common.data.GameContentRegistry;
 import de.dasbabypixel.gamestages.common.data.attribute.ImmutableAttribute;
 import de.dasbabypixel.gamestages.common.data.attribute.SimpleImmutableAttribute;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
@@ -15,9 +14,9 @@ import java.util.Set;
 public final class PreCompileIndex {
     public static final ImmutableAttribute<AbstractGameStageManager<?>, PreCompileIndex> ATTRIBUTE = new SimpleImmutableAttribute<>();
     private final Set<RestrictionEntry.PreCompiled<?, ?>> entries;
-    private final Map<GameContentType<?>, TypeIndex> typeIndexMap;
+    private final Map<GameContentRegistry.Entry<?, ?, ?, ?>, TypeIndex> typeIndexMap;
 
-    public PreCompileIndex(Set<RestrictionEntry.PreCompiled<?, ?>> entries, Map<GameContentType<?>, TypeIndex> typeIndexMap) {
+    public PreCompileIndex(Set<RestrictionEntry.PreCompiled<?, ?>> entries, Map<GameContentRegistry.Entry<?, ?, ?, ?>, TypeIndex> typeIndexMap) {
         this.entries = Objects.requireNonNull(Set.copyOf(entries));
         this.typeIndexMap = Objects.requireNonNull(Map.copyOf(typeIndexMap));
     }
@@ -26,11 +25,11 @@ public final class PreCompileIndex {
         return entries;
     }
 
-    public <Type extends TypedGameContent> TypeIndex typeIndex(GameContentType<Type> type) {
+    public TypeIndex typeIndex(GameContentRegistry.Entry<?, ?, ?, ?> type) {
         return typeIndexMap.getOrDefault(type, TypeIndex.EMPTY);
     }
 
-    public Map<GameContentType<?>, TypeIndex> typeIndexMap() {
+    public Map<GameContentRegistry.Entry<?, ?, ?, ?>, TypeIndex> typeIndexMap() {
         return typeIndexMap;
     }
 }

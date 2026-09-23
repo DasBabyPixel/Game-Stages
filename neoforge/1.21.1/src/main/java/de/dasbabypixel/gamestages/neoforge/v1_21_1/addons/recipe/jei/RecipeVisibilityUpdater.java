@@ -3,8 +3,8 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.jei;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.event.EventType;
-import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeCollection;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeRestrictionEntry;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.RecipeContentWrapper;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.client.ContentVisibilityUpdater;
 import mezz.jei.api.recipe.IRecipeManager;
 import mezz.jei.api.recipe.RecipeType;
@@ -32,7 +32,7 @@ public class RecipeVisibilityUpdater extends ContentVisibilityUpdater<RecipeVisi
     private Map<RecipeAndType<?>, ConverterEntry<?, ?, ?>> converterOrigins = Map.of();
 
     public RecipeVisibilityUpdater(RecipeJEI recipeJEI) {
-        super(CommonRecipeCollection.TYPE);
+        super(de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.RecipeType.get());
         this.recipeJEI = recipeJEI;
     }
 
@@ -221,9 +221,9 @@ public class RecipeVisibilityUpdater extends ContentVisibilityUpdater<RecipeVisi
     private class Converter {
         private final HashMap<net.minecraft.world.item.crafting.RecipeType<?>, List<RecipeHolder<?>>> cache = new HashMap<>();
 
-        public void add(CommonRecipeCollection recipeCollection) {
+        public void add(RecipeContentWrapper gameContent) {
             var recipeManager = RecipeJEI.recipeManager();
-            var recipeIds = recipeCollection.recipes();
+            var recipeIds = gameContent.gameContent().content();
             for (var recipeId : recipeIds) {
                 var recipeOptional = recipeManager.byKey(recipeId);
                 if (recipeOptional.isEmpty()) {

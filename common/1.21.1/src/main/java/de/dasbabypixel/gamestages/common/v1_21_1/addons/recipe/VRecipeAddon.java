@@ -1,8 +1,8 @@
 package de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe;
 
 import de.dasbabypixel.gamestages.common.addon.AddonManager;
-import de.dasbabypixel.gamestages.common.addon.ContentRegistry;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
+import de.dasbabypixel.gamestages.common.data.GameContentDirect;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.AbstractGameStageManager;
 import de.dasbabypixel.gamestages.common.data.manager.immutable.PreCompileIndex;
 import de.dasbabypixel.gamestages.common.data.manager.mutable.ServerMutableGameStageManager;
@@ -13,8 +13,7 @@ import de.dasbabypixel.gamestages.common.data.restriction.predicates.Or;
 import de.dasbabypixel.gamestages.common.data.restriction.predicates.True;
 import de.dasbabypixel.gamestages.common.event.EventType;
 import de.dasbabypixel.gamestages.common.v1_21_1.addon.VAddon;
-import de.dasbabypixel.gamestages.common.v1_21_1.addon.VContentRegistry;
-import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemCollection;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.ItemType;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.messages.RecipeMessages;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.messages.ResolveItemStackPredicate;
 import net.minecraft.resources.ResourceLocation;
@@ -42,14 +41,26 @@ public abstract class VRecipeAddon implements VAddon {
         PRE_COMPILE_TYPE_EVENT.addListener(EventType.ORDER_MONITOR - 10, this::handle);
     }
 
+    public static CommonRecipeRestrictionEntry.@Nullable PreCompiled getEntry(AbstractGameStageManager<?> manager, RecipeHolder<?> holder) {
+        var index = manager.get(PreCompileIndex.ATTRIBUTE).typeIndex(RecipeType.get());
+        var preCompiled = index.preCompiledByContent().get(holder.id());
+        return (CommonRecipeRestrictionEntry.PreCompiled) preCompiled;
+    }
+
+    public static CommonRecipeRestrictionEntry.@Nullable Compiled getEntry(@Nullable BaseStages stages, RecipeHolder<?> holder) {
+        if (stages == null) return null;
+        var compileIndex = stages.get(BaseStages.CompileIndex.ATTRIBUTE);
+        var typeIndex = compileIndex.typeIndex(RecipeType.get());
+        var entry = typeIndex.entryByContent().get(holder.id());
+        return (CommonRecipeRestrictionEntry.Compiled) entry;
+    }
+
+    public static VRecipeAddon instance() {
+        return Objects.requireNonNull(instance);
+    }
+
     private void handle(RegisterCustomContentEvent event) {
-        event
-                .contentRegistry()
-                .prepare(CommonRecipeCollection.TYPE)
-                .set(ContentRegistry.NAME, "recipe")
-                .set(ContentRegistry.FLATTENER_FACTORY, new RecipeFlattenerFactory())
-                .set(VContentRegistry.GAME_CONTENT_SERIALIZER, CommonRecipeCollection.SERIALIZER)
-                .register();
+        RecipeType.register(event.contentRegistry());
     }
 
     @SuppressWarnings("DataFlowIssue")
@@ -61,15 +72,15 @@ public abstract class VRecipeAddon implements VAddon {
     }
 
     private void handle(PreCompilePrepareEvent event) {
-        event.addEvaluationDependency(CommonRecipeCollection.TYPE, CommonItemCollection.TYPE);
+        event.addEvaluationDependency(RecipeType.get(), ItemType.get());
     }
 
     private void handle(PreCompileTypeEvent event) {
-        if (event.type() != CommonRecipeCollection.TYPE) return;
+        if (event.typeEntry() != RecipeType.get()) return;
         var task = event.task();
 
         if (task.manager() instanceof ServerMutableGameStageManager serverManager) {
-            var restrictionsByType = task.restrictionsByType(CommonRecipeCollection.TYPE);
+            var restrictionsByType = task.restrictionsByType(RecipeType.get());
             var registryAccess = serverManager.get(REGISTRY_ATTRIBUTE);
             var recipeRestrictions = new ArrayList<CommonRecipeRestrictionEntry>();
             for (var restrictionEntry : restrictionsByType) {
@@ -104,9 +115,9 @@ public abstract class VRecipeAddon implements VAddon {
             var finalRecipesByRestrictionAndPredicate = new HashMap<CommonRecipeRestrictionEntry, HashMap<PreparedRestrictionPredicate, ArrayList<ResourceLocation>>>();
             var unrestrictedRecipes = new HashSet<>(implicitPredicateByRecipe.keySet());
             for (var restriction : recipeRestrictions) {
-                var restrictionContent = restriction.gameContent();
+                var restrictionContent = restriction.gameContent().gameContent();
 
-                for (var recipe : ((CommonRecipeCollection) restrictionContent).recipes()) {
+                for (var recipe : restrictionContent.content()) {
                     unrestrictedRecipes.remove(recipe);
                     var implicitPredicate = Objects.requireNonNull(implicitPredicateByRecipe.get(recipe));
                     var predicate = restriction.predicate().and(implicitPredicate);
@@ -125,7 +136,7 @@ public abstract class VRecipeAddon implements VAddon {
                     Objects.requireNonNull(entry);
                     var predicate = entry.getKey();
                     var recipes = Objects.requireNonNull(entry.getValue());
-                    var restriction = createDefaultEntry(predicate, new CommonRecipeCollection(recipes));
+                    var restriction = createDefaultEntry(predicate, new RecipeContentWrapper(new GameContentDirect<>(RecipeType.get(), List.copyOf(recipes))));
                     restrictionsByType.add(restriction);
                 }
             }
@@ -138,7 +149,7 @@ public abstract class VRecipeAddon implements VAddon {
                     Objects.requireNonNull(entry2);
                     var predicate = entry2.getKey();
                     var recipes = entry2.getValue();
-                    var recipesContent = new CommonRecipeCollection(Objects.requireNonNull(List.copyOf(recipes)));
+                    var recipesContent = new RecipeContentWrapper(new GameContentDirect<>(RecipeType.get(), List.copyOf(recipes)));
 
                     var newRestriction = restriction.copyWith(predicate, recipesContent);
                     restrictionsByType.add(newRestriction);
@@ -152,25 +163,7 @@ public abstract class VRecipeAddon implements VAddon {
         registry.playClientBound(CommonRecipeRestrictionPacket.TYPE, CommonRecipeRestrictionPacket.STREAM_CODEC);
     }
 
-    protected abstract CommonRecipeRestrictionEntry createDefaultEntry(PreparedRestrictionPredicate predicate, CommonRecipeCollection recipes);
+    protected abstract CommonRecipeRestrictionEntry createDefaultEntry(PreparedRestrictionPredicate predicate, RecipeContentWrapper recipes);
 
     public abstract void handle(CommonRecipeRestrictionPacket packet);
-
-    public static CommonRecipeRestrictionEntry.@Nullable PreCompiled getEntry(AbstractGameStageManager<?> manager, RecipeHolder<?> holder) {
-        var index = manager.get(PreCompileIndex.ATTRIBUTE).typeIndex(CommonRecipeCollection.TYPE);
-        var preCompiled = index.preCompiledByContent().get(holder.id());
-        return (CommonRecipeRestrictionEntry.PreCompiled) preCompiled;
-    }
-
-    public static CommonRecipeRestrictionEntry.@Nullable Compiled getEntry(@Nullable BaseStages stages, RecipeHolder<?> holder) {
-        if (stages == null) return null;
-        var compileIndex = stages.get(BaseStages.CompileIndex.ATTRIBUTE);
-        var typeIndex = compileIndex.typeIndex(CommonRecipeCollection.TYPE);
-        var entry = typeIndex.entryByContent().get(holder.id());
-        return (CommonRecipeRestrictionEntry.Compiled) entry;
-    }
-
-    public static VRecipeAddon instance() {
-        return Objects.requireNonNull(instance);
-    }
 }

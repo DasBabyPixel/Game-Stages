@@ -1,20 +1,21 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.fluid;
 
-import de.dasbabypixel.gamestages.common.data.flattening.GameContentFlattener;
+import de.dasbabypixel.gamestages.common.data.GameContentFlattener;
+import de.dasbabypixel.gamestages.common.data.GameContentWrapper;
 import de.dasbabypixel.gamestages.common.data.manager.mutable.ClientMutableGameStageManager;
 import de.dasbabypixel.gamestages.common.data.restriction.PreparedRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.fluid.CommonFluidRestrictionPacket;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.fluid.FluidContentWrapper;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.fluid.FluidType;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.fluid.VFluidAddon;
-import de.dasbabypixel.gamestages.common.v1_21_1.data.CommonFluidCollection;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.EventRegistry;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonKJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonProbeJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.jei.JEIIntegration;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.StagesKubeJSPlugin;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.ServerRegisterEventJS;
-import dev.latvian.mods.kubejs.script.SourceLine;
-import dev.latvian.mods.kubejs.script.TypeWrapperRegistry;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
@@ -49,24 +50,25 @@ public class NeoFluidAddon extends VFluidAddon implements NeoAddon {
     public static class KJS implements NeoAddonKJS {
         private final FluidJSParser fluidParser = new FluidJSParser();
 
-        @Override
-        public void registerEventExtensions(EventRegistry registry) {
-            var type = registry.get(ServerRegisterEventJS.class);
-            type.addFunctionVarArgs("fluids", (event, cx, args) -> args[0], FluidCollectionWrapper.class, FluidCollectionWrapper.class, FluidCollectionWrapper[].class);
-            type.addFunctionVarArgs("restrictFluids", (event, cx, args) -> {
-                var flattener = event.stageManager().get(GameContentFlattener.Attribute.MUTABLE_MANAGER_ATTRIBUTE);
-                var fluidsContent = flattener.flatten(((FluidCollectionWrapper) Objects.requireNonNull(args[1])).content(), CommonFluidCollection.TYPE);
-                var predicate = (PreparedRestrictionPredicate) Objects.requireNonNull(args[0]);
-                var source = Objects.requireNonNull(SourceLine.of(cx)).toString();
-                return event
-                        .stageManager()
-                        .addRestriction(new NeoFluidRestrictionEntry(predicate, RestrictionEntryOrigin.string(source), fluidsContent));
-            }, FluidCollectionWrapper.class, NeoFluidRestrictionEntry.class, PreparedRestrictionPredicate.class, FluidCollectionWrapper[].class);
+        {
+            StagesKubeJSPlugin.register(FluidType.get(), fluidParser::parse);
         }
 
         @Override
-        public void registerTypeWrappers(TypeWrapperRegistry registry) {
-            registry.register(FluidCollectionWrapper.class, (TypeWrapperRegistry.ContextFromFunction<FluidCollectionWrapper>) (context, o) -> new FluidCollectionWrapper(fluidParser.parse(context, o)));
+        public void registerEventExtensions(EventRegistry registry) {
+            var type = registry.get(ServerRegisterEventJS.class);
+            var fluidType = StagesKubeJSPlugin.typedCollection(FluidType.get());
+            var fluidTypeArray = fluidParser.param(fluidType.asArray());
+            type.addFunctionVarArgs("fluids", fluidParser::parse, fluidType, fluidTypeArray);
+            type.addFunctionVarArgs("restrictFluids", (call, cx, args) -> {
+                var event = call.event();
+                var flattener = event.stageManager().get(GameContentFlattener.MUTABLE_MANAGER_ATTRIBUTE);
+                var gameContent = flattener.flatten(((GameContentWrapper) args[1]).gameContent(), FluidType.get());
+                var predicate = (PreparedRestrictionPredicate) Objects.requireNonNull(args[0]);
+                return event
+                        .stageManager()
+                        .addRestriction(new NeoFluidRestrictionEntry(predicate, cx.origin(), new FluidContentWrapper(gameContent)));
+            }, NeoFluidRestrictionEntry.class, PreparedRestrictionPredicate.class, fluidTypeArray);
         }
     }
 }

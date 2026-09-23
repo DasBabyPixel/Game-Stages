@@ -1,6 +1,6 @@
 package de.dasbabypixel.gamestages.common.data.restriction.compiled;
 
-import de.dasbabypixel.gamestages.common.data.TypedGameContent;
+import de.dasbabypixel.gamestages.common.data.GameContentWrapper;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntry;
 import de.dasbabypixel.gamestages.common.data.restriction.RestrictionEntryOrigin;
 import org.jspecify.annotations.NullMarked;
@@ -13,7 +13,7 @@ public interface CompiledRestrictionEntry<Self extends CompiledRestrictionEntry<
         return preCompiled().origin();
     }
 
-    default TypedGameContent gameContent() {
+    default GameContentWrapper gameContent() {
         return preCompiled().gameContent();
     }
 }

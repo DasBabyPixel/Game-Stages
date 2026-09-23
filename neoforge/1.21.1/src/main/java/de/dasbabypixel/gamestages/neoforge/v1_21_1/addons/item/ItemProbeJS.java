@@ -1,9 +1,12 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.item;
 
 import de.dasbabypixel.gamestages.common.addons.item.datadriven.DataDrivenTypedData;
+import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.ItemType;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.network.DataDrivenTypes;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonProbeJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.item.jsapi.ItemStackRestrictionEntryJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.ServerRegisterEventJS;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.probejs.StagesProbeJSPlugin;
 import moe.wolfgirl.probejs.plugin.builtins.alias.RecordTypes;
 import moe.wolfgirl.probejs.plugin.builtins.alias.RegistryTypes;
 import moe.wolfgirl.probejs.plugin.builtins.alias.SpecialTypes;
@@ -17,6 +20,8 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.probejs.StagesProbeJSPlugin.transformerRegistry;
+import static de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.probejs.StagesProbeJSPlugin.typedCompletionsClassPath;
 import static moe.wolfgirl.probejs.typescript.document.Types.clazz;
 import static moe.wolfgirl.probejs.typescript.document.Types.literal;
 import static moe.wolfgirl.probejs.typescript.document.Types.union;
@@ -27,19 +32,41 @@ import static moe.wolfgirl.probejs.typescript.document.Types.wrapped;
 public class ItemProbeJS implements NeoAddonProbeJS {
     static {
         RecordTypes.SKIP_RECORDS.add(DataDrivenTypedData.class);
-        RecordTypes.SKIP_RECORDS.add(ItemCollectionWrapper.class);
+
+        registerTransformers();
+    }
+
+    @SuppressWarnings({"DataFlowIssue", "CodeBlock2Expr"})
+    private static void registerTransformers() {
+        var itemCollection = StagesProbeJSPlugin.typedCollection(ItemType.get());
+        var usingOnlyItemCollection = StagesProbeJSPlugin.collectionUsingOnly(ItemType.get());
+
+        transformerRegistry.register(ServerRegisterEventJS.class, (classDecl, methodDecl) -> {
+            methodDecl.returnType = itemCollection;
+            methodDecl.params.getFirst().typeInfo = usingOnlyItemCollection.asArray();
+        }, "items");
+        transformerRegistry.register(ServerRegisterEventJS.class, (classDecl, methodDecl) -> {
+            methodDecl.params.get(1).typeInfo = usingOnlyItemCollection.asArray();
+        }, "restrictItems");
+        transformerRegistry.register(ServerRegisterEventJS.class, (classDecl, methodDecl) -> {
+            methodDecl.params.get(1).typeInfo = usingOnlyItemCollection.asArray();
+        }, "restrictItemStacks");
+        transformerRegistry.register(ServerRegisterEventJS.class, (classDecl, methodDecl) -> {
+            methodDecl.returnType = itemCollection;
+        }, "restrictedItems");
     }
 
     @Override
     public void addTypeAlias(AliasRegistrar registrar) {
         {
+            var self = typedCompletionsClassPath(ItemType.get());
             var item = clazz(Item.class).markAsInput();
             var itemExplicit = wrapped("`.${%s}`", item);
             var itemTag = wrapped("`#${%s}`", RegistryTypes.tag("Item"));
             var mod = wrapped("`@${%s}`", SpecialTypes.MOD_ID);
-            var recursive = Objects.requireNonNull(clazz(ItemCollectionWrapper.class).asInput()).asArray();
+            var recursive = Objects.requireNonNull(clazz(self).asInput()).asArray();
             var itemWrapper = union(item, itemExplicit, itemTag, mod, recursive);
-            registrar.addInputAlias(ItemCollectionWrapper.class, itemWrapper.markAsInput());
+            registrar.addInputAlias(self, itemWrapper.markAsInput());
         }
 
         var dataDrivenTypedDataList = new ArrayList<Type>();

@@ -2,13 +2,32 @@ package de.dasbabypixel.gamestages.common.data;
 
 import org.jspecify.annotations.NullMarked;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Stream;
+
 @NullMarked
-public interface GameContent {
-    GameContent except(GameContent... other);
+public sealed interface GameContent extends GameContentWrapper permits GameContentExcept, GameContentMod, GameContentOnly, GameContentSimple, GameContentUnion, TypedGameContent {
+    GameContent EMPTY = new GameContentSimple(List.of());
 
-    GameContent only(GameContent... other);
+    @Override
+    default GameContent gameContent() {
+        return this;
+    }
 
-    GameContent union(GameContent... other);
+    default GameContent except(GameContent... other) {
+        return new GameContentExcept(this, new GameContentUnion(Arrays.asList(other)));
+    }
 
-    GameContent filterType(GameContentType<?> type);
+    default GameContent only(GameContent... other) {
+        return new GameContentOnly(this, new GameContentUnion(Arrays.asList(other)));
+    }
+
+    default GameContent union(GameContent... other) {
+        return new GameContentUnion(Stream.concat(Stream.of(this), Arrays.stream(other)).toList());
+    }
+
+    default <TypeData, Elements, Element> TypedGameContent<TypeData, Elements, Element> filterType(GameContentRegistry.Entry<?, TypeData, Elements, Element> type) {
+        return new GameContentFilterType<>(this, type);
+    }
 }

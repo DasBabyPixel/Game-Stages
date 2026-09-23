@@ -1,11 +1,13 @@
 package de.dasbabypixel.gamestages.common.data.manager.mutable.compiler;
 
+import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.addon.Addon.CompileManagerEvent;
 import de.dasbabypixel.gamestages.common.addon.Addon.PostCompileTypeEvent;
 import de.dasbabypixel.gamestages.common.addon.Addon.PreCompilePrepareEvent;
 import de.dasbabypixel.gamestages.common.addon.Addon.PreCompileTypeEvent;
 import de.dasbabypixel.gamestages.common.data.DuplicatesException;
-import de.dasbabypixel.gamestages.common.data.GameContentType;
+import de.dasbabypixel.gamestages.common.data.GameContentFlattener;
+import de.dasbabypixel.gamestages.common.data.GameContentRegistry;
 import de.dasbabypixel.gamestages.common.data.attribute.AttributeCompiler;
 import de.dasbabypixel.gamestages.common.data.attribute.CompilableAttributeHolder;
 import de.dasbabypixel.gamestages.common.data.attribute.SimpleAttribute;
@@ -36,7 +38,7 @@ public final class ManagerCompilerTask extends SimpleAttributeHolder<ManagerComp
     private final SimpleMutableGameStageManager<?, ?> manager;
     private final MutablePreCompileIndex preCompileIndex;
     private final Precompiler precompiler = new Precompiler();
-    private final HashMap<GameContentType<?>, List<RestrictionEntry<?, ?, ?>>> restrictionsByType = new HashMap<>();
+    private final HashMap<GameContentRegistry.Entry<?, ?, ?, ?>, List<RestrictionEntry<?, ?, ?>>> restrictionsByType = new HashMap<>();
 
     public ManagerCompilerTask(SimpleMutableGameStageManager<?, ?> manager) {
         this.manager = manager;
@@ -65,27 +67,30 @@ public final class ManagerCompilerTask extends SimpleAttributeHolder<ManagerComp
         preparePrecompileRestrictions();
 
         var restrictions = manager.restrictions();
+        var flattener = manager.get(GameContentFlattener.MUTABLE_MANAGER_ATTRIBUTE);
 
         for (var restriction : restrictions) {
-            restrictionsByType.computeIfAbsent(restriction.gameContent().type(), ignored -> new ArrayList<>())
-                    .add(restriction);
+            var simple = flattener.flatten(restriction.gameContent());
+            for (var entry : simple.entries()) {
+                restrictionsByType.computeIfAbsent(entry.typeEntry(), ignored -> new ArrayList<>()).add(restriction);
+            }
         }
 
         precompiler.precompile();
     }
 
-    public List<RestrictionEntry<?, ?, ?>> restrictionsByType(GameContentType<?> type) {
-        return restrictionsByType.computeIfAbsent(type, ignored -> new ArrayList<>());
+    public List<RestrictionEntry<?, ?, ?>> restrictionsByType(GameContentRegistry.Entry<?, ?, ?, ?> typeEntry) {
+        return restrictionsByType.computeIfAbsent(typeEntry, ignored -> new ArrayList<>());
     }
 
     private final class Precompiler {
-        private final HashMap<GameContentType<?>, Map<Object, Set<RestrictionEntry.PreCompiled<?, ?>>>> duplicates = new HashMap<>(0);
-        private final HashMap<GameContentType<?>, List<GameContentType<?>>> evaluationDependencies = new HashMap<>();
-        private final HashSet<GameContentType<?>> compiled = new HashSet<>();
+        private final HashMap<GameContentRegistry.Entry<?, ?, ?, ?>, Map<Object, Set<RestrictionEntry.PreCompiled<?, ?>>>> duplicates = new HashMap<>(0);
+        private final HashMap<GameContentRegistry.Entry<?, ?, ?, ?>, List<GameContentRegistry.Entry<?, ?, ?, ?>>> evaluationDependencies = new HashMap<>();
+        private final HashSet<GameContentRegistry.Entry<?, ?, ?, ?>> compiled = new HashSet<>();
 
         private void precompile() {
-            for (var type : GameContentType.TYPES) {
-                precompile(type);
+            for (var entry : CommonInstances.gameContentRegistry.entries()) {
+                precompile(entry);
             }
 
             var reports = collectDuplicateReports(duplicates);
@@ -94,7 +99,7 @@ public final class ManagerCompilerTask extends SimpleAttributeHolder<ManagerComp
             }
         }
 
-        private void precompile(GameContentType<?> type) {
+        private void precompile(GameContentRegistry.Entry<?, ?, ?, ?> type) {
             if (!compiled.add(type)) return;
 
             if (evaluationDependencies.containsKey(type)) {
@@ -104,30 +109,34 @@ public final class ManagerCompilerTask extends SimpleAttributeHolder<ManagerComp
             }
 
             PRE_COMPILE_TYPE_EVENT.call(new PreCompileTypeEvent(ManagerCompilerTask.this, type));
+            var flattener = manager.get(GameContentFlattener.MUTABLE_MANAGER_ATTRIBUTE);
             var typeIndex = preCompileIndex.typeIndex(type);
             var restrictions = restrictionsByType(type);
             for (var restriction : restrictions) {
                 var preCompiled = restriction.compile(ManagerCompilerTask.this);
-                var typed = restriction.gameContent();
+                var gameContentSimple = flattener.flatten(restriction.gameContent());
                 preCompileIndex.preCompiledRestrictions().add(preCompiled);
 
                 typeIndex.entries().add(preCompiled);
 
-                if (typed.isEmpty()) continue;
-                for (var content : typed.content()) {
-                    if (typeIndex.preCompiledByContent().containsKey(content)) {
-                        duplicates.computeIfAbsent(type, ignored -> new HashMap<>())
-                                .computeIfAbsent(content, ignored -> new HashSet<>())
-                                .add(preCompiled);
-                    } else {
-                        typeIndex.preCompiledByContent().put(content, preCompiled);
+                for (var entry : gameContentSimple.entries()) {
+                    for (var content : entry.contentCollection()) {
+                        Objects.requireNonNull(content);
+                        if (typeIndex.preCompiledByContent().containsKey(content)) {
+                            duplicates
+                                    .computeIfAbsent(type, ignored -> new HashMap<>())
+                                    .computeIfAbsent(content, ignored -> new HashSet<>())
+                                    .add(preCompiled);
+                        } else {
+                            typeIndex.preCompiledByContent().put(content, preCompiled);
+                        }
                     }
                 }
             }
             POST_COMPILE_TYPE_EVENT.call(new PostCompileTypeEvent(ManagerCompilerTask.this, type));
         }
 
-        private List<DuplicateReport> collectDuplicateReports(Map<GameContentType<?>, Map<Object, Set<RestrictionEntry.PreCompiled<?, ?>>>> duplicatesByType) {
+        private List<DuplicateReport> collectDuplicateReports(Map<GameContentRegistry.Entry<?, ?, ?, ?>, Map<Object, Set<RestrictionEntry.PreCompiled<?, ?>>>> duplicatesByType) {
             if (duplicatesByType.isEmpty()) return List.of();
             var reports = new ArrayList<DuplicateReport>();
             for (var entry : duplicatesByType.entrySet()) {

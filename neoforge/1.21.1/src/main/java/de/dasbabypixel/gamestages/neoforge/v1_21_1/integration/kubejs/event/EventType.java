@@ -1,5 +1,7 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event;
 
+import de.dasbabypixel.gamestages.common.Unit;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.JSContext;
 import dev.latvian.mods.kubejs.script.KubeJSContext;
 import dev.latvian.mods.rhino.BaseFunction;
 import dev.latvian.mods.rhino.Context;
@@ -7,7 +9,6 @@ import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.type.ArrayTypeInfo;
 import dev.latvian.mods.rhino.type.TypeInfo;
 import dev.latvian.mods.rhino.util.HideFromJS;
-import net.minecraft.util.Unit;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
@@ -21,130 +22,114 @@ import java.util.Map;
 import java.util.Objects;
 
 @NullMarked
-public final class EventType<Event extends EventJSBase<Event>> {
+public final class EventType<Event extends EventJSBase<? extends Event>> {
     private final Class<? extends Event> cls;
     private final TypeInfo type;
-    private final java.util.function.Function<Event, Unit> NUL = ignore -> Unit.INSTANCE;
     private List<PreEventExecutor<Event>> preExecutors = new ArrayList<>();
     private List<PreEventExecutor<Event>> postExecutors = new ArrayList<>();
-    private Map<String, Function<Event, ?>> functions = new HashMap<>();
+    private Map<String, Function<Event>> functions = new HashMap<>();
 
     public EventType(Class<? extends Event> cls) {
         this.cls = cls;
         this.type = Objects.requireNonNull(TypeInfo.of(cls));
     }
 
-    private static <E extends EventJSBase<E>> EventJSBase.ContextFunction<E, Unit> wrap(EventJSBase.Function<E> function) {
-        return (event, cx, unused, args) -> function.invoke(event, cx, args);
+    @HideFromJS
+    public void addFunction(String name, EventFunction<? super Event> function, Object returnType, @Nullable Object... parameters) {
+        addFunction(name, function, type(returnType), convert(parameters));
     }
 
     @HideFromJS
-    public <EventContext> void addFunction(String name, java.util.function.Function<Event, EventContext> contextSupplier, EventJSBase.ContextFunction<Event, EventContext> function, Object returnType, Object... parameters) {
-        var retType = of(returnType);
-        var params = new ExplicitType[parameters.length];
-        for (var i = 0; i < parameters.length; i++) {
-            params[i] = of(parameters[i]);
-        }
-        addFunction(name, contextSupplier, function, false, null, retType, params);
+    public void addFunction(String name, EventFunction<? super Event> function, TypeInfo returnType, List<? extends FunctionParameterDescriptor<? super Event>> parameters) {
+        addFunction(name, function, new FunctionDescriptor<>(false, returnType, parameters));
     }
 
     @HideFromJS
-    public void addFunction(String name, EventJSBase.Function<Event> function, Object returnType, Object... parameters) {
-        addFunction(name, NUL, wrap(function), returnType, parameters);
+    public void addFunctionVarArgs(String name, EventFunction<? super Event> function, Object returnType, @Nullable Object... parameters) {
+        addFunctionVarArgs(name, function, type(returnType), convert(parameters));
     }
 
     @HideFromJS
-    public <EventContext> void addFunctionVarArgs(String name, java.util.function.Function<Event, EventContext> contextSupplier, EventJSBase.ContextFunction<Event, EventContext> function, @Nullable Object wrapVarargsType, Object returnType, Object... parameters) {
-        var retType = of(returnType);
-        var params = new ExplicitType[parameters.length];
-        for (var i = 0; i < parameters.length; i++) {
-            params[i] = of(parameters[i]);
-        }
-        addFunction(name, contextSupplier, function, true, type(wrapVarargsType), retType, params);
+    public void addFunctionVarArgs(String name, EventFunction<? super Event> function, TypeInfo returnType, List<? extends FunctionParameterDescriptor<? super Event>> parameters) {
+        addFunction(name, function, new FunctionDescriptor<>(true, returnType, parameters));
     }
 
     @HideFromJS
-    public void addFunctionVarArgs(String name, EventJSBase.Function<Event> function, @Nullable Object wrapVarargsType, Object returnType, Object... parameters) {
-        addFunctionVarArgs(name, NUL, wrap(function), wrapVarargsType, returnType, parameters);
+    public void addFunction(String name, EventFunction<? super Event> function, FunctionDescriptor<Event> descriptor) {
+        var parameters = descriptor.parameters();
+        ArrayTypeInfo varargs;
+        if (descriptor.varArgs()) {
+            if (!(descriptor.parameters().getLast().typeInfo() instanceof ArrayTypeInfo array)) {
+                throw new UnsupportedOperationException("Varargs function must expect array as varargs parameter");
+            }
+            varargs = array;
+        } else varargs = null;
+        var invoker = new BaseFunction() {
+            @SuppressWarnings("DataFlowIssue")
+            @NullUnmarked
+            @Override
+            public @Nullable Object call(Context cx_, Scriptable scope, Scriptable thisObj, Object[] args) {
+                Objects.requireNonNull(cx_);
+                Objects.requireNonNull(args);
+                Objects.requireNonNull(thisObj);
+                var cx = (KubeJSContext) cx_;
+                var event = cls.cast(Objects.requireNonNull(cx.jsToJava(thisObj, type)));
+
+                var functionCall = new FunctionCall<Event>(cx, JSContext.instance(cx), scope, event, args);
+
+                var newArgs = new Object[parameters.size()];
+
+                if (varargs != null) {
+                    if (args.length < parameters.size() - 1) {
+                        throw new IllegalArgumentException("Too few arguments. Need at least " + (parameters.size() - 1));
+                    }
+                    for (var i = 0; i < parameters.size() - 1; i++) {
+                        var jsArgument = Objects.requireNonNullElse(args[i], Unit.INSTANCE);
+                        newArgs[i] = parameters.get(i).convert(functionCall, jsArgument);
+                    }
+                    var varargsArray = new Object[args.length - parameters.size() + 1];
+                    for (int i = parameters.size() - 1, j = 0; i < args.length; i++, j++) {
+                        Array.set(varargsArray, j, args[i]);
+                    }
+                    newArgs[parameters.size() - 1] = parameters.getLast().convert(functionCall, varargsArray);
+                } else {
+                    if (args.length != parameters.size()) {
+                        throw new IllegalArgumentException("Wrong number of arguments. Need exactly " + parameters.size());
+                    }
+                    for (var i = 0; i < args.length; i++) {
+                        newArgs[i] = parameters
+                                .get(i)
+                                .convert(functionCall, Objects.requireNonNullElse(args[i], Unit.INSTANCE));
+                    }
+                }
+                return function.call(functionCall, functionCall.cx, newArgs);
+            }
+        };
+        var wrappedFunction = new Function<Event>(invoker, descriptor);
+        functions.put(name, wrappedFunction);
     }
 
-    private ExplicitType of(Object o) {
-        if (o instanceof ExplicitType t) return t;
+    private FunctionParameterDescriptor<?> of(Object o) {
+        if (o instanceof EventType.FunctionParameterDescriptor<?> t) return t;
         var t = Objects.requireNonNull(type(o));
-        return new ExplicitType(t, t);
+        return new FunctionParameterDescriptor<>(t, FunctionParameterConverter.defaultConverter());
     }
 
-    private @Nullable TypeInfo type(@Nullable Object o) {
+    @SuppressWarnings("unchecked")
+    private List<FunctionParameterDescriptor<? super Event>> convert(@Nullable Object[] parameters) {
+        var params = new ArrayList<FunctionParameterDescriptor<? super Event>>(parameters.length);
+        for (var parameter : parameters) {
+            params.add((FunctionParameterDescriptor<? super Event>) of(Objects.requireNonNull(parameter)));
+        }
+        return params;
+    }
+
+    private TypeInfo type(Object o) {
         return switch (o) {
-            case null -> null;
-            case Type t -> TypeInfo.of(t);
+            case Type t -> Objects.requireNonNull(TypeInfo.of(t));
             case TypeInfo t -> t;
             default -> throw new UnsupportedOperationException(String.valueOf(o));
         };
-    }
-
-    @HideFromJS
-    public <EventContext> void addFunction(String name, java.util.function.Function<Event, EventContext> contextSupplier, EventJSBase.ContextFunction<Event, EventContext> function, boolean varArgs, @Nullable TypeInfo wrapVarargsType, ExplicitType returnType, ExplicitType... parameters) {
-        addFunction(name, contextSupplier, function, new FunctionDescriptor(varArgs, returnType, parameters), wrapVarargsType);
-    }
-
-    @HideFromJS
-    public void addFunction(String name, EventJSBase.Function<Event> function, boolean varArgs, @Nullable TypeInfo wrapVarargsType, ExplicitType returnType, ExplicitType... parameters) {
-        addFunction(name, NUL, wrap(function), varArgs, wrapVarargsType, returnType, parameters);
-    }
-
-    @HideFromJS
-    public void addFunction(String name, EventJSBase.Function<Event> function, FunctionDescriptor descriptor, @Nullable TypeInfo wrapVarargsType) {
-        addFunction(name, NUL, wrap(function), descriptor, wrapVarargsType);
-    }
-
-    @HideFromJS
-    public <EventContext> void addFunction(String name, java.util.function.Function<Event, EventContext> contextSupplier, EventJSBase.ContextFunction<Event, EventContext> function, FunctionDescriptor descriptor, @Nullable TypeInfo wrapVarargsType) {
-        var parameters = descriptor.parameters();
-        var varArgs = descriptor.varArgs();
-        ArrayTypeInfo varArgArrayType;
-        if (varArgs) {
-            if (!(descriptor.parameters()[descriptor.parameters().length - 1].jsType() instanceof ArrayTypeInfo array)) {
-                throw new UnsupportedOperationException("Varargs function not expecting array");
-            }
-            varArgArrayType = array;
-        } else varArgArrayType = null;
-        var invoker = new BaseFunction() {
-            @NullUnmarked
-            @SuppressWarnings("unchecked")
-            @Override
-            public @Nullable Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-                Objects.requireNonNull(cx);
-                Objects.requireNonNull(args);
-                if (varArgs) {
-                    var newArgs = new Object[parameters.length];
-                    for (var i = 0; i < parameters.length - 1; i++) {
-                        newArgs[i] = cx.jsToJava(args[i], Objects.requireNonNull(parameters[i]).jsType());
-                    }
-                    var mergedLength = args.length - parameters.length + 1;
-                    var merged = Objects.requireNonNull(varArgArrayType.componentType()).newArray(mergedLength);
-                    for (int i = parameters.length - 1, j = 0; i < args.length; i++, j++) {
-                        Array.set(merged, j, cx.jsToJava(args[i], varArgArrayType.componentType()));
-                    }
-                    if (wrapVarargsType != null) {
-                        merged = cx.jsToJava(merged, wrapVarargsType);
-                    }
-                    newArgs[newArgs.length - 1] = merged;
-                    args = newArgs;
-                } else {
-                    for (var i = 0; i < args.length; i++) {
-                        args[i] = Objects.requireNonNull(cx.jsToJava(args[i], Objects
-                                .requireNonNull(parameters[i])
-                                .jsType()));
-                    }
-                }
-                var event = Objects.requireNonNull(cls.cast(cx.jsToJava(thisObj, type)));
-                var eventContext = (EventContext) event.extra().get(this);
-                return function.invoke(event, (KubeJSContext) cx, eventContext, args);
-            }
-        };
-        var wrappedFunction = new Function<Event, EventContext>(invoker, contextSupplier, function, descriptor);
-        functions.put(name, wrappedFunction);
     }
 
     @HideFromJS
@@ -155,7 +140,7 @@ public final class EventType<Event extends EventJSBase<Event>> {
     }
 
     @HideFromJS
-    public Map<String, Function<Event, ?>> functions() {
+    public Map<String, Function<Event>> functions() {
         return functions;
     }
 
@@ -168,19 +153,47 @@ public final class EventType<Event extends EventJSBase<Event>> {
         return postExecutors;
     }
 
-    public interface PreEventExecutor<Event extends EventJSBase<Event>> {
+    public interface PreEventExecutor<Event> {
         void execute(Event event);
     }
 
-    public record ExplicitType(TypeInfo jsType, TypeInfo probeType) {
+    public interface EventFunction<Event> {
+        @Nullable Object call(FunctionCall<? extends Event> functionCall, JSContext cx, Object[] args);
     }
 
-    public record FunctionDescriptor(boolean varArgs, ExplicitType returnType, ExplicitType[] parameters) {
+    @NullMarked
+    public interface FunctionParameterConverter<Event> {
+        static <E> FunctionParameterConverter<E> defaultConverter() {
+            return (functionCall, descriptor, arg) -> Objects.requireNonNullElse(functionCall
+                    .context()
+                    .jsToJava(arg, descriptor.typeInfo()), Unit.INSTANCE);
+        }
+
+        /**
+         * Converts an argument to the desired receiver type. If this is for a varargs parameter, then the {@code arg} will be an array.
+         */
+        Object convert(FunctionCall<? extends Event> functionCall, FunctionParameterDescriptor<? extends Event> descriptor, Object arg);
     }
 
-    public record Function<Event extends EventJSBase<Event>, EventContext>(BaseFunction invoker,
-                                                                           java.util.function.Function<? super Event, EventContext> contextSupplier,
-                                                                           EventJSBase.ContextFunction<? super Event, EventContext> function,
-                                                                           FunctionDescriptor descriptor) {
+    public record FunctionCall<Event>(KubeJSContext context, JSContext cx, @Nullable Scriptable scope, Event event,
+                                      Object[] args) {
+    }
+
+    public record FunctionParameterDescriptor<Event>(TypeInfo typeInfo,
+                                                     FunctionParameterConverter<? super Event> converter) {
+        Object convert(FunctionCall<? extends Event> functionCall, Object arg) {
+            return converter.convert(functionCall, this, arg);
+        }
+    }
+
+    @NullMarked
+    public record FunctionDescriptor<Event>(boolean varArgs, TypeInfo returnType,
+                                            List<? extends FunctionParameterDescriptor<? super Event>> parameters) {
+        public FunctionDescriptor {
+            parameters = List.copyOf(parameters);
+        }
+    }
+
+    public record Function<Event>(BaseFunction invoker, FunctionDescriptor<Event> descriptor) {
     }
 }
