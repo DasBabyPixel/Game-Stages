@@ -2,6 +2,8 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.probejs;
 
 import de.dasbabypixel.gamestages.common.CommonInstances;
 import de.dasbabypixel.gamestages.common.data.GameContentRegistry;
+import de.dasbabypixel.gamestages.common.data.attribute.ImmutableAttributeHolder;
+import de.dasbabypixel.gamestages.common.data.attribute.SimpleImmutableAttribute;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.EventRegistryImpl;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddonManager;
@@ -12,6 +14,7 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.jsapi.Game
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.jsapi.ModIdJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.jsapi.TypedGameCollectionJS;
 import dev.latvian.mods.kubejs.event.KubeEvent;
+import dev.latvian.mods.rhino.type.TypeInfo;
 import moe.wolfgirl.probejs.plugin.ProbeJSPlugin;
 import moe.wolfgirl.probejs.plugin.builtins.alias.SpecialTypes;
 import moe.wolfgirl.probejs.typescript.ClassPath;
@@ -30,6 +33,7 @@ import moe.wolfgirl.probejs.typescript.document.members.ParamDecl;
 import moe.wolfgirl.probejs.typescript.document.types.ClassType;
 import moe.wolfgirl.probejs.typescript.document.types.ParamType;
 import moe.wolfgirl.probejs.typescript.document.types.VariableType;
+import moe.wolfgirl.probejs.typescript.transpiler.TypeConverter;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -41,9 +45,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 
 @NullMarked
 public class StagesProbeJSPlugin extends ProbeJSPlugin {
+    public static final SimpleImmutableAttribute<ImmutableAttributeHolder<?>, TypeInformation> ATTRIBUTE_TYPE_INFORMATION = new SimpleImmutableAttribute<>();
+    public static final SimpleImmutableAttribute<ImmutableAttributeHolder<?>, DiscoveryClasses> ATTRIBUTE_DISCOVERY_CLASSES = new SimpleImmutableAttribute<>();
     public static final ClassTransformerRegistry transformerRegistry = new ClassTransformerRegistry();
     private static final ClassPath CLASS_PATH_GAME_STAGES = new ClassPath("gamestages");
     private static final ClassPath CLASS_PATH_CONTENT_TYPE_REGISTRY = Objects.requireNonNull(CLASS_PATH_GAME_STAGES.append("ContentTypeRegistry"));
@@ -142,7 +149,6 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
         addonMap(); // Initialize addons
 
         Objects.requireNonNull(classDocuments);
-
         var typeConverter = Objects.requireNonNull(classDocuments.converter);
 
         for (var entry : Objects.requireNonNull(eventRegistry).types().entrySet()) {
@@ -156,7 +162,9 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
                 var name = Objects.requireNonNull(entry2).getKey();
                 var function = entry2.getValue();
                 var descriptor = function.descriptor();
-                var returnType = typeConverter.convertType(descriptor.returnType());
+                var returnType = descriptor.has(ATTRIBUTE_TYPE_INFORMATION) ? descriptor
+                        .get(ATTRIBUTE_TYPE_INFORMATION)
+                        .type(typeConverter) : Types.ANY;
 
                 var variableTypes = new ArrayList<VariableType>();
                 var params = new ArrayList<ParamDecl>();
@@ -166,10 +174,9 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
                     var last = i == descriptor.parameters().size() - 1;
                     var varArg = last && descriptor.varArgs();
                     var paramName = "arg" + (nameId++);
-                    var paramTypeRaw = param.typeInfo();
-//                    var paramType = typeConverter.convertType(varArg ? paramTypeRaw.componentType() : paramTypeRaw);
-                    var paramType = typeConverter.convertType(paramTypeRaw);
-                    Objects.requireNonNull(paramType).markAsInput();
+                    var paramType = param.has(ATTRIBUTE_TYPE_INFORMATION) ? param
+                            .get(ATTRIBUTE_TYPE_INFORMATION)
+                            .type(typeConverter) : Types.ANY;
                     params.add(new ParamDecl(paramName, paramType, varArg, false));
                 }
 
@@ -188,23 +195,28 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
     @SuppressWarnings("DataFlowIssue")
     @Override
     public Set<Class<?>> provideClassForDiscovery() {
-        var eventClasses = new HashSet<Class<?>>();
+        var discoveryClasses = new HashSet<Class<?>>();
+        discoveryClasses.add(ModIdJS.class);
+        discoveryClasses.add(GameCollectionJS.class);
+        discoveryClasses.add(GameCollectionTypeJS.class);
+        discoveryClasses.add(TypedGameCollectionJS.class);
+
         for (var entry : Objects.requireNonNull(eventRegistry).types().entrySet()) {
-            eventClasses.add(entry.getKey());
+            discoveryClasses.add(entry.getKey());
             for (EventType.Function<?> function : entry.getValue().functions().values()) {
-                eventClasses.add(function.descriptor().returnType().asClass());
+                if (function.descriptor().has(ATTRIBUTE_DISCOVERY_CLASSES)) {
+                    discoveryClasses.addAll(function.descriptor().get(ATTRIBUTE_DISCOVERY_CLASSES).classes());
+                }
                 for (var i = 0; i < function.descriptor().parameters().size(); i++) {
                     var parameter = function.descriptor().parameters().get(i);
-                    var last = i == function.descriptor().parameters().size() - 1;
-                    if (last && function.descriptor().varArgs()) {
-                        eventClasses.add(parameter.typeInfo().asClass().componentType());
-                    } else {
-                        eventClasses.add(parameter.typeInfo().asClass());
+
+                    if (parameter.has(ATTRIBUTE_DISCOVERY_CLASSES)) {
+                        discoveryClasses.addAll(parameter.get(ATTRIBUTE_DISCOVERY_CLASSES).classes());
                     }
                 }
             }
         }
-        return eventClasses;
+        return discoveryClasses;
     }
 
     @Override
@@ -295,6 +307,35 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
                     .clazz(CLASS_PATH_TYPE_COMPLETIONS)
                     .withParams(variable)), true);
             registrar.addDocument(CLASS_PATH_GAME_COLLECTION_USING_ONLY, collectionUsingOnly);
+        }
+    }
+
+    public interface TypeInformation {
+        Type type(TypeConverter typeConverter);
+
+        record Direct(Type type) implements TypeInformation {
+            @Override
+            public Type type(TypeConverter typeConverter) {
+                return type;
+            }
+        }
+
+        record Converting(TypeInfo typeInfo, Function<Type, @Nullable Type> postProcessor) implements TypeInformation {
+            @SuppressWarnings("NullableProblems")
+            public Converting(TypeInfo typeInfo) {
+                this(typeInfo, Function.identity());
+            }
+
+            @Override
+            public Type type(TypeConverter typeConverter) {
+                return Objects.requireNonNull(postProcessor.apply(Objects.requireNonNull(typeConverter.convertType(typeInfo))));
+            }
+        }
+    }
+
+    public record DiscoveryClasses(List<Class<?>> classes) {
+        public DiscoveryClasses {
+            classes = List.copyOf(classes);
         }
     }
 

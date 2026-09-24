@@ -61,7 +61,7 @@ public class ReloadHandler {
 
         if (Mods.KUBEJS.isLoaded()) {
             BEFORE_REGISTER_EVENT.call(new RegisterEventData(manager));
-            KJSListeners.postRegisterEvent(manager);
+            KJSListeners.postRegisterEvent(manager, serverResources, registryAccess);
             AFTER_REGISTER_EVENT.call(new RegisterEventData(manager));
             if (mayAbort && !ConsoleJS.SERVER.errors.isEmpty()) {
                 return new ReloadResult.Failure();

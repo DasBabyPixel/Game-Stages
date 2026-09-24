@@ -94,6 +94,7 @@ public class GameContentFlattenerImpl implements GameContentFlattener {
                 }
                 yield new GameContentSimple(typeEntries);
             }
+            case GameContentSugar sugar -> flatten(sugar.desugar());
         };
         simpleCache.put(content, v);
         return v;
@@ -149,7 +150,7 @@ public class GameContentFlattenerImpl implements GameContentFlattener {
     @Override
     public <TypeData, Elements, Element> GameContentDirect<TypeData, Elements, Element> flatten(GameContentWrapper content, GameContentRegistry.Entry<?, TypeData, Elements, Element> type) {
         var flattened = flatten0(content.gameContent(), type);
-        if (flattened == null) return new GameContentDirect<>(type, type.type().newElementsBuilder().build());
+        if (flattened == null) return type.empty();
         return flattened;
     }
 
@@ -179,7 +180,7 @@ public class GameContentFlattenerImpl implements GameContentFlattener {
                     }
                 }
                 if (anyExcluded) {
-                    yield new GameContentDirect<>(type, builder.build());
+                    yield GameContentDirect.create(type, builder.build());
                 }
                 yield base;
             }
@@ -200,14 +201,14 @@ public class GameContentFlattenerImpl implements GameContentFlattener {
                     }
                 }
                 if (anyExcluded) {
-                    yield new GameContentDirect<>(type, builder.build());
+                    yield GameContentDirect.create(type, builder.build());
                 }
                 yield base;
             }
             case GameContentSimple simple -> {
                 var elements = simple.content(type);
                 if (elements == null) elements = type.type().newElementsBuilder().build();
-                yield new GameContentDirect<>(type, elements);
+                yield GameContentDirect.create(type, elements);
             }
             case GameContentUnion(var list) -> {
                 var builder = type.type().newElementsBuilder();
@@ -215,7 +216,7 @@ public class GameContentFlattenerImpl implements GameContentFlattener {
                     var c = flatten0(e, type);
                     if (c != null) builder.addElements(c.elements());
                 }
-                yield new GameContentDirect<>(type, builder.build());
+                yield GameContentDirect.create(type, builder.build());
             }
             case GameContentFilterType<?, ?, ?> filterType -> {
                 if (filterType.typeEntry() == type) {
@@ -233,8 +234,9 @@ public class GameContentFlattenerImpl implements GameContentFlattener {
             case GameContentMod(var modId) -> {
                 var elements = type.type().modContent(modId);
                 if (!type.type().iterate(elements).iterator().hasNext()) yield null;
-                yield new GameContentDirect<>(type, elements);
+                yield GameContentDirect.create(type, elements);
             }
+            case GameContentSugar sugar -> flatten0(sugar.desugar(), type);
         };
         var val = new TypedValue(v);
         typedCache.put(cacheEntry, val);

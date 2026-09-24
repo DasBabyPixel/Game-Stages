@@ -24,6 +24,11 @@ public abstract class AbstractCompilableAttributeHolder<Self extends AbstractCom
         return Objects.requireNonNull((T) attributeMap.get(attribute));
     }
 
+    @Override
+    public boolean has(CompilableAttribute<? super Self, ?, ?> attribute) {
+        return attributeMap.containsKey(attribute);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public Collection<AttributeEntry<? super Self, ?>> attributes() {

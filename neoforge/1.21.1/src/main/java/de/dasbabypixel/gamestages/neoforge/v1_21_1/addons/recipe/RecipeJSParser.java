@@ -19,7 +19,7 @@ import java.util.Set;
 @NullMarked
 public class RecipeJSParser extends JSParserBase {
     public RecipeJSParser() {
-        registerHandler(RecipeLikeKJS.class, (value, parseAppender) -> value.kjs$getOrCreateId());
+        registerHandler(RecipeLikeKJS.class, (context, value, parseAppender) -> value.kjs$getOrCreateId());
         registerHandler(ResourceLocation.class, new CollectingHandler<ResourceLocation, ResourceLocation>() {
             @Override
             public ResourceLocation transform(ResourceLocation value) {
@@ -27,17 +27,21 @@ public class RecipeJSParser extends JSParserBase {
             }
 
             @Override
-            public GameContent finish(Set<ResourceLocation> set) {
-                return new GameContentDirect<>(RecipeType.get(), List.copyOf(set));
+            public GameContent finish(JSContext context, Set<ResourceLocation> set) {
+                return GameContentDirect.create(RecipeType.get(), List.copyOf(set));
             }
         });
-        registerHandler(CharSequence.class, (value, parseAppender) -> {
+        registerHandler(CharSequence.class, (context, value, parseAppender) -> {
             var string = value.toString();
             if (string.startsWith("@")) {
                 return new GameContentMod(string.substring(1)).filterType(RecipeType.get());
             }
             if (string.startsWith(".")) string = string.substring(1);
-            return ResourceLocation.parse(string);
+            var location = ResourceLocation.parse(string);
+            if (context.serverResources().getRecipeManager().byKey(location).isEmpty()) {
+                throw new ParseException("Unknown recipe: " + string);
+            }
+            return location;
         });
     }
 

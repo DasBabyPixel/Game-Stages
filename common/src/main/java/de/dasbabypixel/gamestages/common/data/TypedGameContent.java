@@ -3,7 +3,7 @@ package de.dasbabypixel.gamestages.common.data;
 import org.jspecify.annotations.NullMarked;
 
 @NullMarked
-public sealed interface TypedGameContent<TypeData, Elements, Element> extends GameContent permits GameContentDirect, GameContentFilterType {
+public sealed interface TypedGameContent<TypeData, Elements, Element> extends GameContent permits GameContentDirect, GameContentFilterType, TypedGameContentSugar {
     GameContentRegistry.Entry<?, TypeData, Elements, Element> typeEntry();
 
     TypeData typeData();

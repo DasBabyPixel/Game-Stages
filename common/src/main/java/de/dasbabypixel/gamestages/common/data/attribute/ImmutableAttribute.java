@@ -18,4 +18,9 @@ public interface ImmutableAttribute<H extends ImmutableAttributeHolder<? extends
     default T get(H holder) {
         return holder.get(this);
     }
+
+    @Override
+    default boolean has(H holder) {
+        return holder.has(this);
+    }
 }

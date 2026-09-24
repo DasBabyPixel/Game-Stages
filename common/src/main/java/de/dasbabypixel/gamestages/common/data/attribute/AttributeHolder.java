@@ -10,6 +10,10 @@ public interface AttributeHolder<Self extends AttributeHolder<? extends Self>> {
         return attribute.get(self());
     }
 
+    default boolean has(Attribute<? super Self, ?> attribute) {
+        return attribute.has(self());
+    }
+
     Collection<AttributeEntry<? super Self, ?>> attributes();
 
     @SuppressWarnings("unchecked")

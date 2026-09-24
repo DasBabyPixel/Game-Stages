@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @NullMarked
 public interface GameContentType<TypeData, Elements, Element> {
@@ -21,6 +22,17 @@ public interface GameContentType<TypeData, Elements, Element> {
         var list = new ArrayList<Element>();
         iterate(elements).forEach(list::add);
         return list;
+    }
+
+    default String toStringElements(Elements elements) {
+        return elementCollection(elements)
+                .stream()
+                .map(this::toStringElement)
+                .collect(Collectors.joining(", ", "[", "]"));
+    }
+
+    default String toStringElement(Element element) {
+        return Objects.requireNonNull(element.toString());
     }
 
     ElementsBuilder<Elements, Element> newElementsBuilder();

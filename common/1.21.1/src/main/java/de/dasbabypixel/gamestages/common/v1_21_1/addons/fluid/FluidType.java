@@ -41,6 +41,21 @@ public class FluidType implements GameContentType<FluidType.FluidData, HolderSet
     }
 
     @Override
+    public String toStringElements(HolderSet<Fluid> holders) {
+        return switch (holders) {
+            case HolderSet.Named<Fluid> named -> "#" + named.key().location();
+            case HolderSet.Direct<Fluid> direct -> GameContentType.super.toStringElements(direct);
+            default -> Objects.requireNonNull(holders.toString());
+        };
+    }
+
+    @Override
+    public String toStringElement(Holder<Fluid> itemHolder) {
+        return itemHolder.getRegisteredName();
+    }
+
+
+    @Override
     public HolderSet<Fluid> modContent(String modId) {
         return HolderSet.direct(BuiltInRegistries.FLUID
                 .holders()

@@ -6,19 +6,6 @@ import org.jspecify.annotations.NullMarked;
 
 @NullMarked
 public interface CompilableAttribute<H extends CompilableAttributeHolder<? extends H, ? extends CompiledHolder>, T, CompiledHolder extends AttributeHolder<? extends CompiledHolder>> extends Attribute<H, T>, CompilableResource<CompilableAttributeHolder.CompiledAttributesBuilder<? extends H, CompiledHolder>, Unit> {
-    @Override
-    default T get(H holder) {
-        return holder.get(this);
-    }
-
-    @Override
-    default Unit compile(CompilableAttributeHolder.CompiledAttributesBuilder<? extends H, CompiledHolder> builder) {
-        compile(builder, builder.holder().get(this));
-        return Unit.INSTANCE;
-    }
-
-    void compile(CompilableAttributeHolder.CompiledAttributesBuilder<? extends H, CompiledHolder> builder, T value);
-
     static <H extends CompilableAttributeHolder<? extends H, ? extends CH>, T, CH extends AttributeHolder<? extends CH>> CompilableAttribute<H, T, CH> noop() {
         // Workaround because attributes are based on object identity.
         class HC implements CompilableAttribute<H, T, CH> {
@@ -28,4 +15,22 @@ public interface CompilableAttribute<H extends CompilableAttributeHolder<? exten
         }
         return new HC();
     }
+
+    @Override
+    default T get(H holder) {
+        return holder.get(this);
+    }
+
+    @Override
+    default boolean has(H holder) {
+        return holder.has(this);
+    }
+
+    @Override
+    default Unit compile(CompilableAttributeHolder.CompiledAttributesBuilder<? extends H, CompiledHolder> builder) {
+        compile(builder, builder.holder().get(this));
+        return Unit.INSTANCE;
+    }
+
+    void compile(CompilableAttributeHolder.CompiledAttributesBuilder<? extends H, CompiledHolder> builder, T value);
 }

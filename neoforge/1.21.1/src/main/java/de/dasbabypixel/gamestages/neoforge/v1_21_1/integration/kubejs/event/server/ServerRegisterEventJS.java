@@ -33,8 +33,7 @@ public final class ServerRegisterEventJS extends EventJSBase<ServerRegisterEvent
                 Objects.requireNonNull(mod);
                 list.add(new GameContentMod(((ModIdJSImpl) mod).modId()));
             }
-            var union = new GameContentUnion(list);
-            return new GameCollectionJSImpl(cx, union);
+            return new GameCollectionJSImpl(cx, GameContentUnion.create(list));
         }, GameCollectionJS.class, ModIdJS[].class);
     }
 

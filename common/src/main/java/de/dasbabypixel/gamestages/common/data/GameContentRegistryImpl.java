@@ -95,7 +95,7 @@ public class GameContentRegistryImpl extends SimpleImmutableAttributeHolder<Game
             super(attributes);
             this.id = id;
             this.type = type;
-            this.empty = new GameContentDirect<>(this, type.newElementsBuilder().build());
+            this.empty = GameContentDirect.createEmpty(this);
         }
 
         public GameContentType<TypeData, Elements, Element> type() {

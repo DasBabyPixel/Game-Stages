@@ -12,7 +12,6 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.jsapi.Game
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.jsapi.GameCollectionTypeJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.jsapi.ModIdJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.jsapi.ModIdJSImpl;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.jsapi.TypedGameCollectionJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.listener.KJSListeners;
 import dev.latvian.mods.kubejs.event.EventGroupRegistry;
 import dev.latvian.mods.kubejs.plugin.KubeJSPlugin;
@@ -38,10 +37,6 @@ public class StagesKubeJSPlugin implements KubeJSPlugin {
     private static final Map<GameContentRegistry.Entry<?, ?, ?, ?>, JSContext.TypeEntry> TYPE_ENTRY_MAP = new HashMap<>();
     private final Map<NeoAddon, NeoAddonKJS> addonMap = new HashMap<>();
     private boolean populated = false;
-
-    public static TypeInfo typedCollection(GameContentRegistry.Entry<?, ?, ?, ?> typeEntry) {
-        return Objects.requireNonNull(TypeInfo.of(TypedGameCollectionJS.class));
-    }
 
     public static JSContext.TypeEntry getTypeEntry(GameContentRegistry.Entry<?, ?, ?, ?> typeEntry) {
         return Objects.requireNonNull(TYPE_ENTRY_MAP.get(typeEntry));

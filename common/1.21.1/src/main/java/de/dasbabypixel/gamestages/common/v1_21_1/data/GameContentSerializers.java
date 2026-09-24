@@ -8,6 +8,7 @@ import de.dasbabypixel.gamestages.common.data.GameContentMod;
 import de.dasbabypixel.gamestages.common.data.GameContentOnly;
 import de.dasbabypixel.gamestages.common.data.GameContentRegistry;
 import de.dasbabypixel.gamestages.common.data.GameContentSimple;
+import de.dasbabypixel.gamestages.common.data.GameContentSugar;
 import de.dasbabypixel.gamestages.common.data.GameContentUnion;
 import de.dasbabypixel.gamestages.common.data.attribute.CompilableAttribute;
 import de.dasbabypixel.gamestages.common.data.attribute.ImmutableAttribute;
@@ -75,13 +76,13 @@ public class GameContentSerializers {
 
         this.streamCodec = ByteBufCodecs
                 .registry(SERIALIZER_REGISTRY_KEY)
-                .dispatch(this::serializer, GameContentSerializer::streamCodec);
+                .<GameContent>dispatch(this::serializer, GameContentSerializer::streamCodec)
+                .map(Function.identity(), this::desugar);
         this.streamCodecExcept = StreamCodec.composite(streamCodec, GameContentExcept::base, streamCodec, GameContentExcept::exclusion, GameContentExcept::new);
         this.streamCodecOnly = StreamCodec.composite(streamCodec, GameContentOnly::base, streamCodec, GameContentOnly::inclusion, GameContentOnly::new);
         this.streamCodecUnion = StreamCodec.composite(streamCodec.apply(ByteBufCodecs.list()), GameContentUnion::list, GameContentUnion::new);
         this.streamCodecFilterType = StreamCodec.composite(streamCodec, GameContentFilterType::base, streamCodecContentType, GameContentFilterType::typeEntry, GameContentFilterType::new);
         var simpleEntryCodec = new StreamCodec<RegistryFriendlyByteBuf, GameContentSimple.TypeEntry<?>>() {
-            @SuppressWarnings("unchecked")
             @Override
             public void encode(RegistryFriendlyByteBuf buffer, GameContentSimple.TypeEntry<?> value) {
                 streamCodecContentType.encode(buffer, value.typeEntry());
@@ -89,7 +90,6 @@ public class GameContentSerializers {
                 c.encode(buffer, value.elements());
             }
 
-            @SuppressWarnings("unchecked")
             @Override
             public GameContentSimple.TypeEntry<?> decode(RegistryFriendlyByteBuf buffer) {
                 var type = (GameContentRegistry.Entry<?, ?, @NonNull Object, ?>) streamCodecContentType.decode(buffer);
@@ -115,7 +115,7 @@ public class GameContentSerializers {
             for (var entry : entries) {
                 var type = (GameContentRegistry.Entry<?, ?, @NonNull Object, ?>) entry;
                 var codec = (StreamCodec<? super RegistryFriendlyByteBuf, Object>) entry.get(ATTRIBUTE_STREAM_CODEC_ELEMENTS);
-                streamCodecDirectMap.put(type, codec.map(o -> new GameContentDirect<>(type, o), GameContentDirect::elements));
+                streamCodecDirectMap.put(type, codec.map(o -> GameContentDirect.create(type, o), GameContentDirect::elements));
             }
             this.streamCodecDirectMap = Map.copyOf(streamCodecDirectMap);
 
@@ -136,6 +136,13 @@ public class GameContentSerializers {
     @SuppressWarnings("unchecked")
     public <TypeData, Elements, Element> StreamCodec<? super RegistryFriendlyByteBuf, GameContentDirect<TypeData, Elements, Element>> directStreamCodec(GameContentRegistry.Entry<?, TypeData, Elements, Element> typeEntry) {
         return (StreamCodec<? super RegistryFriendlyByteBuf, GameContentDirect<TypeData, Elements, Element>>) Objects.requireNonNull((Object) this.streamCodecDirectMap.get(typeEntry));
+    }
+
+    private GameContent desugar(GameContent content) {
+        if (content instanceof GameContentSugar sugar) {
+            return sugar.desugar();
+        }
+        return content;
     }
 
     public void register(RegisterHandler handler) {
@@ -167,6 +174,7 @@ public class GameContentSerializers {
             case GameContentDirect<?, ?, ?> direct ->
                     Objects.requireNonNull(serializerDirectMap.get(direct.typeEntry()));
             case GameContentMod ignored -> serializerMod;
+            case GameContentSugar ignored -> throw new IllegalStateException();
         };
     }
 

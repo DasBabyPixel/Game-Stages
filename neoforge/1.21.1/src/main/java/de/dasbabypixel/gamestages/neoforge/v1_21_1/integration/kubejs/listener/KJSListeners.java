@@ -9,6 +9,8 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.Stag
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.server.ServerRegisterEventJS;
 import dev.latvian.mods.kubejs.script.ScriptType;
 import dev.latvian.mods.kubejs.stages.StageCreationEvent;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.server.ReloadableServerResources;
 import net.neoforged.neoforge.common.NeoForge;
 import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
@@ -24,12 +26,12 @@ public class KJSListeners {
         NeoForge.EVENT_BUS.addListener(KJSListeners::handleStageCreation);
     }
 
-    public static void postRegisterEvent(ServerMutableGameStageManager manager) {
+    public static void postRegisterEvent(ServerMutableGameStageManager manager, ReloadableServerResources serverResources, RegistryAccess registryAccess) {
         var contextFactory = Objects.requireNonNull(Objects
                 .requireNonNull(Objects.requireNonNull(ScriptType.SERVER.console).contextFactory)
                 .get());
         var context = Objects.requireNonNull(contextFactory.enter());
-        JSContext.initInstance(context);
+        JSContext.initInstance(context, serverResources, registryAccess);
         var cx = JSContext.instance(context);
         var contentTypes = new JSContext.ContentTypes(CommonInstances.gameContentRegistry
                 .entries()

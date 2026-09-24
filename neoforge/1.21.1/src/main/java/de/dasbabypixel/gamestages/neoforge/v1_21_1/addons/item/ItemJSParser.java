@@ -5,7 +5,7 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.JSContext;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.JSParserBase;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.jsapi.TypedGameCollectionJS;
 import dev.latvian.mods.rhino.Context;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.ItemLike;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -13,7 +13,7 @@ import org.jspecify.annotations.Nullable;
 @NullMarked
 public class ItemJSParser extends JSParserBase {
     public ItemJSParser() {
-        registerRegistryHandlers(ItemLike.class, BuiltInRegistries.ITEM, ItemLike::asItem, ItemType.get());
+        registerRegistryHandlers(ItemLike.class, Registries.ITEM, ItemLike::asItem, ItemType.get());
     }
 
     @Override

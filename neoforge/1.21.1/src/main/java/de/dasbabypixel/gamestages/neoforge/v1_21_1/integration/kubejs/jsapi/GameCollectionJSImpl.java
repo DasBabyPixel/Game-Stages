@@ -31,7 +31,12 @@ public class GameCollectionJSImpl implements GameCollectionJS, GameContentWrappe
     }
 
     public static GameCollectionJS union(JSContext context, List<? extends GameCollectionJS> list) {
-        return new GameCollectionJSImpl(context, new GameContentUnion(Arrays.asList(convert(Objects.requireNonNull(list.toArray(GameCollectionJS[]::new))))));
+        return new GameCollectionJSImpl(context, GameContentUnion.create(Arrays.asList(convert(Objects.requireNonNull(list.toArray(GameCollectionJS[]::new))))));
+    }
+
+    @Override
+    public String toString() {
+        return gameContent.toString();
     }
 
     @Override

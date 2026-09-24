@@ -4,4 +4,8 @@ import org.jspecify.annotations.NullMarked;
 
 @NullMarked
 public record ModIdJSImpl(String modId) implements ModIdJS {
+    @Override
+    public String toString() {
+        return modId;
+    }
 }

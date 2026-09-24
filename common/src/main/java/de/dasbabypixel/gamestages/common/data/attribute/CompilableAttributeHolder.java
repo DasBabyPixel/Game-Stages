@@ -36,6 +36,8 @@ public interface CompilableAttributeHolder<Self extends CompilableAttributeHolde
 
     <T> T get(CompilableAttribute<? super Self, T, ?> attribute);
 
+    boolean has(CompilableAttribute<? super Self, ?, ?> attribute);
+
     CompiledHolder compile(AttributeCompiler<Self> compiler, CompiledAttributes<CompiledHolder> compiledAttributes);
 
     final class CompiledAttributesBuilder<OrigHolder extends CompilableAttributeHolder<? extends OrigHolder, ? extends CompiledHolder>, CompiledHolder extends AttributeHolder<? extends CompiledHolder>> {

@@ -51,6 +51,20 @@ public class ItemType implements GameContentType<ItemType.ItemData, HolderSet<It
     }
 
     @Override
+    public String toStringElements(HolderSet<Item> holders) {
+        return switch (holders) {
+            case HolderSet.Named<Item> named -> "#" + named.key().location();
+            case HolderSet.Direct<Item> direct -> GameContentType.super.toStringElements(direct);
+            default -> Objects.requireNonNull(holders.toString());
+        };
+    }
+
+    @Override
+    public String toStringElement(Holder<Item> itemHolder) {
+        return itemHolder.getRegisteredName();
+    }
+
+    @Override
     public Iterable<Holder<Item>> iterate(HolderSet<Item> holders) {
         return holders;
     }

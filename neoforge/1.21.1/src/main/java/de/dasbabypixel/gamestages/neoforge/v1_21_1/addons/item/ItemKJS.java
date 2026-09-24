@@ -70,17 +70,16 @@ public class ItemKJS implements NeoAddonKJS {
 
     private void serverRegisterExtensions(EventType<ServerRegisterEventJS> type) {
         var typeEntry = ItemType.get();
-        var itemType = StagesKubeJSPlugin.typedCollection(typeEntry);
-        var itemTypeArray = itemParser.param(itemType.asArray());
+        var itemTypeArray = itemParser.param(typeEntry);
         var dataDrivenTypedDataType = new ParameterizedTypeImpl(DataDrivenTypedData.class, WildcardTypeImpl.NO_BOUNDS);
-        type.addFunctionVarArgs("items", itemParser::parse, itemType, itemTypeArray);
+        type.addFunctionVarArgs("items", itemParser::parse, ItemType.get(), itemTypeArray);
         type.addFunctionVarArgs("restrictItems", this::restrictItems, ItemsRestrictionEntryJS.class, PreparedRestrictionPredicate.class, itemTypeArray);
         type.addFunction("registerItemStackEntry", this::registerItemStackEntry, ItemStackRestrictionEntryJS.class, PreparedRestrictionPredicate.class);
         type.addFunctionVarArgs("restrictItemStacks", this::restrictItemStacks, ItemStacksRestrictionEntryJS.class, dataDrivenTypedDataType, itemTypeArray);
         type.addFunction("restrictedItems", (call, cx, args) -> call
                 .event()
                 .stageManager()
-                .restrictedContent(ItemType.get()), itemType);
+                .restrictedContent(ItemType.get()), ItemType.get());
     }
 
     private ItemStackRestrictionEntryJS registerItemStackEntry(EventType.FunctionCall<? extends ServerRegisterEventJS> call, JSContext cx, Object[] args) {

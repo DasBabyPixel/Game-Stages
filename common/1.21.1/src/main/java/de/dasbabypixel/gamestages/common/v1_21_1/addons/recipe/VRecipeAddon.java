@@ -136,7 +136,7 @@ public abstract class VRecipeAddon implements VAddon {
                     Objects.requireNonNull(entry);
                     var predicate = entry.getKey();
                     var recipes = Objects.requireNonNull(entry.getValue());
-                    var restriction = createDefaultEntry(predicate, new RecipeContentWrapper(new GameContentDirect<>(RecipeType.get(), List.copyOf(recipes))));
+                    var restriction = createDefaultEntry(predicate, new RecipeContentWrapper(GameContentDirect.create(RecipeType.get(), List.copyOf(recipes))));
                     restrictionsByType.add(restriction);
                 }
             }
@@ -149,7 +149,7 @@ public abstract class VRecipeAddon implements VAddon {
                     Objects.requireNonNull(entry2);
                     var predicate = entry2.getKey();
                     var recipes = entry2.getValue();
-                    var recipesContent = new RecipeContentWrapper(new GameContentDirect<>(RecipeType.get(), List.copyOf(recipes)));
+                    var recipesContent = new RecipeContentWrapper(GameContentDirect.create(RecipeType.get(), List.copyOf(recipes)));
 
                     var newRestriction = restriction.copyWith(predicate, recipesContent);
                     restrictionsByType.add(newRestriction);

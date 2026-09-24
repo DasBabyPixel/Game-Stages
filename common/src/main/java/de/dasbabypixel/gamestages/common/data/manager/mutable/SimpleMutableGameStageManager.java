@@ -1,6 +1,5 @@
 package de.dasbabypixel.gamestages.common.data.manager.mutable;
 
-import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.GameContentFlattener;
 import de.dasbabypixel.gamestages.common.data.GameContentFlattenerImpl;
 import de.dasbabypixel.gamestages.common.data.GameContentRegistry;
@@ -87,8 +86,8 @@ public abstract class SimpleMutableGameStageManager<H extends SimpleMutableGameS
 
     public <DataType, Elements, Element> TypedGameContent<DataType, Elements, Element> restrictedContent(GameContentRegistry.Entry<?, DataType, Elements, Element> type) {
         var list = restrictedByType.get(type);
-        if (list == null) return GameContent.EMPTY.filterType(type);
-        return new GameContentUnion(List.copyOf(list)).filterType(type);
+        if (list == null) return type.empty();
+        return GameContentUnion.create(List.copyOf(list)).filterType(type);
     }
 
     public void addAll(Collection<? extends GameStage> gameStages) {

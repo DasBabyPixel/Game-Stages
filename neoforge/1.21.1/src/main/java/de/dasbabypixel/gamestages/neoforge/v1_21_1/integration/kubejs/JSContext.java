@@ -12,6 +12,8 @@ import dev.latvian.mods.kubejs.script.KubeJSContext;
 import dev.latvian.mods.kubejs.script.KubeJSServerContext;
 import dev.latvian.mods.kubejs.script.SourceLine;
 import dev.latvian.mods.rhino.Context;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.server.ReloadableServerResources;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -23,17 +25,21 @@ import java.util.Objects;
 @NullMarked
 public final class JSContext extends SimpleAttributeHolder<JSContext> {
     private final KubeJSContext context;
+    private final ReloadableServerResources serverResources;
+    private final RegistryAccess registryAccess;
 
-    public JSContext(KubeJSContext context) {
+    private JSContext(KubeJSContext context, ReloadableServerResources serverResources, RegistryAccess registryAccess) {
         this.context = context;
+        this.serverResources = serverResources;
+        this.registryAccess = registryAccess;
     }
 
     public static JSContext instance(@Nullable Context context) {
         return manager(Objects.requireNonNull(context)).context();
     }
 
-    public static void initInstance(Context context) {
-        manager(context).context(new JSContext((KubeJSContext) context));
+    public static void initInstance(Context context, ReloadableServerResources serverResources, RegistryAccess registryAccess) {
+        manager(context).context(new JSContext((KubeJSContext) context, serverResources, registryAccess));
     }
 
     public static void clearInstance(Context context) {
@@ -42,6 +48,14 @@ public final class JSContext extends SimpleAttributeHolder<JSContext> {
 
     private static StagesServerScriptManager manager(Context context) {
         return ((StagesServerScriptManager) Objects.requireNonNull(((KubeJSServerContext) context).kjsFactory).manager);
+    }
+
+    public ReloadableServerResources serverResources() {
+        return serverResources;
+    }
+
+    public RegistryAccess registryAccess() {
+        return registryAccess;
     }
 
     public RestrictionEntryOrigin origin() {

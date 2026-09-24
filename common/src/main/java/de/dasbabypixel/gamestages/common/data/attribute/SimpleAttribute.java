@@ -8,4 +8,9 @@ public class SimpleAttribute<H extends SimpleAttributeHolder<? extends H>, T> im
     public T get(H holder) {
         return holder.get(this);
     }
+
+    @Override
+    public boolean has(H holder) {
+        return holder.has(this);
+    }
 }

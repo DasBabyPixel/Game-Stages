@@ -6,7 +6,7 @@ import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.JSParserBa
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.jsapi.TypedGameCollectionJS;
 import dev.latvian.mods.kubejs.fluid.FluidLike;
 import dev.latvian.mods.rhino.Context;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -14,7 +14,7 @@ import org.jspecify.annotations.Nullable;
 public class FluidJSParser extends JSParserBase {
     @SuppressWarnings("DataFlowIssue")
     public FluidJSParser() {
-        registerRegistryHandlers(FluidLike.class, BuiltInRegistries.FLUID, FluidLike::kjs$getFluid, FluidType.get());
+        registerRegistryHandlers(FluidLike.class, Registries.FLUID, FluidLike::kjs$getFluid, FluidType.get());
     }
 
     @Override

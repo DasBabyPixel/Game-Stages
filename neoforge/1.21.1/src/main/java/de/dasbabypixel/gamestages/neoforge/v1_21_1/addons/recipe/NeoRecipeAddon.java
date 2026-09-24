@@ -66,9 +66,8 @@ public class NeoRecipeAddon extends VRecipeAddon implements NeoAddon {
         @Override
         public void registerEventExtensions(EventRegistry registry) {
             var type = registry.get(ServerRegisterEventJS.class);
-            var recipeType = StagesKubeJSPlugin.typedCollection(RecipeType.get());
-            var recipeTypeArray = recipeParser.param(recipeType.asArray());
-            type.addFunctionVarArgs("recipes", recipeParser::parse, recipeType, recipeTypeArray);
+            var recipeTypeArray = recipeParser.param(RecipeType.get());
+            type.addFunctionVarArgs("recipes", recipeParser::parse, RecipeType.get(), recipeTypeArray);
             type.addFunctionVarArgs("restrictRecipes", (call, cx, args) -> {
                 var event = call.event();
                 var flattener = event.stageManager().get(GameContentFlattener.MUTABLE_MANAGER_ATTRIBUTE);

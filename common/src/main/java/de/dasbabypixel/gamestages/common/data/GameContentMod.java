@@ -8,4 +8,9 @@ public record GameContentMod(String modId) implements GameContent {
     public String toString() {
         return "@" + modId;
     }
+
+    @Override
+    public <TypeData, Elements, Element> TypedGameContent<TypeData, Elements, Element> filterType(GameContentRegistry.Entry<?, TypeData, Elements, Element> type) {
+        return new GameContentTypedMod<>(type, modId);
+    }
 }

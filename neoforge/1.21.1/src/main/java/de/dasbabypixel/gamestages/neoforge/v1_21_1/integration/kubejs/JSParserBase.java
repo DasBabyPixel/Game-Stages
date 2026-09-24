@@ -2,21 +2,21 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs;
 
 import de.dasbabypixel.gamestages.common.data.GameContent;
 import de.dasbabypixel.gamestages.common.data.GameContentDirect;
-import de.dasbabypixel.gamestages.common.data.GameContentMod;
 import de.dasbabypixel.gamestages.common.data.GameContentRegistry;
+import de.dasbabypixel.gamestages.common.data.GameContentTypedMod;
 import de.dasbabypixel.gamestages.common.data.GameContentUnion;
 import de.dasbabypixel.gamestages.common.data.GameContentWrapper;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.AddonUtil;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.event.EventType;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.jsapi.GameCollectionJS;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.kubejs.jsapi.GameCollectionJSImpl;
 import dev.latvian.mods.kubejs.error.KubeRuntimeException;
-import dev.latvian.mods.kubejs.script.SourceLine;
 import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.Wrapper;
-import dev.latvian.mods.rhino.type.TypeInfo;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import org.jspecify.annotations.NonNull;
@@ -49,36 +49,32 @@ public class JSParserBase {
         registerHandler(GameCollectionJS.class, ContentIdentityHandler.INSTANCE);
     }
 
-    public static GameCollectionJS parse(JSContext context, List<? extends GameContent> list) {
-        GameContent base;
-        if (list.size() == 1) base = list.getFirst();
-        else base = new GameContentUnion(List.copyOf(list));
-        return new GameCollectionJSImpl(context, base);
-    }
-
-    public <Event> EventType.FunctionParameterDescriptor<Event> param(@Nullable TypeInfo typeInfo) {
-        Objects.requireNonNull(typeInfo);
-        return new EventType.FunctionParameterDescriptor<>(typeInfo, (call, ignored, arg) -> parse(call.context(), arg));
+    public <Event> EventType.FunctionParameterDescriptor<Event> param(GameContentRegistry.Entry<?, ?, ?, ?> typeEntry) {
+        var attributes = AddonUtil.usingOnlyArray(typeEntry);
+        return new EventType.FunctionParameterDescriptor<>(attributes, (call, ignored, arg) -> parse(call.context(), arg));
     }
 
     public GameCollectionJS parse(EventType.FunctionCall<?> call, JSContext cx, Object[] args) {
         return parse(call.context(), args);
     }
 
-    public GameCollectionJS parse(Context cx, Object @Nullable ... inputs) {
+    public GameCollectionJS parse(JSContext context, Object @Nullable ... inputs) {
         try {
-            var context = JSContext.instance(cx);
-            var list = parse(inputs);
-            return JSParserBase.parse(context, list);
+            return parseInternal(context, inputs);
         } catch (ParseException e) {
-            throw new KubeRuntimeException(Objects.requireNonNull(SourceLine.of(cx)).toString(), e);
+            throw new KubeRuntimeException(context.source().toString(), e);
         }
     }
 
+    public GameCollectionJS parse(Context cx, Object @Nullable ... inputs) {
+        var context = JSContext.instance(cx);
+        return parse(context, inputs);
+    }
+
     @SafeVarargs
-    protected final <T> List<GameContent> parse(T @Nullable ... inputs) throws ParseException {
+    protected final <T> GameCollectionJS parseInternal(JSContext context, T @Nullable ... inputs) throws ParseException {
         var parseQueue = new ArrayDeque<@Nullable Object>(inputs == null ? List.of() : Arrays.asList(inputs));
-        var usedHandlers = new ArrayList<Handler<?>>();
+        var usedHandlers = new HashSet<Handler<?>>();
         var content = new ArrayList<GameContent>();
 
         for (var input = parseQueue.poll(); input != null; input = parseQueue.poll()) {
@@ -90,7 +86,7 @@ public class JSParserBase {
 
                 var handler = getHandler(input.getClass());
                 usedHandlers.add(handler);
-                input = handler.read(input, parseQueue::add);
+                input = handler.read(context, input, parseQueue::add);
                 if (input instanceof GameContentWrapper c) {
                     content.add(c.gameContent());
                     break;
@@ -101,21 +97,22 @@ public class JSParserBase {
         }
 
         for (var usedHandler : usedHandlers) {
-            var c = usedHandler.finish();
+            var c = usedHandler.finish(context);
             if (c != null) content.add(c);
         }
 
-        return content;
+        return new GameCollectionJSImpl(context, GameContentUnion.create(content));
     }
 
-    protected <T, V> void registerRegistryHandlers(Class<T> cls, Registry<V> registry, Function<T, V> transform, GameContentRegistry.Entry<?, ?, HolderSet<V>, ?> type) {
-        registerHandler(cls, new RegistryParser<>(registry, transform));
-        registerHandler(Holder.class, new RegistryParserCollector<V>(holders -> new GameContentDirect<>(type, holders)));
-        registerHandler(TagKey.class, new TagParser<>(registry, holders -> new GameContentDirect<>(type, holders)));
-        this.registerHandler(CharSequence.class, (value, parseAppender) -> {
+    protected <T, V> void registerRegistryHandlers(Class<T> cls, ResourceKey<? extends Registry<V>> registryKey, Function<T, V> transform, GameContentRegistry.Entry<?, ?, HolderSet<V>, ?> type) {
+        registerHandler(cls, new RegistryParser<>(registryKey, transform));
+        registerHandler(Holder.class, new RegistryParserCollector<V>(holders -> GameContentDirect.create(type, holders)));
+        registerHandler(TagKey.class, new TagParser<>(registryKey, holders -> GameContentDirect.create(type, holders)));
+        registerHandler(CharSequence.class, (context, value, parseAppender) -> {
+            var registry = context.registryAccess().registryOrThrow(registryKey);
             var string = value.toString();
             if (string.startsWith("@")) {
-                return new GameContentMod(string.substring(1)).filterType(type);
+                return new GameContentTypedMod<>(type, string.substring(1));
             }
             if (string.startsWith("#")) {
                 return TagKey.create(registry.key(), ResourceLocation.parse(string.substring(1)));
@@ -152,9 +149,9 @@ public class JSParserBase {
     }
 
     public interface Handler<T> {
-        @Nullable Object read(T value, Consumer<Object> parseAppender);
+        @Nullable Object read(JSContext context, T value, Consumer<Object> parseAppender) throws ParseException;
 
-        default @Nullable GameContent finish() {
+        default @Nullable GameContent finish(JSContext context) throws ParseException {
             return null;
         }
     }
@@ -169,7 +166,7 @@ public class JSParserBase {
         public static final ArrayHandler INSTANCE = new ArrayHandler();
 
         @Override
-        public @Nullable Object read(Object value, Consumer<Object> parseAppender) {
+        public @Nullable Object read(JSContext context, Object value, Consumer<Object> parseAppender) {
             var len = Array.getLength(value);
             if (len == 1) return Array.get(value, 0);
             for (var i = 0; i < len; i++) {
@@ -183,7 +180,7 @@ public class JSParserBase {
         public static final WrapperHandler INSTANCE = new WrapperHandler();
 
         @Override
-        public @Nullable Object read(Wrapper value, Consumer<Object> parseAppender) {
+        public @Nullable Object read(JSContext context, Wrapper value, Consumer<Object> parseAppender) {
             return value.unwrap();
         }
     }
@@ -193,7 +190,7 @@ public class JSParserBase {
         public static final IterableParser INSTANCE = new IterableParser();
 
         @Override
-        public @Nullable Object read(Iterable value, Consumer<Object> parseAppender) {
+        public @Nullable Object read(JSContext context, Iterable value, Consumer<Object> parseAppender) {
             var it = value.iterator();
             if (!it.hasNext()) return null;
             var first = Objects.requireNonNull(it.next());
@@ -210,7 +207,7 @@ public class JSParserBase {
         public static final ContentIdentityHandler INSTANCE = new ContentIdentityHandler();
 
         @Override
-        public Object read(GameCollectionJS value, Consumer<Object> parseAppender) {
+        public Object read(JSContext context, GameCollectionJS value, Consumer<Object> parseAppender) {
             return value;
         }
     }
@@ -219,30 +216,30 @@ public class JSParserBase {
         private final Set<V> set = new HashSet<>();
 
         @Override
-        public @Nullable Object read(T value, Consumer<Object> parseAppender) {
+        public @Nullable Object read(JSContext context, T value, Consumer<Object> parseAppender) {
             set.add(transform(value));
             return null;
         }
 
         @Override
-        public @Nullable GameContent finish() {
+        public @Nullable GameContent finish(JSContext context) {
             if (set.isEmpty()) return null;
-            var content = finish(Set.copyOf(set));
+            var content = finish(context, Set.copyOf(set));
             set.clear();
             return content;
         }
 
         public abstract V transform(T value);
 
-        public abstract GameContent finish(Set<V> set);
+        public abstract GameContent finish(JSContext context, Set<V> set);
     }
 
     @SuppressWarnings("rawtypes")
     public static class TagParser<V> extends CollectingHandler<TagKey, TagKey<V>> {
-        private final Registry<V> registry;
+        private final ResourceKey<? extends Registry<? extends V>> registry;
         private final Function<HolderSet<V>, GameContent> contentCreator;
 
-        public TagParser(Registry<V> registry, Function<HolderSet<V>, GameContent> contentCreator) {
+        public TagParser(ResourceKey<? extends Registry<? extends V>> registry, Function<HolderSet<V>, GameContent> contentCreator) {
             this.registry = registry;
             this.contentCreator = contentCreator;
         }
@@ -254,7 +251,8 @@ public class JSParserBase {
         }
 
         @Override
-        public GameContent finish(Set<TagKey<V>> set) {
+        public GameContent finish(JSContext context, Set<TagKey<V>> set) {
+            var registry = context.registryAccess().registryOrThrow(this.registry);
             if (set.size() == 1) {
                 return contentCreator.apply(registry.getTag(set.iterator().next()).orElseThrow());
             }
@@ -270,16 +268,17 @@ public class JSParserBase {
     }
 
     public static class RegistryParser<T, V> implements Handler<T> {
-        private final Registry<V> registry;
+        private final ResourceKey<? extends Registry<? extends V>> registry;
         private final Function<T, V> transform;
 
-        public RegistryParser(Registry<V> registry, Function<T, V> transform) {
+        public RegistryParser(ResourceKey<? extends Registry<V>> registry, Function<T, V> transform) {
             this.registry = registry;
             this.transform = transform;
         }
 
         @Override
-        public @Nullable Object read(T value, Consumer<Object> parseAppender) {
+        public @Nullable Object read(JSContext context, T value, Consumer<Object> parseAppender) {
+            var registry = context.registryAccess().registryOrThrow(this.registry);
             return registry.wrapAsHolder(transform.apply(value));
         }
     }
@@ -299,7 +298,7 @@ public class JSParserBase {
         }
 
         @Override
-        public GameContent finish(Set<Holder<T>> set) {
+        public GameContent finish(JSContext context, Set<Holder<T>> set) {
             return contentCreator.apply(HolderSet.direct(List.copyOf(set)));
         }
     }

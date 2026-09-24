@@ -23,6 +23,13 @@ public final class GameContentSimple implements GameContent {
         this.content = Map.copyOf(map);
     }
 
+    @Override
+    public <TypeData, Elements, Element> TypedGameContent<TypeData, Elements, Element> filterType(GameContentRegistry.Entry<?, TypeData, Elements, Element> type) {
+        var content = content(type);
+        if (content == null) return type.empty();
+        return GameContentDirect.create(type, content);
+    }
+
     @SuppressWarnings("unchecked")
     public <Elements> @Nullable Elements content(GameContentRegistry.Entry<?, ?, Elements, ?> type) {
         return (Elements) content.get(type);
@@ -38,6 +45,7 @@ public final class GameContentSimple implements GameContent {
         return List.copyOf(l);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public String toString() {
         var sb = new StringBuilder();
@@ -48,7 +56,10 @@ public final class GameContentSimple implements GameContent {
             if (!first) {
                 sb.append(", ");
             }
-            sb.append(entry.getKey().id()).append('=').append(entry.getValue());
+            var elementsString = ((GameContentType<?, @NonNull Object, ?>) entry
+                    .getKey()
+                    .type()).toStringElements(entry.getValue());
+            sb.append(entry.getKey().id()).append('=').append(elementsString);
         }
         sb.append(")");
         return sb.toString();
@@ -57,7 +68,7 @@ public final class GameContentSimple implements GameContent {
     @NullMarked
     public record TypeEntry<Elements>(GameContentRegistry.Entry<?, ?, Elements, ?> typeEntry, Elements elements) {
         private static <TypeData, Elements, Element> GameContentDirect<TypeData, Elements, Element> direct(GameContentRegistry.Entry<?, TypeData, Elements, Element> typeEntry, Elements elements) {
-            return new GameContentDirect<>(typeEntry, elements);
+            return GameContentDirect.create(typeEntry, elements);
         }
 
         public Collection<? extends Object> contentCollection() {

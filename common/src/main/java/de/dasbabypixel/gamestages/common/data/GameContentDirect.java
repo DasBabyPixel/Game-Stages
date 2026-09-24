@@ -10,10 +10,19 @@ public final class GameContentDirect<TypeData, Elements, Element> implements Typ
     private final TypeData typeData;
     private final Elements elements;
 
-    public GameContentDirect(GameContentRegistry.Entry<?, TypeData, Elements, Element> typeEntry, Elements elements) {
+    private GameContentDirect(GameContentRegistry.Entry<?, TypeData, Elements, Element> typeEntry, Elements elements) {
         this.typeEntry = typeEntry;
         this.elements = elements;
         this.typeData = typeEntry.type().newTypeData(this);
+    }
+
+    public static <TypeData, Elements, Element> GameContentDirect<TypeData, Elements, Element> createEmpty(GameContentRegistry.Entry<?, TypeData, Elements, Element> typeEntry) {
+        return new GameContentDirect<>(typeEntry, typeEntry.type().newElementsBuilder().build());
+    }
+
+    public static <TypeData, Elements, Element> GameContentDirect<TypeData, Elements, Element> create(GameContentRegistry.Entry<?, TypeData, Elements, Element> typeEntry, Elements elements) {
+        if (!typeEntry.type().iterate(elements).iterator().hasNext()) return typeEntry.empty();
+        return new GameContentDirect<>(typeEntry, elements);
     }
 
     public GameContentSimple.TypeEntry<Elements> createTypeEntry() {
@@ -48,11 +57,12 @@ public final class GameContentDirect<TypeData, Elements, Element> implements Typ
 
     @Override
     public String toString() {
-        return typeEntry.id() + "(" + elements + ")";
+        var content = isEmpty() ? "" : typeEntry.type().toStringElements(elements);
+        return "%s(%s)".formatted(typeEntry.id(), content);
     }
 
     @Override
-    public GameContentDirect<TypeData, Elements, Element> gameContent() {
+    public GameContentDirect<?, ?, ?> gameContent() {
         return this;
     }
 }

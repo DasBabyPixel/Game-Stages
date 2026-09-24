@@ -13,7 +13,7 @@ public class SimpleImmutableAttributeHolder<Self extends SimpleImmutableAttribut
     protected final Map<ImmutableAttribute<? super Self, ?>, Object> attributeMap;
     private final List<AttributeEntry<? super Self, ?>> attributeEntries;
 
-    public SimpleImmutableAttributeHolder(Collection<AttributeEntry<? super Self, ?>> attributes) {
+    public SimpleImmutableAttributeHolder(Collection<? extends AttributeEntry<? super Self, ?>> attributes) {
         this.attributeEntries = Objects.requireNonNull(List.copyOf(attributes));
         var map = new HashMap<ImmutableAttribute<? super Self, ?>, Object>();
         for (var entry : attributeEntries) {
@@ -26,6 +26,11 @@ public class SimpleImmutableAttributeHolder<Self extends SimpleImmutableAttribut
     @Override
     public <T> T get(ImmutableAttribute<? super Self, T> attribute) {
         return Objects.requireNonNull((T) attributeMap.get(attribute));
+    }
+
+    @Override
+    public boolean has(ImmutableAttribute<? super Self, ?> attribute) {
+        return attributeMap.containsKey(attribute);
     }
 
     @Override

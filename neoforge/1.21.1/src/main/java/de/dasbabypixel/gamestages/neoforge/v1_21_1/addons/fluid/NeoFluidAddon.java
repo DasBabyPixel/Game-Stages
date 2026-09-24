@@ -57,9 +57,8 @@ public class NeoFluidAddon extends VFluidAddon implements NeoAddon {
         @Override
         public void registerEventExtensions(EventRegistry registry) {
             var type = registry.get(ServerRegisterEventJS.class);
-            var fluidType = StagesKubeJSPlugin.typedCollection(FluidType.get());
-            var fluidTypeArray = fluidParser.param(fluidType.asArray());
-            type.addFunctionVarArgs("fluids", fluidParser::parse, fluidType, fluidTypeArray);
+            var fluidTypeArray = fluidParser.param(FluidType.get());
+            type.addFunctionVarArgs("fluids", fluidParser::parse, FluidType.get(), fluidTypeArray);
             type.addFunctionVarArgs("restrictFluids", (call, cx, args) -> {
                 var event = call.event();
                 var flattener = event.stageManager().get(GameContentFlattener.MUTABLE_MANAGER_ATTRIBUTE);
