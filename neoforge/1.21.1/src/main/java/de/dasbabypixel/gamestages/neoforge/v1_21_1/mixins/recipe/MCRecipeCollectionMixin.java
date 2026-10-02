@@ -46,7 +46,7 @@ public abstract class MCRecipeCollectionMixin implements IRecipeCollection {
     }
 
     @ModifyExpressionValue(method = "getDisplayRecipes", at = @At(value = "INVOKE", target = "Ljava/util/Set;contains(Ljava/lang/Object;)Z"))
-    private boolean getDisplayRecipes(boolean original, @Local(name = "recipeholder") RecipeHolder<?> recipeholder) {
+    private boolean getDisplayRecipes(boolean original, @Local RecipeHolder<?> recipeholder) {
         if (!original) return false;
         var stages = ClientGameStageManager.stages();
         var entry = VRecipeAddon.getEntry(stages, recipeholder);

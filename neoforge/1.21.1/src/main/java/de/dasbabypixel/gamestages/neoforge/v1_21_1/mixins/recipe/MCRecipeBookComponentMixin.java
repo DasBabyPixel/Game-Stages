@@ -51,7 +51,7 @@ public abstract class MCRecipeBookComponentMixin implements IRecipeBookComponent
     }
 
     @Inject(method = "updateCollections", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/EditBox;getValue()Ljava/lang/String;"))
-    private void updateCollections(boolean resetPageNumber, CallbackInfo ci, @Local(name = "list1") List<RecipeCollection> list1) {
+    private void updateCollections(boolean resetPageNumber, CallbackInfo ci, @Local(ordinal = 1) List<RecipeCollection> list1) {
         list1.removeIf(c -> !c.hasValidRecipes());
     }
 

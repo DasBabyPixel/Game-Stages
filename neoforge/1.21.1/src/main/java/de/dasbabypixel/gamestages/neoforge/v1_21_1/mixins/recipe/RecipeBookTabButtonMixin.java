@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(RecipeBookTabButton.class)
 public class RecipeBookTabButtonMixin {
     @ModifyExpressionValue(method = "updateVisibility", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/recipebook/RecipeCollection;hasKnownRecipes()Z"))
-    private boolean updateVisibility(boolean original, @Local(name = "recipecollection") RecipeCollection recipecollection) {
+    private boolean updateVisibility(boolean original, @Local RecipeCollection recipecollection) {
         if (!original) return false;
         return recipecollection.hasValidRecipes();
     }
