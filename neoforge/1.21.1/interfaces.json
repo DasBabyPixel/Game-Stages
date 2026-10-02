@@ -22,5 +22,20 @@
   ],
   "net/minecraft/world/level/block/entity/CrafterBlockEntity": [
     "de/dasbabypixel/gamestages/neoforge/v1_21_1/entity/IBlockEntity"
+  ],
+  "net/minecraft/client/gui/screens/recipebook/RecipeCollection": [
+    "de/dasbabypixel/gamestages/neoforge/v1_21_1/addons/recipe/IRecipeCollection"
+  ],
+  "net/minecraft/client/gui/screens/recipebook/RecipeBookComponent": [
+    "de/dasbabypixel/gamestages/neoforge/v1_21_1/addons/recipe/IRecipeBookComponent"
+  ],
+  "net/minecraft/client/gui/screens/recipebook/RecipeBookPage": [
+    "de/dasbabypixel/gamestages/neoforge/v1_21_1/addons/recipe/IRecipeBookPage"
+  ],
+  "net/minecraft/client/gui/screens/recipebook/OverlayRecipeComponent": [
+    "de/dasbabypixel/gamestages/neoforge/v1_21_1/addons/recipe/IOverlayRecipeComponent"
+  ],
+  "net/minecraft/client/gui/screens/recipebook/GhostRecipe": [
+    "de/dasbabypixel/gamestages/neoforge/v1_21_1/addons/recipe/IGhostRecipe"
   ]
 }

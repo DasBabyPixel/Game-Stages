@@ -71,8 +71,7 @@ public abstract class ServerStages extends BaseStages {
 
     protected abstract Collection<? extends ServerPlayer> onlinePlayers();
 
-    public void fullSync() {
-        var online = onlinePlayers();
+    protected void fullSync(Collection<? extends ServerPlayer> online) {
         if (online.isEmpty()) return;
         var unlocked = Objects.requireNonNull(List.copyOf(getUnlockedStages()));
         for (var serverPlayer : online) {
@@ -81,5 +80,9 @@ public abstract class ServerStages extends BaseStages {
 
             CommonInstances.platformPlayerProvider.refreshMenu(serverPlayer);
         }
+    }
+
+    public void fullSync() {
+        fullSync(onlinePlayers());
     }
 }

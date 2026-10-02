@@ -131,8 +131,6 @@ public class NeoForgeEntrypoint {
             container.registerConfig(ModConfig.Type.CLIENT, GameStagesClientConfig.CONFIG_SPEC);
         }
 
-        ReloadHandler.registerListeners();
-
         ItemStackRestrictionResolverFactories.instance().register(new DataDrivenResolverFactory());
 
         IngredientContent.platformIngredientHelper = new IngredientContent.PlatformIngredientHelper() {

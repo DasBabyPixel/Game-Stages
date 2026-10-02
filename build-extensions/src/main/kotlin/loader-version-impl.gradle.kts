@@ -5,8 +5,8 @@ plugins {
 val loaderVersionBase = extensions.getByType<BaseExtension>()
 val expandProperties = loaderVersionBase.expandProperties
 val gameStagesComponent = configurations.dependencyScope("gameStagesComponent")
-val actualNeo = configurations.resolvable("resolvableGameStagesComponent") { extendsFrom(gameStagesComponent.get()) }
-configurations.compileOnly.configure { extendsFrom(gameStagesComponent.get()) }
+val actualNeo = configurations.resolvable("resolvableGameStagesComponent") { extendsFrom(gameStagesComponent) }
+configurations.compileOnly.configure { extendsFrom(gameStagesComponent) }
 
 fun AbstractCopyTask.configureProcessResources() {
     val expand = expandProperties.get()

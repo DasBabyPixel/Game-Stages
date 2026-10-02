@@ -189,7 +189,7 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
             classDocuments.addClassDocument(new ClassPath(cls), decl);
         }
 
-        addDocuments(Documents.INSTANCE);
+        addDocuments(classDocuments);
     }
 
     @SuppressWarnings("DataFlowIssue")
@@ -262,8 +262,7 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
     }
 
     @SuppressWarnings({"DataFlowIssue", "SameParameterValue"})
-    private void addDocuments(Documents registrar) {
-        Objects.requireNonNull(registrar);
+    private void addDocuments(Documents.ClassAccessor registrar) {
 
         var gameContentRegistry = CommonInstances.gameContentRegistry;
         {
@@ -274,7 +273,7 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
                         .kind(KindAware.Kind.INTERFACE)
                         .field("_brand", Types.literal("brand_" + entry.id()))
                         .build();
-                registrar.addDocument(classPath, typeClass);
+                registrar.addClassDocument(classPath, typeClass);
 
                 var completionsClassPath = typedCompletionsClassPath(entry);
                 var completionsClass = Members
@@ -282,7 +281,7 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
                         .kind(KindAware.Kind.INTERFACE)
                         .implementsType(Types.clazz(GameCollectionJS.class))
                         .build();
-                registrar.addDocument(completionsClassPath, completionsClass);
+                registrar.addClassDocument(completionsClassPath, completionsClass);
             }
         }
         {
@@ -290,7 +289,7 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
             for (var entry : gameContentRegistry.entries()) {
                 contentTypeRegistry.field(entry.id(), contentType(entry));
             }
-            registrar.addDocument(CLASS_PATH_CONTENT_TYPE_REGISTRY, contentTypeRegistry.build());
+            registrar.addClassDocument(CLASS_PATH_CONTENT_TYPE_REGISTRY, contentTypeRegistry.build());
         }
         {
             var variable = Types.variable("Type");
@@ -299,14 +298,14 @@ public class StagesProbeJSPlugin extends ProbeJSPlugin {
                 instanceOfChain = new InstanceTestType(variable, contentType(entry), typedCompletions(entry).markAsInput(), instanceOfChain);
             }
             var typeCompletions = new TypeDecl(CLASS_PATH_TYPE_COMPLETIONS, List.of(variable), instanceOfChain, true);
-            registrar.addDocument(CLASS_PATH_TYPE_COMPLETIONS, typeCompletions);
+            registrar.addClassDocument(CLASS_PATH_TYPE_COMPLETIONS, typeCompletions);
         }
         {
             var variable = Types.variable("Type");
             var collectionUsingOnly = new TypeDecl(CLASS_PATH_GAME_COLLECTION_USING_ONLY, List.of(variable), Types.union(Types.clazz(GameCollectionJS.class), Types
                     .clazz(CLASS_PATH_TYPE_COMPLETIONS)
                     .withParams(variable)), true);
-            registrar.addDocument(CLASS_PATH_GAME_COLLECTION_USING_ONLY, collectionUsingOnly);
+            registrar.addClassDocument(CLASS_PATH_GAME_COLLECTION_USING_ONLY, collectionUsingOnly);
         }
     }
 

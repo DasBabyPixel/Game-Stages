@@ -7,7 +7,7 @@ plugins {
 val loaderVersionBase = extensions.getByType<BaseExtension>()
 val versionBaseExtension = extensions.getByType<VersionBaseExtension>()
 val expandProperties = loaderVersionBase.expandProperties
-val extension = extensions.create<LoaderNeoExtension>("loaderVersionNeo", project)
+val extension = extensions.create<VersionNeoExtension>("loaderVersionNeo", project)
 expandProperties.put("neo_version", provider { extension.neoVersion!! })
 
 repositories {

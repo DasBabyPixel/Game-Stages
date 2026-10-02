@@ -5,39 +5,47 @@ import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestr
 import de.dasbabypixel.gamestages.common.event.EventType;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.CommonRecipeRestrictionEntry;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.RecipeContentWrapper;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.client.ContentVisibilityUpdater;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.jei.JEIVisibilityUpdater;
 import mezz.jei.api.recipe.IRecipeManager;
 import mezz.jei.api.recipe.RecipeType;
+import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeInput;
+import net.minecraft.world.item.crafting.RecipeManager;
 import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 @NullMarked
-public class RecipeVisibilityUpdater extends ContentVisibilityUpdater<RecipeVisibilityUpdater.Wrapper, RecipeAndType<?>, CommonRecipeRestrictionEntry.Compiled> {
+public class RecipeVisibilityUpdater extends JEIVisibilityUpdater<Context, RecipeVisibilityUpdater.RecipeContext, RecipeVisibilityUpdater.Wrapper, RecipeAndType<?>, CommonRecipeRestrictionEntry.Compiled> {
     public static final EventType<RegisterConverters> REGISTER_CONVERTERS_EVENT = EventType.create();
     private static final Logger LOGGER = LoggerFactory.getLogger(RecipeVisibilityUpdater.class);
     private static final DefaultConverter DEFAULT_CONVERTER = new DefaultConverter();
     private final Map<net.minecraft.world.item.crafting.RecipeType<?>, ConverterEntry<?, ?, ?>> converterMap = new HashMap<>();
-    private final RecipeJEI recipeJEI;
     private Map<RecipeAndType<?>, ConverterEntry<?, ?, ?>> converterOrigins = Map.of();
 
-    public RecipeVisibilityUpdater(RecipeJEI recipeJEI) {
+    public RecipeVisibilityUpdater() {
         super(de.dasbabypixel.gamestages.common.v1_21_1.addons.recipe.RecipeType.get());
-        this.recipeJEI = recipeJEI;
     }
 
-    @SuppressWarnings("unchecked")
-    public void reload(Context context) {
+    @Override
+    protected Context createContext(IJeiRuntime runtime) {
+        return Context.create(runtime);
+    }
+
+    @Override
+    protected void initialize(Context context, RecipeContext recipeContext) {
         converterMap.clear();
         REGISTER_CONVERTERS_EVENT.call(new RegisterConverters(context));
         for (var e : context.recipeTypeByMinecraft().entrySet()) {
@@ -46,6 +54,11 @@ public class RecipeVisibilityUpdater extends ContentVisibilityUpdater<RecipeVisi
             if (converterMap.containsKey(mcType)) continue;
             converterMap.put(mcType, new ConverterEntry<>(mcType, DEFAULT_CONVERTER, context));
         }
+    }
+
+    @Override
+    protected void shutdown(Context context, RecipeContext recipeContext) {
+        converterMap.clear();
     }
 
     @Override
@@ -77,10 +90,10 @@ public class RecipeVisibilityUpdater extends ContentVisibilityUpdater<RecipeVisi
     }
 
     @Override
-    protected void collect(BaseStages stages, BaseStages.CompileIndex compileIndex, CommonRecipeRestrictionEntry.Compiled compiledEntry, Collector collector) {
+    protected void collect(Context context, RecipeContext recipeContext, BaseStages stages, BaseStages.CompileIndex compileIndex, CommonRecipeRestrictionEntry.Compiled compiledEntry, Collector collector) {
         var predicate = compiledEntry.predicate();
         if (!compiledEntry.hideInJEI()) predicate = CompiledRestrictionPredicate.TRUE;
-        var converter = new Converter();
+        var converter = new Converter(recipeContext.recipeManager());
         converter.add(compiledEntry.gameContent());
         var converted = converter.convert();
         converterOrigins.putAll(converted.converterEntryMap);
@@ -91,13 +104,13 @@ public class RecipeVisibilityUpdater extends ContentVisibilityUpdater<RecipeVisi
 
     @Override
     protected void show(List<RecipeAndType<?>> show) {
-        var r = recipeJEI.context().runtime().getRecipeManager();
+        var r = context().runtime().getRecipeManager();
         holders(show).forEach(h -> h.unhide(r));
     }
 
     @Override
     protected void hide(List<RecipeAndType<?>> hide) {
-        var r = recipeJEI.context().runtime().getRecipeManager();
+        var r = context().runtime().getRecipeManager();
         holders(hide).forEach(h -> h.hide(r));
     }
 
@@ -116,9 +129,11 @@ public class RecipeVisibilityUpdater extends ContentVisibilityUpdater<RecipeVisi
 
     @SuppressWarnings("unchecked")
     private List<Holder<?>> holders(List<RecipeAndType<?>> recipes) {
-        var map = new HashMap<RecipeType<?>, List<Object>>();
+        var map = new HashMap<RecipeType<?>, Set<Object>>();
         for (var recipe : recipes) {
-            map.computeIfAbsent(recipe.type(), t -> new ArrayList<>()).add(recipe.recipe());
+            map
+                    .computeIfAbsent(recipe.type(), t -> Collections.newSetFromMap(new IdentityHashMap<>()))
+                    .add(recipe.recipe());
         }
         var list = new ArrayList<Holder<?>>();
         for (var entry : map.entrySet()) {
@@ -127,6 +142,9 @@ public class RecipeVisibilityUpdater extends ContentVisibilityUpdater<RecipeVisi
             list.add(new Holder<>(type, entry.getValue()));
         }
         return list;
+    }
+
+    public record RecipeContext(RecipeManager recipeManager) {
     }
 
     public static class Wrapper {
@@ -183,7 +201,7 @@ public class RecipeVisibilityUpdater extends ContentVisibilityUpdater<RecipeVisi
         }
     }
 
-    private record Holder<T>(mezz.jei.api.recipe.RecipeType<T> type, List<T> recipes) {
+    private record Holder<T>(mezz.jei.api.recipe.RecipeType<T> type, Set<T> recipes) {
         private void unhide(IRecipeManager recipeManager) {
             recipeManager.unhideRecipes(type, recipes);
         }
@@ -219,10 +237,14 @@ public class RecipeVisibilityUpdater extends ContentVisibilityUpdater<RecipeVisi
     }
 
     private class Converter {
+        private final RecipeManager recipeManager;
         private final HashMap<net.minecraft.world.item.crafting.RecipeType<?>, List<RecipeHolder<?>>> cache = new HashMap<>();
 
+        public Converter(RecipeManager recipeManager) {
+            this.recipeManager = recipeManager;
+        }
+
         public void add(RecipeContentWrapper gameContent) {
-            var recipeManager = RecipeJEI.recipeManager();
             var recipeIds = gameContent.gameContent().content();
             for (var recipeId : recipeIds) {
                 var recipeOptional = recipeManager.byKey(recipeId);

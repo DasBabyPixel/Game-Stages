@@ -8,7 +8,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -18,7 +17,6 @@ import java.util.UUID;
 @NullMarked
 public class PlayerStages extends ServerStages {
     private static final Logger LOGGER = Objects.requireNonNull(LoggerFactory.getLogger(PlayerStages.class));
-    private final List<ServerPlayer> playerList = new ArrayList<>(1);
     private final StagesCache stagesCache;
     private boolean valid = true;
     private @Nullable UUID teamId;
@@ -54,9 +52,11 @@ public class PlayerStages extends ServerStages {
         if (!valid) throw new IllegalStateException();
         var player = CommonInstances.platformPlayerProvider.getPlayer(this.key.uuid());
         if (player == null) return List.of();
-        playerList.clear();
-        playerList.add(player);
-        return playerList;
+        return List.of(player);
+    }
+
+    public void fullSync(ServerPlayer player) {
+        fullSync(List.of(player));
     }
 
     @Override

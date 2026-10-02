@@ -2,6 +2,7 @@ package de.dasbabypixel.gamestages.neoforge.v1_21_1.client;
 
 import de.dasbabypixel.gamestages.common.addon.Addon;
 import de.dasbabypixel.gamestages.common.addon.ClientEvents;
+import de.dasbabypixel.gamestages.common.client.ClientPlayerStages;
 import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.GameContentRegistry;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionEntry;
@@ -11,8 +12,10 @@ import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -22,7 +25,7 @@ import java.util.stream.Collectors;
 @NullMarked
 public abstract class ContentVisibilityUpdater<WrapperData, RawData, Entry extends CompiledRestrictionEntry<? extends Entry, ?>> {
     private final GameContentRegistry.Entry<?, ?, ?, ?> type;
-    private final Set<RawData> invisible = new HashSet<>();
+    private final Set<RawData> invisible = Collections.newSetFromMap(new IdentityHashMap<>());
     private Map<RawData, WrapperData> wrapperByRawMap = Map.of();
     private Map<CompiledRestrictionPredicate, Set<WrapperData>> affectedByPredicateMap = Map.of();
 
@@ -38,9 +41,13 @@ public abstract class ContentVisibilityUpdater<WrapperData, RawData, Entry exten
         affectedByPredicateMap = Map.of();
     }
 
-    private void postRecompile(Addon.ClientRecompilePostEvent event) {
-        if (!Objects.requireNonNull(EffectiveSide.get()).isClient()) throw new IllegalStateException();
+    protected void postRecompile(Addon.ClientRecompilePostEvent event) {
         var stages = event.stages();
+        clearAndLoad(stages);
+    }
+
+    protected final void clearAndLoad(ClientPlayerStages stages) {
+        if (!Objects.requireNonNull(EffectiveSide.get()).isClient()) throw new IllegalStateException();
 
         var compileIndex = stages.get(BaseStages.CompileIndex.ATTRIBUTE);
 
@@ -101,7 +108,7 @@ public abstract class ContentVisibilityUpdater<WrapperData, RawData, Entry exten
         if (!Objects.requireNonNull(EffectiveSide.get()).isClient()) throw new IllegalStateException();
         // Full reload. All are assumed visible again for the viewer, so we need to re-hide all invisible
         if (!invisible.isEmpty()) {
-            hide(Objects.requireNonNull(List.copyOf(invisible)));
+            hide(List.copyOf(invisible));
         }
     }
 

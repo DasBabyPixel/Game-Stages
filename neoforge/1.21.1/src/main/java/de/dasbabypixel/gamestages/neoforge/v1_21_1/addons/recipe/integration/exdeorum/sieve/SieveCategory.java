@@ -1,6 +1,5 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.integration.exdeorum.sieve;
 
-
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.serialization.Codec;
 import mezz.jei.api.constants.VanillaTypes;
@@ -39,6 +38,8 @@ import java.util.List;
 
 @NullMarked
 public class SieveCategory<T extends SieveRecipe> implements IRecipeCategory<JEIUpdatableRecipe<T>> {
+    public static final ThreadLocal<Boolean> IGNORE_TOOLTIP = ThreadLocal.withInitial(() -> false);
+    private final RecipeType<Object> fakeType;
     private final IDrawable slot;
     private final IDrawable row;
     private final IDrawable icon;
@@ -54,6 +55,7 @@ public class SieveCategory<T extends SieveRecipe> implements IRecipeCategory<JEI
         this.icon = helper.createDrawableItemStack(new ItemStack(icon));
         this.title = title;
         this.rows = rows;
+        this.fakeType = RecipeType.create("exdeorum", type.getUid().getPath(), Object.class);
     }
 
     public static <T extends SieveRecipe> SieveCategory<T> sieve(IGuiHelper helper, ItemLike icon, String translationKey, MutableInt rows, RecipeType<JEIUpdatableRecipe<T>> type) {
@@ -87,6 +89,7 @@ public class SieveCategory<T extends SieveRecipe> implements IRecipeCategory<JEI
 
     @Override
     public @Nullable ResourceLocation getRegistryName(JEIUpdatableRecipe<T> recipe) {
+        if (IGNORE_TOOLTIP.get()) return null; // Skips JEI's tooltip for recipe ID which we manually add
         return recipe.identifier();
     }
 
@@ -99,9 +102,15 @@ public class SieveCategory<T extends SieveRecipe> implements IRecipeCategory<JEI
         var results = recipe.results();
         for (int i = 0; i < results.size(); i++) {
             var result = results.get(i);
-            var slot = builder
-                    .addSlot(RecipeIngredientRole.OUTPUT, 1 + (i % 9) * 18, 1 + XeiUtil.SIEVE_ROW_START + 18 * (i / 9))
-                    .addItemStack(result.item());
+            IRecipeSlotBuilder slot;
+            IGNORE_TOOLTIP.set(true);
+            try {
+                slot = builder
+                        .addSlot(RecipeIngredientRole.OUTPUT, 1 + (i % 9) * 18, 1 + XeiUtil.SIEVE_ROW_START + 18 * (i / 9))
+                        .addItemStack(result.item());
+            } finally {
+                IGNORE_TOOLTIP.set(false);
+            }
 
             addTooltips(slot, result.byHandOnly(), result.provider(), result.holder());
         }
@@ -128,8 +137,8 @@ public class SieveCategory<T extends SieveRecipe> implements IRecipeCategory<JEI
             XeiUtil.addSieveDropTooltip(byHandOnly, provider, tooltip::add);
         });
 
-        var recipeType = this.getRecipeType();
-        OutputSlotTooltipCallback callback = new OutputSlotTooltipCallback(holder.id(), recipeType);
+        // Use fake type to get rid of JEI's Recipe By: Pixel's GameStages
+        OutputSlotTooltipCallback callback = new OutputSlotTooltipCallback(holder.id(), fakeType);
         slot.addRichTooltipCallback(callback);
     }
 

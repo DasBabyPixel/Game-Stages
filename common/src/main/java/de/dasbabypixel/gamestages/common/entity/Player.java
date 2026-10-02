@@ -7,7 +7,11 @@ import java.util.UUID;
 
 @NullMarked
 public interface Player {
-    BaseStages getGameStages();
+    default BaseStages getGameStages() {
+        throw new UnsupportedOperationException("Missing mixin override");
+    }
 
-    UUID getUniqueId();
+    default UUID getUniqueId() {
+        throw new UnsupportedOperationException("Missing mixin override");
+    }
 }

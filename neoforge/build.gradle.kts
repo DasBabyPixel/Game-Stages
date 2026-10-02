@@ -4,5 +4,4 @@ plugins {
 
 dependencies {
     api(projects.common)
-    compileOnly(projects.compileHacks)
 }

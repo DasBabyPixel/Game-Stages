@@ -6,5 +6,7 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public interface ClientPlayer extends Player {
     @Override
-    ClientPlayerStages getGameStages();
+    default ClientPlayerStages getGameStages() {
+        throw new UnsupportedOperationException("Missing mixin override");
+    }
 }

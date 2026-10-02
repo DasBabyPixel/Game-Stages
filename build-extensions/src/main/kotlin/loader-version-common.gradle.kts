@@ -8,7 +8,7 @@ repositories {
     maven("https://maven.neoforged.net/releases/")
 }
 
-project.extensions.create<LoaderCommonExtension>("loaderVersionCommon", project)
+project.extensions.create<VersionCommonExtension>("loaderVersionCommon", project)
 
 idea {
     module {

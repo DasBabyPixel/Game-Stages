@@ -1,4 +1,4 @@
-package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.jei.mixins;
+package de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.jei;
 
 import mezz.jei.gui.bookmarks.IBookmark;
 import org.jspecify.annotations.NullMarked;

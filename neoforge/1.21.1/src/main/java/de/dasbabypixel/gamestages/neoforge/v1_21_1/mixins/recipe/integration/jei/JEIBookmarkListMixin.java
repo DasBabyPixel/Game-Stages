@@ -1,7 +1,7 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.mixins.recipe.integration.jei;
 
 import com.mojang.serialization.Codec;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.jei.mixins.IBookmarkList;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.jei.IBookmarkList;
 import mezz.jei.api.helpers.ICodecHelper;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusFactory;

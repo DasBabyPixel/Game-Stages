@@ -35,7 +35,6 @@ plugins {
 include("common")
 //include("fabric")
 include("neoforge")
-include("compile-hacks")
 
 includeVersions("common", "1.21.1")
 includeVersions("neoforge", "1.21.1")

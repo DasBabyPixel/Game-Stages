@@ -4,25 +4,27 @@ import de.dasbabypixel.gamestages.common.data.BaseStages;
 import de.dasbabypixel.gamestages.common.data.restriction.compiled.CompiledRestrictionPredicate;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.CommonItemRestrictionEntry;
 import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.ItemType;
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.client.ContentVisibilityUpdater;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.jei.JEIVisibilityUpdater;
 import mezz.jei.api.constants.VanillaTypes;
+import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.NullMarked;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @NullMarked
-public class ItemVisibilityUpdater extends ContentVisibilityUpdater<ItemVisibilityUpdater.Entry, ItemStack, CommonItemRestrictionEntry.Compiled> {
-    private final ItemJEI itemJEI;
+public class ItemVisibilityUpdater extends JEIVisibilityUpdater<ItemVisibilityUpdater.JEIContext, ItemVisibilityUpdater.ItemContext, ItemVisibilityUpdater.Entry, ItemStack, CommonItemRestrictionEntry.Compiled> {
 
-    public ItemVisibilityUpdater(ItemJEI itemJEI) {
+    public ItemVisibilityUpdater() {
         super(ItemType.get());
-        this.itemJEI = itemJEI;
     }
 
     @Override
@@ -31,25 +33,24 @@ public class ItemVisibilityUpdater extends ContentVisibilityUpdater<ItemVisibili
     }
 
     @Override
-    protected void collect(BaseStages stages, BaseStages.CompileIndex compileIndex, CommonItemRestrictionEntry.Compiled compiled, Collector collector) {
-        var itemSet = compiled.gameContent().gameContent().elements();
-        var resolver = compiled.resolver();
+    protected void collect(JEIContext jeiContext, ItemContext itemContext, BaseStages stages, BaseStages.CompileIndex compileIndex, CommonItemRestrictionEntry.Compiled compiledEntry, Collector collector) {
+        var itemSet = compiledEntry.gameContent().gameContent().elements();
+        var resolver = compiledEntry.resolver();
 
-        List<ItemStack> items = getItems(itemSet);
+        List<ItemStack> items = getItems(jeiContext, itemSet);
         if (items.isEmpty()) return;
         for (var item : items) {
             var resolved = resolver.resolveRestrictionEntry(item);
 
             if (resolved != null) {
-                resolved.settings();
                 var predicate = resolved.predicate();
                 collector.add(predicate, item);
             }
         }
     }
 
-    private List<ItemStack> getItems(HolderSet<Item> itemSet) {
-        var itemCache = itemJEI.getItemCache();
+    private List<ItemStack> getItems(JEIContext jeiContext, HolderSet<Item> itemSet) {
+        var itemCache = jeiContext.itemCache();
         return itemSet
                 .stream()
                 .map(Objects::requireNonNull)
@@ -62,12 +63,12 @@ public class ItemVisibilityUpdater extends ContentVisibilityUpdater<ItemVisibili
 
     @Override
     protected void show(List<ItemStack> show) {
-        itemJEI.runtime().getIngredientManager().addIngredientsAtRuntime(VanillaTypes.ITEM_STACK, show);
+        context().runtime().getIngredientManager().addIngredientsAtRuntime(VanillaTypes.ITEM_STACK, show);
     }
 
     @Override
     protected void hide(List<ItemStack> hide) {
-        itemJEI.runtime().getIngredientManager().removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hide);
+        context().runtime().getIngredientManager().removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hide);
     }
 
     @Override
@@ -80,6 +81,41 @@ public class ItemVisibilityUpdater extends ContentVisibilityUpdater<ItemVisibili
         if (relevantEntries.size() != 1) throw new IllegalStateException();
         var predicate = relevantEntries.getFirst();
         return new Entry(itemStack, predicate);
+    }
+
+    @Override
+    protected JEIContext createContext(IJeiRuntime runtime) {
+        var itemCache = new HashMap<Item, List<ItemStack>>();
+        var ingredientManager = runtime.getIngredientManager();
+        for (var ingredient : ingredientManager.getAllIngredients(VanillaTypes.ITEM_STACK)) {
+            assert ingredient != null;
+            itemCache.computeIfAbsent(ingredient.getItem(), unused -> new ArrayList<>(1)).add(ingredient);
+        }
+        itemCache.entrySet().forEach(e -> {
+            assert e != null;
+            e.setValue(List.copyOf(e.getValue()));
+        });
+
+        return new JEIContext(runtime, itemCache);
+    }
+
+    @Override
+    protected void initialize(JEIContext jeiContext, ItemContext itemContext) {
+
+    }
+
+    @Override
+    protected void shutdown(JEIContext jeiContext, ItemContext itemContext) {
+
+    }
+
+    public record JEIContext(IJeiRuntime runtime, Map<Item, List<ItemStack>> itemCache) {
+        public JEIContext {
+            itemCache = Map.copyOf(itemCache);
+        }
+    }
+
+    public record ItemContext() {
     }
 
     public static class Entry {

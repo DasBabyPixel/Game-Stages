@@ -17,6 +17,9 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 
+/**
+ * A type of sieve recipe, like normal/compressed
+ */
 @NullMarked
 public class SieveRegistration<T extends SieveRecipe> {
     public final Supplier<net.minecraft.world.item.crafting.RecipeType<T>> mcType;

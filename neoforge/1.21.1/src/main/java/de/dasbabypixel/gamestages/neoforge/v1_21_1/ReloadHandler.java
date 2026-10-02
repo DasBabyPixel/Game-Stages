@@ -8,7 +8,6 @@ import de.dasbabypixel.gamestages.common.data.manager.immutable.ServerGameStageM
 import de.dasbabypixel.gamestages.common.data.manager.mutable.ServerMutableGameStageManager;
 import de.dasbabypixel.gamestages.common.data.manager.mutable.SimpleMutableGameStageManager;
 import de.dasbabypixel.gamestages.common.data.server.GlobalServerState;
-import de.dasbabypixel.gamestages.common.entity.ServerPlayer;
 import de.dasbabypixel.gamestages.neoforge.integration.Mods;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.addon.NeoAddon.RegisterEventData;
@@ -18,9 +17,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.ReloadableServerResources;
-import net.neoforged.bus.api.EventPriority;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.minecraft.server.level.ServerPlayer;
 import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,10 +40,6 @@ public class ReloadHandler {
     private static final Logger LOGGER = Objects.requireNonNull(LoggerFactory.getLogger(ReloadHandler.class));
     private static final List<String> PENDING_DUPLICATES = new ArrayList<>();
     private static final AtomicInteger VERSION_COUNTER = new AtomicInteger();
-
-    public static void registerListeners() {
-        NeoForge.EVENT_BUS.addListener(EventPriority.LOW, ReloadHandler::handlePlayerJoin);
-    }
 
     public static ReloadResult fullReload(ReloadableServerResources serverResources, RegistryAccess registryAccess, boolean mayAbort) {
         var version = VERSION_COUNTER.incrementAndGet();
@@ -91,8 +84,7 @@ public class ReloadHandler {
         return new ReloadResult.Successful();
     }
 
-    private static void handlePlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
-        var player = (ServerPlayer) event.getEntity();
+    public static void initializeNewPlayer(ServerPlayer player) {
         var instance = GlobalServerState.currentManager();
         instance.sync(packet -> CommonInstances.platformPacketDistributor.sendToPlayer(player, packet));
         playerUpdate(instance, player);
@@ -104,11 +96,10 @@ public class ReloadHandler {
         } catch (DuplicatesException d) {
             NeoForgeEntrypoint.LOGGER.error("Failed GameStages reload because of duplicates", d);
         }
-        player.getGameStages().fullSync();
+        player.getGameStages().fullSync(player);
 
-        net.minecraft.server.level.ServerPlayer sp = (net.minecraft.server.level.ServerPlayer) player;
         for (var pendingDuplicate : PENDING_DUPLICATES) {
-            sp.sendSystemMessage(Component.literal(pendingDuplicate).withStyle(ChatFormatting.RED));
+            player.sendSystemMessage(Component.literal(pendingDuplicate).withStyle(ChatFormatting.RED));
         }
     }
 
@@ -117,7 +108,7 @@ public class ReloadHandler {
         if (!players.isEmpty()) {
             manager.sync(CommonInstances.platformPacketDistributor::sendToAllPlayers);
             for (var player : CommonInstances.platformPlayerProvider.allPlayers()) {
-                playerUpdate(manager, player);
+                playerUpdate(manager, (ServerPlayer) player);
             }
         }
         if (GlobalServerState.initialized()) {

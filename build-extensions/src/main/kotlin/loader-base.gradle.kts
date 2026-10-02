@@ -4,9 +4,13 @@ plugins {
 
 extensions.create<BuildConstantsExtension>("buildConstants")
 
-java.toolchain {
-    languageVersion = JavaLanguageVersion.of(21)
-    vendor = JvmVendorSpec.ADOPTIUM
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+        vendor = JvmVendorSpec.ADOPTIUM
+    }
+    withSourcesJar()
+    withJavadocJar()
 }
 
 tasks.withType<JavaCompile>().configureEach {

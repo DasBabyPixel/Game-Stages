@@ -1,6 +1,6 @@
 package de.dasbabypixel.gamestages.neoforge.v1_21_1.mixins.recipe.integration.jei;
 
-import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.jei.mixins.IBookmarkOverlay;
+import de.dasbabypixel.gamestages.neoforge.v1_21_1.addons.recipe.jei.IBookmarkOverlay;
 import mezz.jei.gui.bookmarks.BookmarkList;
 import mezz.jei.gui.overlay.bookmarks.BookmarkOverlay;
 import org.jspecify.annotations.NullMarked;
