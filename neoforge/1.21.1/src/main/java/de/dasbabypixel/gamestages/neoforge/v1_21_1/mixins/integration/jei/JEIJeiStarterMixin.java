@@ -1,4 +1,4 @@
-package de.dasbabypixel.gamestages.neoforge.v1_21_1.mixins.integration;
+package de.dasbabypixel.gamestages.neoforge.v1_21_1.mixins.integration.jei;
 
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.jei.JEIIntegration;
 import mezz.jei.library.startup.JeiStarter;

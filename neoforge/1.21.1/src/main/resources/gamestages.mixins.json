@@ -5,8 +5,9 @@
   "plugin": "de.dasbabypixel.gamestages.neoforge.v1_21_1.mixins.MixinPlugin",
   "client": [
     "MCLocalPlayerMixin",
-    "integration.JEIJeiStarterMixin",
+    "integration.jei.JEIJeiStarterMixin",
     "item.MCGuiMixin",
+    "item.integration.jei.JEITagInfoRecipeCategoryMixin",
     "recipe.MCCrafterMenuMixin",
     "recipe.MCCraftingMenuMixin",
     "recipe.MCGhostRecipeMixin",
@@ -18,8 +19,7 @@
     "recipe.MCSmithingMenuMixin",
     "recipe.MCStonecutterMenuMixin",
     "recipe.RecipeBookTabButtonMixin",
-    "recipe.integration.jei.JEIBookmarkListMixin",
-    "recipe.integration.jei.JEIBookmarkOverlayMixin"
+    "recipe.integration.jei.JEIRecipeBookmarkElementMixin"
   ],
   "mixins": [
     "KJSPlayerEventHandlerMixin",
@@ -42,7 +42,6 @@
     "recipe.MCRecipeManagerMixin",
     "recipe.MCResultSlotMixin",
     "recipe.integration.exdeorum.EDSieveLogicMixin",
-    "recipe.integration.jei.JEIRecipeBookmarkElementMixin",
     "recipe.integration.polymorph.PolymorphAbstractRecipeDataMixin",
     "recipe.integration.polymorph.PolymorphRecipeCacheMixin",
     "recipe.integration.polymorph.PolymorphRecipeManagerMixin",

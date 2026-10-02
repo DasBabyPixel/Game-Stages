@@ -7,6 +7,7 @@ import de.dasbabypixel.gamestages.common.v1_21_1.addons.item.ItemType;
 import de.dasbabypixel.gamestages.neoforge.v1_21_1.integration.jei.JEIVisibilityUpdater;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.runtime.IJeiRuntime;
+import mezz.jei.common.ingredients.TypedIngredient;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.world.item.Item;
@@ -29,7 +30,7 @@ public class ItemVisibilityUpdater extends JEIVisibilityUpdater<ItemVisibilityUp
 
     @Override
     protected boolean shouldBeVisible(Entry entry) {
-        return entry.predicate.test();
+        return entry.predicate().test();
     }
 
     @Override
@@ -68,12 +69,22 @@ public class ItemVisibilityUpdater extends JEIVisibilityUpdater<ItemVisibilityUp
 
     @Override
     protected void hide(List<ItemStack> hide) {
+        removeBookmarks(hide);
         context().runtime().getIngredientManager().removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hide);
+    }
+
+    private void removeBookmarks(List<ItemStack> items) {
+        var ingredientManager = context().runtime().getIngredientManager();
+        for (var itemStack : items) {
+            var ingredient = TypedIngredient.createAndFilterInvalid(ingredientManager, VanillaTypes.ITEM_STACK, itemStack, false);
+            if (ingredient == null) continue;
+            context().runtime().getBookmarkManager().remove(ingredient);
+        }
     }
 
     @Override
     protected ItemStack extract(Entry entry) {
-        return entry.stack;
+        return entry.stack();
     }
 
     @Override
@@ -118,13 +129,6 @@ public class ItemVisibilityUpdater extends JEIVisibilityUpdater<ItemVisibilityUp
     public record ItemContext() {
     }
 
-    public static class Entry {
-        private final ItemStack stack;
-        private final CompiledRestrictionPredicate predicate;
-
-        public Entry(ItemStack stack, CompiledRestrictionPredicate predicate) {
-            this.stack = stack;
-            this.predicate = predicate;
-        }
+    public record Entry(ItemStack stack, CompiledRestrictionPredicate predicate) {
     }
 }
